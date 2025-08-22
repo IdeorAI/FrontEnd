@@ -1,36 +1,122 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Roadmap de 9 Semanas 
+Semana 1 – Setup e Fundamentos
 
-## Getting Started
+Configuração inicial dos repositórios (monorepo ou separados backend/frontend).
 
-First, run the development server:
+Setup do ambiente: FastAPI, Next.js, Supabase (auth e DB), deploy inicial (Vercel + Railway).
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Estrutura inicial do banco: usuários, projetos, tarefas, métricas (score, valuation).
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Design system básico (UI kit + componentes base com Tailwind).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Semana 2 – Autenticação e Fluxo de Usuário
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Implementar cadastro/login via Supabase (frontend + backend integrado).
 
-## Learn More
+Criar modal de autenticação (login/cadastro).
 
-To learn more about Next.js, take a look at the following resources:
+Gerenciamento de sessão no frontend.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Testar fluxo: entrar, sair, persistência de sessão.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Semana 3 – Página Inicial (Landing Page)
 
-## Deploy on Vercel
+Página inicial com:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Mensagem principal e benefícios.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+CTA primário “Criar minha Startup GRÁTIS”.
+
+CTAs secundários mockados.
+
+Ajuste de SEO e responsividade.
+
+Integração do botão “Criar minha Startup” → redirecionar para criação de ideia.
+
+Semana 4 – Página de Criação de Ideia (Chat IA)
+
+Integração inicial com API externa (OpenAI ou similar).
+
+Implementar fluxo:
+
+“Já tenho uma ideia e quero melhorar”
+
+“Quero gerar uma nova ideia”
+
+Histórico de chat (frontend + backend).
+
+Detecção de “definição mínima” → exibir botão “Iniciar minha Startup”.
+
+Testes de performance/latência.
+
+Semana 5 – Dashboard do Usuário
+
+Estrutura da dashboard com cards de projetos.
+
+Cada card exibe:
+
+Nome provisório (editável inline).
+
+Resumo editável (400 chars).
+
+Score, Valuation, Equipe (mock), Selo, Barra de evolução.
+
+Próxima tarefa.
+
+Regras iniciais para cálculo de Score/Valuation (mock + integração básica IA).
+
+Semana 6 – Página do Projeto
+
+Layout do projeto com cabeçalho completo (nome, resumo, score, valuation, badges, progresso, equipe).
+
+Estrutura de fases (accordion ou colunas) com tarefas.
+
+Navegação entre fases/tarefas.
+
+Salvamento automático de edições.
+
+Semana 7 – Popup de Edição de Tarefa + IA Avaliadora
+
+Criar modal de edição de tarefa (texto rico simples).
+
+Implementar botão “Submeter à avaliação da IA”:
+
+Envio de dados para API externa.
+
+Spinner/estado “Avaliando…”.
+
+Atualização de score parcial + valuation.
+
+Exibir recomendações da IA (“Melhorias aplicáveis”).
+
+Toasts/feedback ao usuário.
+
+Semana 8 – Métricas, Badges e Refinamentos
+
+Regras visuais completas para:
+
+Score (0–10 com frações).
+
+Valuation dinâmico (mock avançado).
+
+Selos/badges por faixa de score.
+
+Barra de evolução com gradiente.
+
+Ajustes de UI/UX no fluxo.
+
+Melhorias no design e consistência visual.
+
+Semana 9 – Testes, Deploy Final e Demonstração
+
+Testes E2E básicos (login → criar ideia → dashboard → editar tarefa).
+
+Deploy estável no Vercel (frontend) e Railway/Render (backend).
+
+Ajustes de performance e segurança (rate limits na API IA).
+
+Preparar demo funcional para stakeholders/testadores.
+
+⚡ Resultado ao final das 9 semanas:
+
+Usuário consegue entrar na plataforma, criar ou melhorar ideias via IA, iniciar um projeto, ver suas métricas visuais (score, valuation, badges, barra de evolução), navegar no dashboard, abrir tarefas, submeter à avaliação da IA e acompanhar a evolução do seu projeto.
