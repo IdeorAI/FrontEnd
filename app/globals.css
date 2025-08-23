@@ -60,14 +60,6 @@
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
 
 :root {
   --sidebar: hsl(0 0% 98%);
@@ -110,3 +102,4 @@
     @apply bg-background text-foreground;
   }
 }
+
