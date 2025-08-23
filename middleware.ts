@@ -1,44 +1,19 @@
-// lib/supabase/middleware.ts
-import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+// /middleware.ts (raiz)
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { updateSession } from "@/lib/supabase/middleware";
 
-export async function updateSession(request: NextRequest) {
-  const response = NextResponse.next({ request });
-
-  const url =
-    process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anon =
-    process.env.SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !anon) {
-    // Sem variáveis? Só segue a requisição sem tentar autenticar.
-    return response;
+export async function middleware(request: NextRequest) {
+  try {
+    return await updateSession(request);
+  } catch (err) {
+    // evita 500 em produção se algo falhar
+    console.error("[middleware] crashed:", err);
+    return NextResponse.next();
   }
-
-  const supabase = createServerClient(url, anon, {
-    cookies: {
-      getAll: () => request.cookies.getAll(),
-      setAll: (cookiesToSet) => {
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options),
-        );
-      },
-    },
-  });
-
-  const { data } = await supabase.auth.getUser();
-  const user = data.user;
-
-  const pathname = request.nextUrl.pathname;
-  const isAuthRoute =
-    pathname.startsWith("/auth") || pathname.startsWith("/login");
-
-  // Protege rotas autenticadas (ajuste conforme sua necessidade)
-  if (!user && !isAuthRoute && pathname !== "/") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/auth/login";
-    return NextResponse.redirect(url);
-  }
-
-  return response;
 }
+
+// Rode o middleware só onde precisa sessão
+export const config = {
+  matcher: ["/dashboard/:path*", "/api/:path*"],
+};
