@@ -40,7 +40,6 @@ export default function IdeaCreationPage() {
   const router = useRouter();
   const { user, loading: userLoading } = useUser();
 
-
   useEffect(() => {
     const fetchProject = async () => {
       if (!user) return;
@@ -59,7 +58,6 @@ export default function IdeaCreationPage() {
 
     fetchProject();
   }, [user]);
-
 
   const handleClose = () => {
     try {
@@ -154,7 +152,7 @@ export default function IdeaCreationPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <Lightbulb className="h-6 w-6" />
-          Nova Ideia de Projeto
+          Ideia de Projeto
         </h1>
 
         {/* Ícone de fechar: SEM disabled para não “prender” na tela */}
