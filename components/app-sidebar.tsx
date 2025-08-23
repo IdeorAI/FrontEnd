@@ -1,215 +1,159 @@
+// components/app-sidebar.tsx - VERSÃO RESPONSIVA
+"use client";
+
 import * as React from "react"
-import { ChevronRight } from "lucide-react"
+import { Lightbulb, Home, BarChart, Settings, User, Menu, X } from "lucide-react"
+import { useRouter, usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 
-import { SearchForm } from "@/components/search-form"
-import { VersionSwitcher } from "@/components/version-switcher"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-} from "@/components/ui/sidebar"
-
-// This is sample data.
-const data = {
-  versions: ["1.0.1", "1.1.0-alpha", "2.0.0-beta1"],
-  navMain: [
-    {
-      title: "Getting Started",
-      url: "#",
-      items: [
-        {
-          title: "Installation",
-          url: "#",
-        },
-        {
-          title: "Project Structure",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Building Your Application",
-      url: "#",
-      items: [
-        {
-          title: "Routing",
-          url: "#",
-        },
-        {
-          title: "Data Fetching",
-          url: "#",
-          isActive: true,
-        },
-        {
-          title: "Rendering",
-          url: "#",
-        },
-        {
-          title: "Caching",
-          url: "#",
-        },
-        {
-          title: "Styling",
-          url: "#",
-        },
-        {
-          title: "Optimizing",
-          url: "#",
-        },
-        {
-          title: "Configuring",
-          url: "#",
-        },
-        {
-          title: "Testing",
-          url: "#",
-        },
-        {
-          title: "Authentication",
-          url: "#",
-        },
-        {
-          title: "Deploying",
-          url: "#",
-        },
-        {
-          title: "Upgrading",
-          url: "#",
-        },
-        {
-          title: "Examples",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "API Reference",
-      url: "#",
-      items: [
-        {
-          title: "Components",
-          url: "#",
-        },
-        {
-          title: "File Conventions",
-          url: "#",
-        },
-        {
-          title: "Functions",
-          url: "#",
-        },
-        {
-          title: "next.config.js Options",
-          url: "#",
-        },
-        {
-          title: "CLI",
-          url: "#",
-        },
-        {
-          title: "Edge Runtime",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Architecture",
-      url: "#",
-      items: [
-        {
-          title: "Accessibility",
-          url: "#",
-        },
-        {
-          title: "Fast Refresh",
-          url: "#",
-        },
-        {
-          title: "Next.js Compiler",
-          url: "#",
-        },
-        {
-          title: "Supported Browsers",
-          url: "#",
-        },
-        {
-          title: "Turbopack",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Community",
-      url: "#",
-      items: [
-        {
-          title: "Contribution Guide",
-          url: "#",
-        },
-      ],
-    },
-  ],
+interface AppSidebarProps {
+  user?: {
+    name: string;
+    email: string;
+  };
+  projectName?: string;
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ user, projectName }: AppSidebarProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [isMobileOpen, setIsMobileOpen] = React.useState(false);
+
+  const menuItems = [
+    {
+      title: "Geral",
+      items: [
+        {
+          title: "Dashboard",
+          icon: Home,
+          href: "/dashboard",
+          active: pathname === "/dashboard",
+        },
+        {
+          title: "Ideia Inicial",
+          icon: Lightbulb,
+          href: "/idea/create",
+          active: pathname === "/idea/create",
+        },
+      ],
+    },
+    {
+      title: "Análise",
+      items: [
+        {
+          title: "Métricas",
+          icon: BarChart,
+          href: "/metrics",
+          active: pathname === "/metrics",
+        },
+      ],
+    },
+    {
+      title: "Configurações",
+      items: [
+        {
+          title: "Perfil",
+          icon: User,
+          href: "/profile",
+          active: pathname === "/profile",
+        },
+        {
+          title: "Configurações",
+          icon: Settings,
+          href: "/settings",
+          active: pathname === "/settings",
+        },
+      ],
+    },
+  ];
+
   return (
-    <Sidebar {...props}>
-      <SidebarHeader>
-        <VersionSwitcher
-          versions={data.versions}
-          defaultVersion={data.versions[0]}
+    <>
+      {/* Botão Hamburguer para Mobile */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="lg:hidden fixed top-4 left-4 z-50 bg-background border"
+        onClick={() => setIsMobileOpen(!isMobileOpen)}
+      >
+        <Menu className="h-5 w-5" />
+      </Button>
+
+      {/* Overlay para mobile */}
+      {isMobileOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setIsMobileOpen(false)}
         />
-        <SearchForm />
-      </SidebarHeader>
-      <SidebarContent className="gap-0">
-        {/* We create a collapsible SidebarGroup for each parent. */}
-        {data.navMain.map((item) => (
-          <Collapsible
-            key={item.title}
-            title={item.title}
-            defaultOpen
-            className="group/collapsible"
+      )}
+
+      {/* Sidebar */}
+      <div className={cn(
+        "fixed left-0 top-0 h-screen w-64 border-r bg-background z-50 transition-transform lg:transform-none",
+        "lg:block",
+        isMobileOpen ? "transform-none" : "-translate-x-full"
+      )}>
+        {/* Header do Sidebar */}
+        <div className="p-4 border-b flex items-center justify-between">
+          <div>
+            <h2 className="font-semibold text-lg">{projectName || "Ideor"}</h2>
+            {user && (
+              <p className="text-sm text-muted-foreground truncate">
+                Olá, {user.name}
+              </p>
+            )}
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden"
+            onClick={() => setIsMobileOpen(false)}
           >
-            <SidebarGroup>
-              <SidebarGroupLabel
-                asChild
-                className="group/label text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sm"
-              >
-                <CollapsibleTrigger>
-                  {item.title}{" "}
-                  <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-                </CollapsibleTrigger>
-              </SidebarGroupLabel>
-              <CollapsibleContent>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {item.items.map((item) => (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton asChild isActive={item.isActive}>
-                          <a href={item.url}>{item.title}</a>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </CollapsibleContent>
-            </SidebarGroup>
-          </Collapsible>
-        ))}
-      </SidebarContent>
-      <SidebarRail />
-    </Sidebar>
-  )
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Menu Content */}
+        <div className="flex-1 overflow-auto py-4">
+          {menuItems.map((group, groupIndex) => (
+            <div key={groupIndex} className="px-4 py-2">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 px-3">
+                {group.title}
+              </div>
+              <div className="space-y-1">
+                {group.items.map((item, itemIndex) => (
+                  <button
+                    key={itemIndex}
+                    onClick={() => {
+                      router.push(item.href);
+                      setIsMobileOpen(false);
+                    }}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-3 py-3 rounded-md transition-colors text-sm", // py-3 maior para mobile
+                      item.active
+                        ? "bg-primary text-primary-foreground"
+                        : "hover:bg-accent hover:text-accent-foreground text-foreground"
+                    )}
+                  >
+                    <item.icon className="h-5 w-5" /> {/* Ícones maiores */}
+                    <span>{item.title}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Conteúdo principal com margem responsiva */}
+      <main className={cn(
+        "min-h-screen transition-margin",
+        "lg:ml-64", // Margem apenas em desktop
+        isMobileOpen ? "ml-64" : "ml-0" // Margem apenas quando sidebar aberto em mobile
+      )}>
+        {/* Seu conteúdo aqui */}
+      </main>
+    </>
+  );
 }

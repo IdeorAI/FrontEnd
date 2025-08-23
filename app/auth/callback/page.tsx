@@ -1,12 +1,20 @@
 "use client";
-import { useEffect } from "react";
+
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export default function AuthCallbackPage() {
+  return (
+    <Suspense fallback={<p>Conectando…</p>}>
+      <AuthCallbackInner />
+    </Suspense>
+  );
+}
+
+function AuthCallbackInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
 
   useEffect(() => {
     const doExchange = async () => {
@@ -18,14 +26,21 @@ export default function AuthCallbackPage() {
 
       const supabase = createClient();
       const { error } = await supabase.auth.exchangeCodeForSession(code);
+
       if (error) {
-        router.replace(`/auth/login?error=${encodeURIComponent(error.message)}`);
+        router.replace(
+          `/auth/login?error=${encodeURIComponent(error.message)}`
+        );
         return;
       }
-      router.replace("/protected"); // ajuste o destino
+
+      // ajuste o destino conforme sua app
+      router.replace("/dashboard");
     };
+
     doExchange();
   }, [router, searchParams]);
 
-  return <p>Conectando…</p>;
+  // O conteúdo real fica no fallback do Suspense; aqui não renderizamos nada
+  return null;
 }
