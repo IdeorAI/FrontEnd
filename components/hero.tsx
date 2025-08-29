@@ -27,8 +27,8 @@ export default function Hero() {
           com a ajuda da IA
         </h1>
 
-        <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed drop-shadow-lg">
-          Transforme sua ideia em um unicórnio: Do zero ao investimento, mesmo
+        <p className="text-xl md:text-2xl text-white-400 mb-8 max-w-3xl mx-auto leading-relaxed drop-shadow-xl">
+          Transforme sua ideia em um unicórnio: do zero ao investimento, mesmo
           sem saber por onde começar.
         </p>
 

@@ -38,7 +38,7 @@ const ValueProposition = () => {
               Processo guiado por IA
             </span>
             <br />
-            do zero ao investidor
+            do zero a captação
           </h2>
         </div>
         
