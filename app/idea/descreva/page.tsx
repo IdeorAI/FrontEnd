@@ -189,6 +189,15 @@ export default function IdeaCreationPage() {
           </div>
           {/* Botões */}
           <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
+           
+           <Button
+              type="button"
+              onClick={handleSaveProject}
+              disabled={isLoading || !projectName.trim()}
+            >
+              {isLoading ? "Salvando..." : <>Enviar</>}
+            </Button>
+           
             <Button
               type="button"
               variant="outline"
@@ -199,13 +208,7 @@ export default function IdeaCreationPage() {
               Voltar
             </Button>
 
-            <Button
-              type="button"
-              onClick={handleSaveProject}
-              disabled={isLoading || !projectName.trim()}
-            >
-              {isLoading ? "Salvando..." : <>Enviar</>}
-            </Button>
+            
           </div>
         </CardContent>
       </Card>

@@ -22,8 +22,8 @@ export default function IdeaCreatePage() {
         className="
           mx-auto w-full max-w-[640px] 
           rounded-3xl border border-white/10 
-          bg-slate-950/80 backdrop-blur-lg shadow-2xl
-          px-6 py-8 sm:px-10 sm:py-12
+          bg-[1e2830]  shadow-2xl
+          px-6  pt-4 pb-8 sm:px-10 sm:pt-6 sm:pb-12
         "
       >
         <div className="text-center space-y-2">
