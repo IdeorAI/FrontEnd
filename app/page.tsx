@@ -9,7 +9,7 @@ import FinalCTA from "@/components/FinalCTA";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Onboarding | Crie sua startup com IA",
+  title: "Ideor.AI Crie sua startup com IA",
   description:
     "Do zero ao investimento: acompanhe os passos para criar sua startup com a ajuda da IA.",
 };
