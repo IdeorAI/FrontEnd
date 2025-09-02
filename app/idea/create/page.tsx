@@ -4,6 +4,13 @@
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Lightbulb } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function IdeaCreatePage() {
   const router = useRouter();
@@ -17,59 +24,48 @@ export default function IdeaCreatePage() {
         <h1 className="text-xl sm:text-2xl font-bold">Criar novo projeto</h1>
       </div>
 
-      {/* CONTAINER ESCURO */}
-      <div
-        className="
-          mx-auto w-full max-w-[640px] 
-          rounded-3xl border border-white/10 
-          bg-[1e2830]  shadow-2xl
-          px-6  pt-4 pb-8 sm:px-10 sm:pt-6 sm:pb-12
-        "
-      >
-        <div className="text-center space-y-2">
-          <h2 className="text-lg sm:text-xl font-semibold">
+      {/* CARD PRINCIPAL */}
+      <Card className="mx-auto w-full max-w-[640px] rounded-3xl border-white/10 bg-[1e2830] shadow-2xl">
+        <CardHeader className="text-center space-y-2 pb-4">
+          <CardTitle className="text-lg sm:text-xl font-semibold">
             Inicie sua nova Startup
-          </h2>
-          <p className="text-sm text-white/70">Você pode melhorar uma ideia</p>
-        </div>
+          </CardTitle>
+          <CardDescription className="text-sm text-white/70">
+            Você pode melhorar uma ideia
+          </CardDescription>
+        </CardHeader>
 
-        {/* Botão 1 */}
-        <div className="mt-1.5">
+        <CardContent className="space-y-6">
+          {/* Botão 1 */}
           <Button
             size="lg"
-            className="
-              w-full font-semibold rounded-lg shadow-md
+            className="w-full font-semibold rounded-lg shadow-md
               bg-gradient-to-r from-[#07f7eb] to-[#9B6CFF]
               hover:shadow-glow transition-all duration-300 
-            // transform hover:scale-105 text-purple-950  drop-shadow-lg
-            "
+              transform hover:scale-105 text-purple-950 drop-shadow-lg"
             onClick={goToDescribe}
           >
             JÁ TENHO UMA IDEIA INICIAL
           </Button>
-        </div>
 
-        <div className="mt-6 text-center">
-          <p className="text-sm text-white/70">
-            Ou receber sugestões para iniciar do zero
-          </p>
-        </div>
+          <div className="text-center">
+            <p className="text-sm text-white/70">
+              Ou receber sugestões para iniciar do zero
+            </p>
+          </div>
 
-        {/* Botão 2 */}
-        <div className="mt-1.5">
+          {/* Botão 2 */}
           <Button
             size="lg"
-            className="
-              w-full font-semibold rounded-lg shadow-md
+            className="w-full font-semibold rounded-lg shadow-md
               bg-gradient-hero hover:shadow-glow transition-all duration-300 
-             transform hover:scale-105 text-[#1e2830]  drop-shadow-lg
-            "
+              transform hover:scale-105 text-[#1e2830] drop-shadow-lg"
             onClick={goToDescribe}
           >
             COMEÇAR COM A AJUDA DO IDEOR ✨
           </Button>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
