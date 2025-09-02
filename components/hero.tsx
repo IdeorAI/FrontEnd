@@ -35,7 +35,7 @@ export default function Hero() {
         <div className="space-y-4">
           <Button
             size="lg"
-            className="text-lg px-8 py-4 bg-gradient-hero hover:shadow-glow transition-all duration-300 transform hover:scale-105 text-white font-semibold shadow-2xl drop-shadow-lg"
+            className="text-lg px-8 py-4 bg-gradient-hero hover:shadow-glow transition-all duration-300 transform hover:scale-105 text-[#1e2830] font-semibold shadow-2xl drop-shadow-lg"
             asChild
           >
             <Link href="/auth/sign-up">Criar minha Startup GRÁTIS</Link>

@@ -34,7 +34,7 @@ export default function IdeaCreatePage() {
         </div>
 
         {/* Botão 1 */}
-        <div className="mt-21.5">
+        <div className="mt-1.5">
           <Button
             size="lg"
             className="
@@ -62,7 +62,7 @@ export default function IdeaCreatePage() {
             className="
               w-full font-semibold rounded-lg shadow-md
               bg-gradient-hero hover:shadow-glow transition-all duration-300 
-             transform hover:scale-105 text-white  drop-shadow-lg
+             transform hover:scale-105 text-[#1e2830]  drop-shadow-lg
             "
             onClick={goToDescribe}
           >
