@@ -13,8 +13,7 @@ export default function Header() {
             alt="Ideor.AI"
             width={176}
             height={53}
-            className="mx-auto h-8 w-auto sm:h-9 md:h-10 lg:h-12"
-            sizes="(max-width: 640px) 8rem, (max-width: 768px) 9rem, (max-width: 1024px) 10rem, 12rem"
+            className="h-10 w-auto sm:h-11 md:h-12" // antes era h-8
             priority
           />
         </div>
