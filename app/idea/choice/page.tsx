@@ -6,11 +6,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/lib/supabase/use-user";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
-import { Lightbulb, RefreshCcw, Check } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Lightbulb, ChevronLeft, RefreshCcw, Check } from "lucide-react";
 
 const BASE_OPTIONS = [
   "Transforme memórias em música: nossa IA cria canções exclusivas, com melodia e letra, a partir de uma simples foto. Um presente único para aniversários, casamentos ou qualquer celebração especial.",
@@ -31,6 +28,7 @@ export default function ChoicePage() {
     setOptions((prev) => [...prev].sort(() => Math.random() - 0.5));
     setSelected(null);
   };
+  const handleBack = () => router.replace("/idea/descreva");
 
   const handleContinue = async () => {
     if (selected === null) return;
@@ -56,13 +54,13 @@ export default function ChoicePage() {
   };
 
   return (
-    <div className="w-full mx-auto px-4">
-      {/* título + subtítulo */}
-      <div className="mb-6 flex items-center justify-center gap-2">
-        <Lightbulb className="h-5 w-5 translate-y-[1px]" />
-        <h1 className="text-xl sm:text-2xl font-bold">Já tenho uma ideia inicial</h1>
+    <div className="mx-auto w-full max-w-[640px] py-8">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-bold flex items-center gap-2">
+          <Lightbulb className="h-6 w-6" />
+          Tenho uma ideia inicial
+        </h1>
       </div>
-
       {/* CARD CONTAINER */}
       <div
         className="
@@ -73,7 +71,9 @@ export default function ChoicePage() {
         "
       >
         <div className="mb-5">
-          <h2 className="text-base sm:text-lg font-semibold">Escolha uma das descrições:</h2>
+          <h2 className="text-base sm:text-lg font-semibold">
+            Escolha uma das descrições:
+          </h2>
           <p className="text-sm text-white/70">
             Selecione o texto que melhor descreve a sua proposta de Startup.
           </p>
@@ -116,7 +116,11 @@ export default function ChoicePage() {
                         className={`
                           mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center
                           rounded-full border
-                          ${isActive ? "border-teal-300 bg-teal-300/20" : "border-white/20 bg-white/5"}
+                          ${
+                            isActive
+                              ? "border-teal-300 bg-teal-300/20"
+                              : "border-white/20 bg-white/5"
+                          }
                         `}
                       >
                         {isActive ? (
@@ -125,7 +129,11 @@ export default function ChoicePage() {
                           <span className="text-xs opacity-80">{idx + 1}</span>
                         )}
                       </div>
-                      <p className={`text-sm leading-relaxed ${isActive ? "text-teal-200" : "text-white/90"}`}>
+                      <p
+                        className={`text-sm leading-relaxed ${
+                          isActive ? "text-teal-200" : "text-white/90"
+                        }`}
+                      >
                         {text}
                       </p>
                     </div>
@@ -146,6 +154,15 @@ export default function ChoicePage() {
           >
             <RefreshCcw className="mr-2 h-4 w-4" />
             Gerar novamente
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleBack}
+            className="order-2 sm:order-1"
+          >
+            <ChevronLeft className="mr-2 h-4 w-4" />
+            Voltar
           </Button>
 
           <Button
