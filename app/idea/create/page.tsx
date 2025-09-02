@@ -34,12 +34,12 @@ export default function IdeaCreatePage() {
         </div>
 
         {/* Botão 1 */}
-        <div className="mt-2">
+        <div className="mt-21.5">
           <Button
             size="lg"
             className="
               w-full font-semibold rounded-lg shadow-md
-              bg-gradient-to-r from-[#9B6CFF] to-[#07f7eb]
+              bg-gradient-to-r from-[#07f7eb] to-[#9B6CFF]
               hover:shadow-glow transition-all duration-300 
             // transform hover:scale-105 text-purple-950  drop-shadow-lg
             "
@@ -56,7 +56,7 @@ export default function IdeaCreatePage() {
         </div>
 
         {/* Botão 2 */}
-        <div className="mt-2">
+        <div className="mt-1.5">
           <Button
             size="lg"
             className="
