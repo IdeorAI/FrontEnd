@@ -15,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { X, Save, Lightbulb } from "lucide-react";
+import { X, ChevronLeft, Lightbulb } from "lucide-react";
 import type { PostgrestError } from "@supabase/supabase-js";
 
 function getErrorMessage(err: unknown): string {
@@ -59,6 +59,8 @@ export default function IdeaCreationPage() {
     fetchProject();
   }, [user]);
 
+  const handleBack = () => router.replace("/idea/create");
+
   const handleClose = () => {
     try {
       // tenta navegação SPA
@@ -96,28 +98,28 @@ export default function IdeaCreationPage() {
       return;
     }
 
-   const supabase = createClient();
-setIsLoading(true);
+    const supabase = createClient();
+    setIsLoading(true);
 
-try {
-  const { error: updateError } = await supabase
-    .from("projects")
-    .update({
-      description: description || null,
-    })
-    .eq("owner_id", user.id);
+    try {
+      const { error: updateError } = await supabase
+        .from("projects")
+        .update({
+          description: description || null,
+        })
+        .eq("owner_id", user.id);
 
-  if (updateError) {
-    setError(getErrorMessage(updateError));
-    return;
-  }
+      if (updateError) {
+        setError(getErrorMessage(updateError));
+        return;
+      }
 
-  router.replace("/idea/choice");
-} catch (err: unknown) {
-  setError(getErrorMessage(err));
-} finally {
-  setIsLoading(false);
-}
+      router.replace("/idea/choice");
+    } catch (err: unknown) {
+      setError(getErrorMessage(err));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (userLoading) {
@@ -186,9 +188,15 @@ try {
             </p>
           </div>
           {/* Botões */}
-          <div className="mt-6 flex items-center justify-end gap-3">
-            <Button type="button" variant="outline" onClick={handleClose}>
-              Cancelar
+          <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleBack}
+              className="order-2 sm:order-1"
+            >
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Voltar
             </Button>
 
             <Button
@@ -196,14 +204,7 @@ try {
               onClick={handleSaveProject}
               disabled={isLoading || !projectName.trim()}
             >
-              {isLoading ? (
-                "Salvando..."
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Enviar
-                </>
-              )}
+              {isLoading ? "Salvando..." : <>Enviar</>}
             </Button>
           </div>
         </CardContent>

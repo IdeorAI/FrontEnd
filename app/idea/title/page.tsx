@@ -136,13 +136,14 @@ export default function TitlePage() {
     );}
 
   return (
-    <div className="w-full mx-auto px-4">
-      {/* Header */}
-      <div className="mb-6 flex items-center justify-center gap-2">
-        <Lightbulb className="h-5 w-5 translate-y-[1px]" />
-        <h1 className="text-xl sm:text-2xl font-bold">Já tenho uma ideia inicial</h1>
+   <div className="mx-auto w-full max-w-[640px] py-8">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-bold flex items-center gap-2">
+          <Lightbulb className="h-6 w-6" />
+          Tenho uma ideia inicial
+        </h1>
+    
       </div>
-
       {/* Card container */}
       <div
         className="
