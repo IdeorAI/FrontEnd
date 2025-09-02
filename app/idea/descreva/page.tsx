@@ -189,26 +189,22 @@ export default function IdeaCreationPage() {
           </div>
           {/* Botões */}
           <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
-           
-           <Button
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleBack}
+             // className="order-2 sm:order-1"
+            >
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Voltar
+            </Button>
+            <Button
               type="button"
               onClick={handleSaveProject}
               disabled={isLoading || !projectName.trim()}
             >
               {isLoading ? "Salvando..." : <>Enviar</>}
             </Button>
-           
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleBack}
-              className="order-2 sm:order-1"
-            >
-              <ChevronLeft className="mr-2 h-4 w-4" />
-              Voltar
-            </Button>
-
-            
           </div>
         </CardContent>
       </Card>
