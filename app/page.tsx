@@ -2,7 +2,7 @@
 import type { Metadata } from "next";
 
 import Header from "@/components/Header";
-import Hero from "@/components/hero"; // mantenha assim se o arquivo for 'hero.tsx'
+import Hero from "@/components/hero"; 
 import ValueProposition from "@/components/ValueProposition";
 import HowItWorks from "@/components/HowItWorks";
 import FinalCTA from "@/components/FinalCTA";

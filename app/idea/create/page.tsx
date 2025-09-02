@@ -27,18 +27,21 @@ export default function IdeaCreatePage() {
         "
       >
         <div className="text-center space-y-2">
-          <h2 className="text-lg sm:text-xl font-semibold">Inicie sua nova Startup</h2>
+          <h2 className="text-lg sm:text-xl font-semibold">
+            Inicie sua nova Startup
+          </h2>
           <p className="text-sm text-white/70">Você pode melhorar uma ideia</p>
         </div>
 
         {/* Botão 1 */}
-        <div className="mt-6">
+        <div className="mt-2">
           <Button
             size="lg"
             className="
               w-full font-semibold rounded-lg shadow-md
-              bg-gradient-to-r from-[#9B6CFF] to-[#C396FF]
-              hover:opacity-90 active:opacity-95
+              bg-gradient-to-r from-[#9B6CFF] to-[#07f7eb]
+              hover:shadow-glow transition-all duration-300 
+            // transform hover:scale-105 text-purple-950  drop-shadow-lg
             "
             onClick={goToDescribe}
           >
@@ -47,18 +50,19 @@ export default function IdeaCreatePage() {
         </div>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-white/70">Ou receber sugestões para iniciar do zero</p>
+          <p className="text-sm text-white/70">
+            Ou receber sugestões para iniciar do zero
+          </p>
         </div>
 
         {/* Botão 2 */}
-        <div className="mt-4">
+        <div className="mt-2">
           <Button
             size="lg"
             className="
               w-full font-semibold rounded-lg shadow-md
-              bg-gradient-to-r from-[#39E0F5] to-[#7EFFFF]
-              text-slate-900
-              hover:opacity-90 active:opacity-95
+              bg-gradient-hero hover:shadow-glow transition-all duration-300 
+             transform hover:scale-105 text-white  drop-shadow-lg
             "
             onClick={goToDescribe}
           >
