@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/lib/supabase/use-user";
 import { Button } from "@/components/ui/button";
-//import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
@@ -15,8 +14,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { X, ChevronLeft, Lightbulb } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { X, ChevronLeft, Lightbulb, Check, ChevronsUpDown } from "lucide-react";
 import type { PostgrestError } from "@supabase/supabase-js";
+import categories from "@/lib/data/categories.json";
 
 function getErrorMessage(err: unknown): string {
   if (!err) return "Erro desconhecido";
@@ -33,8 +46,9 @@ function getErrorMessage(err: unknown): string {
 }
 
 export default function IdeaCreationPage() {
-  const [projectName, setProjectName] = useState("");
   const [projectDescription, setProjectDescription] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -46,13 +60,13 @@ export default function IdeaCreationPage() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from("projects")
-        .select("name, description")
+        .select("description, category")
         .eq("owner_id", user.id)
-        .maybeSingle(); // retorna null se não houver projeto
+        .maybeSingle();
 
       if (!error && data) {
-        setProjectName(data.name || "");
         setProjectDescription(data.description || "");
+        setSelectedCategory(data.category || "");
       }
     };
 
@@ -63,13 +77,10 @@ export default function IdeaCreationPage() {
 
   const handleClose = () => {
     try {
-      // tenta navegação SPA
       router.replace("/dashboard");
     } catch {
-      // fallback hard refresh
       window.location.href = "/dashboard";
     } finally {
-      // se quiser, também pode disparar o hard refresh após um pequeno atraso:
       setTimeout(() => {
         window.location.href = "/dashboard";
       }, 0);
@@ -82,19 +93,18 @@ export default function IdeaCreationPage() {
       setError("Usuário não autenticado");
       return;
     }
-    const name = projectName.trim();
     const description = projectDescription.trim();
 
-    if (!name) {
-      setError("O nome do projeto é obrigatório");
-      return;
-    }
-    if (name.length > 100) {
-      setError("O nome do projeto deve ter no máximo 100 caracteres");
+    if (description.length === 0) {
+      setError("A descrição do projeto é obrigatória");
       return;
     }
     if (description.length > 400) {
       setError("A descrição deve ter no máximo 400 caracteres");
+      return;
+    }
+    if (!selectedCategory) {
+      setError("Por favor, selecione uma categoria");
       return;
     }
 
@@ -106,6 +116,7 @@ export default function IdeaCreationPage() {
         .from("projects")
         .update({
           description: description || null,
+          category: selectedCategory,
         })
         .eq("owner_id", user.id);
 
@@ -139,20 +150,19 @@ export default function IdeaCreationPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[640px] py-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="mx-auto w-full max-w-[640px] py-4">
+      <div className="flex items-center justify-between ">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Lightbulb className="h-6 w-6" />
           Tenho uma ideia inicial
         </h1>
 
-        {/* Ícone de fechar: SEM disabled para não “prender” na tela */}
         <Button variant="ghost" onClick={handleClose}>
           <X className="h-5 w-5" />
         </Button>
       </div>
 
-      <Card>
+      <Card className="bg-slate-950/80">
         <CardHeader>
           <CardTitle>Descreva sua ideia</CardTitle>
           <CardDescription>
@@ -167,43 +177,106 @@ export default function IdeaCreationPage() {
             </div>
           )}
 
-          <div>
-            <label
-              htmlFor="project-description"
-              className="block text-sm font-medium mb-1"
-            >
-              Descrição do projeto
-            </label>
-            <Textarea
-              id="project-description"
-              value={projectDescription}
-              onChange={(e) => setProjectDescription(e.target.value)}
-              placeholder="Descreva sua ideia em até 400 caracteres..."
-              rows={4}
-              maxLength={400}
-              className="resize-none"
-            />
-            <p className="text-sm text-muted-foreground mt-1">
-              {projectDescription.length}/400
-            </p>
+          <div className="space-y-6">
+            {/* Campo de Categoria */}
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Categoria do projeto
+              </label>
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    className="w-full justify-between"
+                  >
+                    {selectedCategory
+                      ? categories.find(
+                          (category) => category.value === selectedCategory
+                        )?.label
+                      : "Selecione uma categoria..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0 sm:max-w-[400px]">
+                  <Command>
+                    <CommandInput placeholder="Buscar categoria..." />git
+                    <CommandList>
+                      <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
+                      <CommandGroup>
+                        {categories.map((category) => (
+                          <CommandItem
+                            key={category.value}
+                            value={category.value}
+                            onSelect={(currentValue) => {
+                              setSelectedCategory(
+                                currentValue === selectedCategory
+                                  ? ""
+                                  : currentValue
+                              );
+                              setOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={`mr-2 h-4 w-4 ${
+                                selectedCategory === category.value
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              }`}
+                            />
+                            <div className="flex flex-col">
+                              <span>{category.label}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {category.description}
+                              </span>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Campo de Descrição */}
+            <div>
+              <label
+                htmlFor="project-description"
+                className="block text-sm font-medium mb-1"
+              >
+                Descrição do projeto
+              </label>
+              <Textarea
+                id="project-description"
+                value={projectDescription}
+                onChange={(e) => setProjectDescription(e.target.value)}
+                placeholder="Descreva sua ideia em até 400 caracteres..."
+                rows={4}
+                maxLength={400}
+                className="resize-none"
+              />
+              <p className="text-sm text-muted-foreground mt-1">
+                {projectDescription.length}/400
+              </p>
+            </div>
           </div>
+
           {/* Botões */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleBack}
-             // className="order-2 sm:order-1"
-            >
+          <div className="flex flex-col sm:flex-row gap-3 sm:justify-end mt-6">
+            <Button type="button" variant="outline" onClick={handleBack}>
               <ChevronLeft className="mr-2 h-4 w-4" />
               Voltar
             </Button>
             <Button
               type="button"
               onClick={handleSaveProject}
-              disabled={isLoading || !projectName.trim()}
+              disabled={
+                isLoading || !projectDescription.trim() || !selectedCategory
+              }
             >
-              {isLoading ? "Salvando..." : <>Enviar</>}
+              {isLoading ? "Salvando..." : "Enviar"}
             </Button>
           </div>
         </CardContent>

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Lightbulb, ChevronLeft, Save } from "lucide-react";
 import type { PostgrestError } from "@supabase/supabase-js";
+import categories from "@/lib/data/categories.json";
 
 function getErrorMessage(err: unknown): string {
   if (!err) return "Erro desconhecido";
@@ -32,6 +33,7 @@ export default function TitlePage() {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState<string>("");
+  const [category, setCategory] = useState<string>("");
   const [existsProject, setExistsProject] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -42,7 +44,7 @@ export default function TitlePage() {
       if (!user) return;
       const { data, error } = await supabase
         .from("projects")
-        .select("name, description")
+        .select("name, description, category")
         .eq("owner_id", user.id)
         .maybeSingle();
 
@@ -55,6 +57,7 @@ export default function TitlePage() {
         setExistsProject(true);
         setName(data.name ?? "");
         setDescription(data.description ?? "");
+        setCategory(data.category ?? "");
       } else {
         setExistsProject(false);
       }
@@ -103,6 +106,7 @@ export default function TitlePage() {
           owner_id: user.id,
           name: trimmed,
           description: description || null,
+          category: category || null,
         });
 
         if (error) {
@@ -120,6 +124,14 @@ export default function TitlePage() {
     }
   };
 
+  // Função para obter o label da categoria a partir do value
+  const getCategoryLabel = (categoryValue: string) => {
+    const foundCategory = categories.find((cat) => cat.value === categoryValue);
+    return foundCategory
+      ? foundCategory.label
+      : "Nenhuma categoria selecionada";
+  };
+
   if (userLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center text-muted-foreground">
@@ -133,16 +145,16 @@ export default function TitlePage() {
       <div className="flex min-h-[60vh] items-center justify-center text-muted-foreground">
         Você precisa estar autenticado.
       </div>
-    );}
+    );
+  }
 
   return (
-   <div className="mx-auto w-full max-w-[640px] py-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="mx-auto w-full max-w-[640px] py-4">
+      <div className="flex items-center justify-between ">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Lightbulb className="h-6 w-6" />
           Tenho uma ideia inicial
         </h1>
-    
       </div>
       {/* Card container */}
       <div
@@ -180,9 +192,23 @@ export default function TitlePage() {
 
             {/* Descrição selecionada */}
             <div>
-              <div className="text-sm font-medium mb-1">Descrição selecionada:</div>
+              <div className="text-sm font-medium mb-1">
+                Descrição selecionada:
+              </div>
               <div className="rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-white/90">
                 {description || "Você ainda não selecionou uma descrição."}
+              </div>
+            </div>
+
+            {/* Categoria selecionada */}
+            <div>
+              <div className="text-sm font-medium mb-1">
+                Categoria selecionada:
+              </div>
+              <div className="rounded-lg border border-white/10 bg-white/5 p-3 sm:p-4 text-sm text-white/90 min-h-[3rem] flex items-center">
+                {category
+                  ? getCategoryLabel(category)
+                  : "Nenhuma categoria selecionada"}
               </div>
             </div>
 
@@ -192,7 +218,7 @@ export default function TitlePage() {
                 type="button"
                 variant="outline"
                 onClick={handleBack}
-                className="order-2 sm:order-1"
+                className="order-1 sm:order-1"
               >
                 <ChevronLeft className="mr-2 h-4 w-4" />
                 Voltar
@@ -201,9 +227,16 @@ export default function TitlePage() {
                 type="button"
                 onClick={handleSave}
                 disabled={saving || !name.trim()}
-                className="order-1 sm:order-2"
+                className="order-2 sm:order-2"
               >
-                {saving ? "Salvando..." : (<><Save className="mr-2 h-4 w-4" />Salvar</>)}
+                {saving ? (
+                  "Salvando..."
+                ) : (
+                  <>
+                    <Save className=" mr-2 h-4 w-4" />
+                    Salvar
+                  </>
+                )}
               </Button>
             </div>
 
