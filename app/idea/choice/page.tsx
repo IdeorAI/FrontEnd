@@ -6,7 +6,13 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/lib/supabase/use-user";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Lightbulb, ChevronLeft, RefreshCcw, Check } from "lucide-react";
 
 const BASE_OPTIONS = [
@@ -27,7 +33,7 @@ export default function ChoicePage() {
     setOptions((prev) => [...prev].sort(() => Math.random() - 0.5));
     setSelected(null);
   };
-  
+
   const handleBack = () => router.replace("/idea/descreva");
 
   const handleContinue = async () => {
@@ -52,16 +58,16 @@ export default function ChoicePage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[880px] py-8 px-4">
-      <div className="flex items-center justify-between mb-6">
+    <div className="mx-auto w-full max-w-[880px] py-4 px-4">
+      <div className="flex items-center justify-between ">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Lightbulb className="h-6 w-6" />
           Tenho uma ideia inicial
         </h1>
       </div>
-      
+
       {/* CARD PRINCIPAL */}
-      <Card className="rounded-3xl border-white/10 bg-[1e2830] shadow-2xl p-6 sm:p-8">
+      <Card className="rounded-3xl border-white/10 bg-slate-950/80  shadow-2xl p-6 sm:p-8">
         <CardHeader className="pb-4">
           <CardTitle className="text-base sm:text-lg font-semibold">
             Escolha uma das descrições:
@@ -115,7 +121,9 @@ export default function ChoicePage() {
                           {isActive ? (
                             <Check className="h-4 w-4" />
                           ) : (
-                            <span className="text-xs opacity-80">{idx + 1}</span>
+                            <span className="text-xs opacity-80">
+                              {idx + 1}
+                            </span>
                           )}
                         </div>
                         <p
@@ -135,30 +143,34 @@ export default function ChoicePage() {
 
           {/* AÇÕES */}
           <div className="mt-6 flex flex-col sm:flex-row gap-3 sm:justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={regenerate}
-              className="order-2 sm:order-1"
-            >
-              <RefreshCcw className="mr-2 h-4 w-4" />
-              Gerar novamente
-            </Button>
+            {/* VOLTAR - Primeiro botão */}
             <Button
               type="button"
               variant="outline"
               onClick={handleBack}
-              className="order-2 sm:order-1"
+              className="order-1 sm:order-1"
             >
               <ChevronLeft className="mr-2 h-4 w-4" />
               Voltar
             </Button>
 
+            {/* GERAR NOVAMENTE - Segundo botão */}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={regenerate}
+              className="order-2 sm:order-2"
+            >
+              <RefreshCcw className="mr-2 h-4 w-4" />
+              Gerar novamente
+            </Button>
+
+            {/* CONTINUAR - Terceiro botão */}
             <Button
               type="button"
               onClick={handleContinue}
               disabled={selected === null || saving}
-              //className="order-1 sm:order-2"
+              className="order-3 sm:order-3"
             >
               {saving ? "Salvando..." : "Continuar"}
             </Button>

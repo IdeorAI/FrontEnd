@@ -1,0 +1,62 @@
+[
+  {
+    "value": "software-ia-dados",
+    "label": "Software, IA e Dados",
+    "description": "SaaS, IA generativa, analytics/BI, infraestrutura de dados e enterprise AI"
+  },
+  {
+    "value": "financas-seguros",
+    "label": "Finanças e Seguros",
+    "description": "Fintech, Insurtech, Pagamentos, banking, crédito, investimentos, seguros e Web3 quando ligado a serviços financeiros"
+  },
+  {
+    "value": "saude-ciencias-vida",
+    "label": "Saúde e Ciências da Vida",
+    "description": "Telemedicina, dispositivos, bio/diagnósticos, saúde digital e wellness"
+  },
+  {
+    "value": "varejo-ecommerce-marketing",
+    "label": "Varejo, E-commerce e Marketing",
+    "description": "Marketplaces, D2C, martech/adtech, social commerce e CRM"
+  },
+  {
+    "value": "industria-manufatura-iot",
+    "label": "Indústria, Manufatura e IoT",
+    "description": "Indústria 4.0, automação, robótica, hardware e dispositivos conectados"
+  },
+  {
+    "value": "logistica-mobilidade-transporte",
+    "label": "Logística, Mobilidade e Transporte",
+    "description": "Supply chain, entregas, gestão de frotas e mobilidade urbana"
+  },
+  {
+    "value": "energia-clima-sustentabilidade",
+    "label": "Energia, Clima e Sustentabilidade",
+    "description": "Renováveis, eficiência energética, carbono e economia circular"
+  },
+  {
+    "value": "imoveis-construcao",
+    "label": "Imóveis e Construção",
+    "description": "Prop/Construtech, Real estate, gestão imobiliária, construção digital e infraestruturas"
+  },
+  {
+    "value": "educacao-rh",
+    "label": "Educação e RH",
+    "description": "Edtech, HRtech, E-learning, upskilling, ferramentas para educadores e people/HR tech"
+  },
+  {
+    "value": "seguranca-infraestrutura-digital",
+    "label": "Segurança e Infraestrutura Digital",
+    "description": "Cibersegurança, identidade, privacidade e plataformas de infraestrutura de TI"
+  },
+  {
+    "value": "governo-juridico-setor-publico",
+    "label": "Governo, Jurídico e Setor Público",
+    "description": "Govtech, legaltech, assinatura/identidade e serviços públicos digitais"
+  },
+  {
+    "value": "midia-entretenimento-criadores",
+    "label": "Mídia, Entretenimento e Criadores",
+    "description": "Streaming, games, creator economy e experiências imersivas"
+  }
+]
