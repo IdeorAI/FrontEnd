@@ -30,6 +30,7 @@ import {
 import { X, ChevronLeft, Lightbulb, Check, ChevronsUpDown } from "lucide-react";
 import type { PostgrestError } from "@supabase/supabase-js";
 import categories from "@/lib/data/categories.json";
+import { generateStartupIdeas } from '@/lib/gemini-api';
 
 function getErrorMessage(err: unknown): string {
   if (!err) return "Erro desconhecido";
@@ -93,7 +94,9 @@ export default function IdeaCreationPage() {
       setError("Usuário não autenticado");
       return;
     }
+    
     const description = projectDescription.trim();
+    const category = selectedCategory;
 
     if (description.length === 0) {
       setError("A descrição do projeto é obrigatória");
@@ -103,7 +106,7 @@ export default function IdeaCreationPage() {
       setError("A descrição deve ter no máximo 400 caracteres");
       return;
     }
-    if (!selectedCategory) {
+    if (!category) {
       setError("Por favor, selecione uma categoria");
       return;
     }
@@ -112,11 +115,12 @@ export default function IdeaCreationPage() {
     setIsLoading(true);
 
     try {
+      // 1. Salvar no Supabase
       const { error: updateError } = await supabase
         .from("projects")
         .update({
           description: description || null,
-          category: selectedCategory,
+          category: category,
         })
         .eq("owner_id", user.id);
 
@@ -125,6 +129,27 @@ export default function IdeaCreationPage() {
         return;
       }
 
+      // 2. Gerar ideias com Gemini
+      const categoryLabel = categories.find(c => c.value === category)?.label || category;
+      
+      const ideasResponse = await generateStartupIdeas({
+        seedIdea: description,
+        segmentDescription: categoryLabel
+      });
+
+      // 3. Salvar as ideias geradas no Supabase
+      const { error: ideasError } = await supabase
+        .from("projects")
+        .update({ 
+          generated_options: ideasResponse.ideas 
+        })
+        .eq("owner_id", user.id);
+
+      if (ideasError) {
+        console.error("Erro ao salvar opções:", ideasError);
+      }
+
+      // 4. Redirecionar para a página de escolha
       router.replace("/idea/choice");
     } catch (err: unknown) {
       setError(getErrorMessage(err));
@@ -162,7 +187,7 @@ export default function IdeaCreationPage() {
         </Button>
       </div>
 
-      <Card className="bg-slate-950/80">
+      <Card >
         <CardHeader>
           <CardTitle>Descreva sua ideia</CardTitle>
           <CardDescription>
@@ -201,7 +226,7 @@ export default function IdeaCreationPage() {
                 </PopoverTrigger>
                 <PopoverContent className="w-full p-0 sm:max-w-[400px]">
                   <Command>
-                    <CommandInput placeholder="Buscar categoria..." />git
+                    <CommandInput placeholder="Buscar categoria..." />
                     <CommandList>
                       <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
                       <CommandGroup>

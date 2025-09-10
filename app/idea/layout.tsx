@@ -36,11 +36,14 @@ export default async function IdeaLayout({ children }: { children: ReactNode }) 
         sizes="100vw"
       />
       {/* Overlay */}
-      <div className="absolute inset-0 bg-black/20 md:bg-black/30" />
+      <div className="absolute inset-0 pointer-events-none" />
 
       {/* Header fixo */}
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-slate-950/60 backdrop-blur-md">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 flex items-center justify-between">
+    <header
+      className="fixed inset-x-0 top-0 z-[9999] border-b border-white/10"
+      style={{ backgroundColor: "#202a31" }}
+    >
+       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 flex items-center justify-between">
           {/* Logo (esquerda) */}
           <div className="flex items-center">
             <Image
