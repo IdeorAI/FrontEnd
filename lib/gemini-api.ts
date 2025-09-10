@@ -1,10 +1,24 @@
 // lib/gemini-api.ts
-const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+export interface GenerateIdeasRequest {
+  seedIdea: string;
+  segmentDescription: string;
+}
+
+export interface GenerateIdeasResponse {
+  ideas: string[];
+}
 
 export async function generateStartupIdeas(
   request: GenerateIdeasRequest
 ): Promise<GenerateIdeasResponse> {
   try {
+    const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    
+    if (!backendBaseUrl) {
+      throw new Error('BACKEND_URL não está configurada');
+    }
+
     // URL direta do backend no Render - SEM proxy local
     const apiUrl = `${backendBaseUrl}/api/GeminiAI/suggest`;
 
@@ -20,12 +34,14 @@ export async function generateStartupIdeas(
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`HTTP error! status: ${response.status}: ${errorText}`);
+      console.error('Erro do backend:', errorText);
+      throw new Error(`Erro do servidor: ${response.status}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error('Error generating ideas:', error);
-    throw new Error('Failed to generate startup ideas: ' + error.message);
+    throw new Error('Falha ao gerar ideias: ' + (error instanceof Error ? error.message : 'Erro desconhecido'));
   }
 }
