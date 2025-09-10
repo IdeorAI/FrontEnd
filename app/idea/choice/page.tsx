@@ -13,7 +13,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Lightbulb, ChevronLeft, RefreshCcw, Check } from "lucide-react";
+import { Lightbulb, ChevronLeft, Check } from "lucide-react";
 
 const BASE_OPTIONS = [
   "Transforme memórias em música: nossa IA cria canções exclusivas, com melodia e letra, a partir de uma simples foto. Um presente único para aniversários, casamentos ou qualquer celebração especial.",
@@ -63,10 +63,10 @@ export default function ChoicePage() {
 
   const handleBack = () => router.replace("/idea/descreva");
 
-  const regenerate = () => {
-    setOptions((prev) => [...prev].sort(() => Math.random() - 0.5));
-    setSelected(null);
-  };
+  // const regenerate = () => {
+  //   setOptions((prev) => [...prev].sort(() => Math.random() - 0.5));
+  //   setSelected(null);
+  // };
 
   const handleContinue = async () => {
     if (selected === null) return;
