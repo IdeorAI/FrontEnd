@@ -161,7 +161,7 @@ export default function TitlePage() {
         className="
           mx-auto w-full max-w-[880px]
           rounded-3xl border border-white/10
-          bg-slate-950/80 backdrop-blur-lg shadow-2xl
+          bg-[#202a31] backdrop-blur-lg shadow-2xl
           px-5 py-6 sm:px-8 sm:py-8
         "
       >

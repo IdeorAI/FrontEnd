@@ -1,7 +1,7 @@
 // app/idea/choice/page.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/lib/supabase/use-user";
@@ -24,17 +24,49 @@ const BASE_OPTIONS = [
 export default function ChoicePage() {
   const router = useRouter();
   const { user } = useUser();
-  const [options, setOptions] = useState<string[]>(BASE_OPTIONS);
+  const [options, setOptions] = useState<string[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
-  const supabase = useMemo(() => createClient(), []);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+
+  useEffect(() => {
+    const fetchGeneratedOptions = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from("projects")
+          .select("generated_options")
+          .eq("owner_id", user.id)
+          .single();
+
+        if (error) {
+          console.error("Erro ao buscar opções:", error);
+          // Fallback para opções base
+          setOptions(BASE_OPTIONS);
+        } else if (data?.generated_options) {
+          setOptions(data.generated_options);
+        } else {
+          setOptions(BASE_OPTIONS);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar opções:", error);
+        setOptions(BASE_OPTIONS);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGeneratedOptions();
+  }, [user, supabase]);
+
+  const handleBack = () => router.replace("/idea/descreva");
 
   const regenerate = () => {
     setOptions((prev) => [...prev].sort(() => Math.random() - 0.5));
     setSelected(null);
   };
-
-  const handleBack = () => router.replace("/idea/descreva");
 
   const handleContinue = async () => {
     if (selected === null) return;
@@ -57,6 +89,14 @@ export default function ChoicePage() {
     router.replace("/idea/title");
   };
 
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center text-muted-foreground">
+        Carregando opções...
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto w-full max-w-[880px] py-4 px-4">
       <div className="flex items-center justify-between ">
@@ -67,7 +107,7 @@ export default function ChoicePage() {
       </div>
 
       {/* CARD PRINCIPAL */}
-      <Card className="rounded-3xl border-white/10 bg-slate-950/80  shadow-2xl p-6 sm:p-8">
+      <Card className="rounded-3xl border-white/10   shadow-2xl p-6 sm:p-8">
         <CardHeader className="pb-4">
           <CardTitle className="text-base sm:text-lg font-semibold">
             Escolha uma das descrições:
@@ -154,18 +194,9 @@ export default function ChoicePage() {
               Voltar
             </Button>
 
-            {/* GERAR NOVAMENTE - Segundo botão */}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={regenerate}
-              className="order-2 sm:order-2"
-            >
-              <RefreshCcw className="mr-2 h-4 w-4" />
-              Gerar novamente
-            </Button>
+           
 
-            {/* CONTINUAR - Terceiro botão */}
+            {/* CONTINUAR -  botão */}
             <Button
               type="button"
               onClick={handleContinue}

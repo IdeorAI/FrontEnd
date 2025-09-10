@@ -26,7 +26,7 @@ export default function IdeaCreatePage() {
       </div>
       </div>
       {/* CARD PRINCIPAL */}
-      <Card className="mx-auto w-full max-w-[640px] rounded-3xl border-white/10 bg-slate-950/80 shadow-2xl">
+      <Card className="mx-auto w-full max-w-[640px] rounded-3xl border-white/10  shadow-2xl">
         <CardHeader className="text-center space-y-4 pb-4">
           <CardTitle className="text-lg sm:text-xl font-semibold">
             Inicie sua nova Startup
