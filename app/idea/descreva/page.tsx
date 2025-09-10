@@ -30,7 +30,7 @@ import {
 import { X, ChevronLeft, Lightbulb, Check, ChevronsUpDown } from "lucide-react";
 import type { PostgrestError } from "@supabase/supabase-js";
 import categories from "@/lib/data/categories.json";
-import { generateStartupIdeas } from '@/lib/gemini-api';
+import { generateStartupIdeas } from "@/lib/gemini-api";
 
 function getErrorMessage(err: unknown): string {
   if (!err) return "Erro desconhecido";
@@ -94,7 +94,7 @@ export default function IdeaCreationPage() {
       setError("Usuário não autenticado");
       return;
     }
-    
+
     const description = projectDescription.trim();
     const category = selectedCategory;
 
@@ -130,18 +130,19 @@ export default function IdeaCreationPage() {
       }
 
       // 2. Gerar ideias com Gemini
-      const categoryLabel = categories.find(c => c.value === category)?.label || category;
-      
+      const categoryLabel =
+        categories.find((c) => c.value === category)?.label || category;
+
       const ideasResponse = await generateStartupIdeas({
         seedIdea: description,
-        segmentDescription: categoryLabel
+        segmentDescription: categoryLabel,
       });
 
       // 3. Salvar as ideias geradas no Supabase
       const { error: ideasError } = await supabase
         .from("projects")
-        .update({ 
-          generated_options: ideasResponse.ideas 
+        .update({
+          generated_options: ideasResponse.ideas,
         })
         .eq("owner_id", user.id);
 
@@ -187,7 +188,7 @@ export default function IdeaCreationPage() {
         </Button>
       </div>
 
-      <Card >
+      <Card>
         <CardHeader>
           <CardTitle>Descreva sua ideia</CardTitle>
           <CardDescription>
@@ -224,7 +225,7 @@ export default function IdeaCreationPage() {
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-full p-0 sm:max-w-[400px]">
+                <PopoverContent className="w-[min(100vw,640px)] max-h-[70vh] overflow-y-auto p-0 sm:max-w-[400px]">
                   <Command>
                     <CommandInput placeholder="Buscar categoria..." />
                     <CommandList>
@@ -252,7 +253,7 @@ export default function IdeaCreationPage() {
                             />
                             <div className="flex flex-col">
                               <span>{category.label}</span>
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-muted-foreground whitespace-normal break-words">
                                 {category.description}
                               </span>
                             </div>
