@@ -6,8 +6,13 @@ import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/components/logout-button";
 import heroBg from "@/app/assets/hero-bg1.jpg";
 import Logo from "@/app/assets/logo_branco.png";
+import Link from "next/link";
 
-export default async function IdeaLayout({ children }: { children: ReactNode }) {
+export default async function IdeaLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -39,26 +44,27 @@ export default async function IdeaLayout({ children }: { children: ReactNode }) 
       <div className="absolute inset-0 pointer-events-none" />
 
       {/* Header fixo */}
-    <header
-      className="fixed inset-x-0 top-0 z-[9999] border-b border-white/10"
-      style={{ backgroundColor: "#202a31" }}
-    >
-       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 flex items-center justify-between">
+      <header
+        className="fixed inset-x-0 top-0 z-[9999] border-b border-white/10"
+        style={{ backgroundColor: "#202a31" }}
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 flex items-center justify-between">
           {/* Logo (esquerda) */}
           <div className="flex items-center">
-            <Image
-              src={Logo}
-              alt="Ideor.AI"
-              width={404}
-              height={121}
-              className="h-10 w-auto sm:h-11 md:h-12"
-              priority
-            />
+            <Link href="/dashboard" aria-label="Ir para o dashboard">
+              <Image
+                src={Logo}
+                alt="Ideor.AI"
+                width={202} // 176 * 1.15 ≈ 202
+                height={61} // 53 * 1.15 ≈ 61
+                className="h-13 w-auto sm:h-[52px] md:h-[55px]"
+                priority
+              />
+            </Link>
           </div>
 
           {/* Ações (direita) */}
           <nav className="flex items-center gap-4 text-sm">
-           
             <span className="hidden md:inline opacity-80">
               Olá, {userProps.name}
             </span>

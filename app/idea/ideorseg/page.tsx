@@ -1,4 +1,3 @@
-// app/idea/create/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/lib/supabase/use-user";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -30,24 +28,54 @@ import {
 import { X, ChevronLeft, Lightbulb, Check, ChevronsUpDown } from "lucide-react";
 import type { PostgrestError } from "@supabase/supabase-js";
 import categories from "@/lib/data/categories.json";
-import { generateStartupIdeas } from "@/lib/gemini-api";
+
+type IdeasResponse = { ideas: string[] };
+
+function safeStringify(value: unknown) {
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}
 
 function getErrorMessage(err: unknown): string {
   if (!err) return "Erro desconhecido";
   if (typeof err === "string") return err;
-  if (err instanceof Error) return err.message;
-  // Supabase PostgrestError
-  const maybePg = err as Partial<PostgrestError>;
-  return (
-    maybePg.message ||
-    maybePg.details ||
-    maybePg.hint ||
-    "Erro ao criar projeto"
-  );
+  const e = err as Partial<PostgrestError> & { message?: string; error?: string; detail?: string };
+  return e.message || e.error || e.details || e.detail || "Falha na operação";
 }
 
-export default function IdeaCreationPage() {
-  const [projectDescription, setProjectDescription] = useState("");
+function apiBase(): string {
+  const fromEnv = (process.env.NEXT_PUBLIC_BACKEND_URL || "").replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
+  if (typeof window !== "undefined") return window.location.origin;
+  return "";
+}
+
+async function requestIdeasBySegment(segmentLabel: string, count = 4): Promise<IdeasResponse> {
+  const url = `${apiBase()}/api/GeminiAI/suggest-by-segment`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" },
+    body: JSON.stringify({ segmentDescription: segmentLabel, count }),
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    let detail = "";
+    try {
+      const j = await res.json();
+      detail = j?.error || j?.detail || "";
+    } catch {
+      /* noop */
+    }
+    throw new Error(`Falha ao gerar ideias (${res.status}). ${detail}`.trim());
+  }
+  return (await res.json()) as IdeasResponse;
+}
+
+export default function SegmentIdeasPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -55,23 +83,23 @@ export default function IdeaCreationPage() {
   const router = useRouter();
   const { user, loading: userLoading } = useUser();
 
+  // Puxa a categoria atual (há unique em owner_id -> 1 projeto por usuário)
   useEffect(() => {
-    const fetchProject = async () => {
+    const fetchProjectCategory = async () => {
       if (!user) return;
       const supabase = createClient();
       const { data, error } = await supabase
         .from("projects")
-        .select("description, category")
+        .select("category")
         .eq("owner_id", user.id)
         .maybeSingle();
 
       if (!error && data) {
-        setProjectDescription(data.description || "");
         setSelectedCategory(data.category || "");
       }
     };
 
-    fetchProject();
+    fetchProjectCategory();
   }, [user]);
 
   const handleBack = () => router.replace("/idea/create");
@@ -88,26 +116,15 @@ export default function IdeaCreationPage() {
     }
   };
 
-  const handleSaveProject = async () => {
+  const handleGenerateBySegment = async () => {
     setError("");
     if (!user) {
       setError("Usuário não autenticado");
       return;
     }
-
-    const description = projectDescription.trim();
     const category = selectedCategory;
-
-    if (description.length === 0) {
-      setError("A descrição do projeto é obrigatória");
-      return;
-    }
-    if (description.length > 400) {
-      setError("A descrição deve ter no máximo 400 caracteres");
-      return;
-    }
     if (!category) {
-      setError("Por favor, selecione uma categoria");
+      setError("Por favor, selecione um segmento");
       return;
     }
 
@@ -115,44 +132,52 @@ export default function IdeaCreationPage() {
     setIsLoading(true);
 
     try {
-      // 1. Salvar no Supabase
-      const { error: updateError } = await supabase
-        .from("projects")
-        .update({
-          description: description || null,
-          category: category,
-        })
-        .eq("owner_id", user.id);
-
-      if (updateError) {
-        setError(getErrorMessage(updateError));
-        return;
-      }
-
-      // 2. Gerar ideias com Gemini
       const categoryLabel =
         categories.find((c) => c.value === category)?.label || category;
 
-      const ideasResponse = await generateStartupIdeas({
-        seedIdea: description,
-        segmentDescription: categoryLabel,
-      });
+      // 1) Gerar 4 ideias no backend
+      const ideasResponse = await requestIdeasBySegment(categoryLabel, 4);
+      if (!Array.isArray(ideasResponse.ideas) || ideasResponse.ideas.length === 0) {
+        throw new Error("Backend não retornou ideias.");
+      }
+      // Log para depuração local (não quebra produção)
+      console.log("Ideias (backend):", ideasResponse.ideas);
 
-      // 3. Salvar as ideias geradas no Supabase
-      const { error: ideasError } = await supabase
+      // 2) UPDATE ÚNICO: category + generated_options (com throwOnError)
+      const updateRes = await supabase
         .from("projects")
         .update({
+          category,
+          description: null,
           generated_options: ideasResponse.ideas,
         })
-        .eq("owner_id", user.id);
+        .eq("owner_id", user.id)
+        .select("id, generated_options")
+        .throwOnError();
 
-      if (ideasError) {
-        console.error("Erro ao salvar opções:", ideasError);
+      // Se o PostgREST permitir update mas bloquear RETURNING pela policy,
+      // updateRes.data pode vir [] — então vamos revalidar via fetch simples:
+      const { data: checkRow, error: checkErr } = await supabase
+        .from("projects")
+        .select("generated_options")
+        .eq("owner_id", user.id)
+        .single();
+
+      if (checkErr) {
+        console.error("Revalidação falhou:", safeStringify(checkErr));
+        throw new Error(getErrorMessage(checkErr));
       }
 
-      // 4. Redirecionar para a página de escolha
-      router.replace("/idea/choice");
+      if (!checkRow?.generated_options || checkRow.generated_options.length === 0) {
+        // Nada salvo -> abortar fluxo
+        console.error("Revalidação: generated_options vazio após UPDATE.", safeStringify(updateRes));
+        throw new Error("Não foi possível salvar as ideias no banco.");
+      }
+
+      // 3) Redirecionar
+      router.replace("/idea/ideorchoice");
     } catch (err: unknown) {
+      console.error("Falha ao gerar/salvar ideias:", safeStringify(err));
       setError(getErrorMessage(err));
     } finally {
       setIsLoading(false);
@@ -162,7 +187,7 @@ export default function IdeaCreationPage() {
   if (userLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center text-muted-foreground">
-        Carregando...
+        Carregando.
       </div>
     );
   }
@@ -170,45 +195,45 @@ export default function IdeaCreationPage() {
   if (!user) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center text-muted-foreground">
-        Você precisa estar autenticado para criar um projeto.
+        Você precisa estar autenticado para continuar.
       </div>
     );
   }
 
   return (
     <div className="mx-auto w-full max-w-[640px] py-4 space-y-4">
-      <div className="flex items-center justify-between ">
+      <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Lightbulb className="h-6 w-6" />
-          Tenho uma ideia inicial
+          Começar com ajuda do Ideor
         </h1>
 
-        <Button variant="ghost" onClick={handleClose}>
+        <Button variant="ghost" onClick={handleClose} aria-label="Fechar">
           <X className="h-5 w-5" />
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Descreva sua ideia</CardTitle>
+          <CardTitle>Escolha um segmento</CardTitle>
           <CardDescription>
-            Cite com poucas palavras o que você imagina para seu projeto. Deixe
-            o Ideor lapidar sua ideia.
+            Selecione um segmento e o Ideor vai gerar <strong>4 ideias inovadoras</strong> com base nessa escolha.
           </CardDescription>
         </CardHeader>
+
         <CardContent>
           {error && (
-            <div className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+            <div
+              role="alert"
+              className="mb-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700"
+            >
               {error}
             </div>
           )}
 
           <div className="space-y-6">
-            {/* Campo de Categoria */}
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Categoria do projeto
-              </label>
+              <label className="block text-sm font-medium mb-1">Segmento</label>
               <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -218,18 +243,16 @@ export default function IdeaCreationPage() {
                     className="w-full justify-between"
                   >
                     {selectedCategory
-                      ? categories.find(
-                          (category) => category.value === selectedCategory
-                        )?.label
-                      : "Selecione uma categoria..."}
+                      ? categories.find((category) => category.value === selectedCategory)?.label
+                      : "Selecione um segmento."}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[min(100vw,640px)] max-h-[70vh] overflow-y-auto p-0 sm:max-w-[400px]">
                   <Command>
-                    <CommandInput placeholder="Buscar categoria..." />
+                    <CommandInput placeholder="Buscar segmento." />
                     <CommandList>
-                      <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
+                      <CommandEmpty>Nenhum segmento encontrado.</CommandEmpty>
                       <CommandGroup>
                         {categories.map((category) => (
                           <CommandItem
@@ -237,18 +260,14 @@ export default function IdeaCreationPage() {
                             value={category.value}
                             onSelect={(currentValue) => {
                               setSelectedCategory(
-                                currentValue === selectedCategory
-                                  ? ""
-                                  : currentValue
+                                currentValue === selectedCategory ? "" : currentValue
                               );
                               setOpen(false);
                             }}
                           >
                             <Check
                               className={`mr-2 h-4 w-4 ${
-                                selectedCategory === category.value
-                                  ? "opacity-100"
-                                  : "opacity-0"
+                                selectedCategory === category.value ? "opacity-100" : "opacity-0"
                               }`}
                             />
                             <div className="flex flex-col">
@@ -265,44 +284,15 @@ export default function IdeaCreationPage() {
                 </PopoverContent>
               </Popover>
             </div>
-
-            {/* Campo de Descrição */}
-            <div>
-              <label
-                htmlFor="project-description"
-                className="block text-sm font-medium mb-1"
-              >
-                Descrição do projeto
-              </label>
-              <Textarea
-                id="project-description"
-                value={projectDescription}
-                onChange={(e) => setProjectDescription(e.target.value)}
-                placeholder="Descreva sua ideia em até 400 caracteres..."
-                rows={4}
-                maxLength={400}
-                className="resize-none"
-              />
-              <p className="text-sm text-muted-foreground mt-1">
-                {projectDescription.length}/400
-              </p>
-            </div>
           </div>
 
-          {/* Botões */}
           <div className="flex flex-col sm:flex-row gap-3 sm:justify-end mt-6">
             <Button type="button" variant="outline" onClick={handleBack}>
               <ChevronLeft className="mr-2 h-4 w-4" />
               Voltar
             </Button>
-            <Button
-              type="button"
-              onClick={handleSaveProject}
-              disabled={
-                isLoading || !projectDescription.trim() || !selectedCategory
-              }
-            >
-              {isLoading ? "Salvando..." : "Enviar"}
+            <Button type="button" onClick={handleGenerateBySegment} disabled={isLoading || !selectedCategory}>
+              {isLoading ? "Gerando..." : "Gerar ideias"}
             </Button>
           </div>
         </CardContent>

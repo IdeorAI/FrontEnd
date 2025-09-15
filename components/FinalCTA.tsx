@@ -17,7 +17,7 @@ const FinalCTA = () => {
         
         <Button 
           size="lg" 
-          className="text-lg px-8 py-4 bg-gradient-hero hover:shadow-glow transition-all duration-300 transform hover:scale-105"
+          className="text-lg px-8 py-4 bg-gradient-hero hover:shadow-glow transition-all duration-300 text-[#1e2830] transform hover:scale-105"
         >
           Começar agora grátis
         </Button>

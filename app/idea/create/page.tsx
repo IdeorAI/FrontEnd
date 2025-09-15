@@ -15,6 +15,7 @@ import {
 export default function IdeaCreatePage() {
   const router = useRouter();
   const goToDescribe = () => router.push("/idea/descreva");
+  const goToIdeor = () => router.push("/idea/ideorseg");
 
   return (
     <div className="w-full mx-auto px-4">
@@ -22,7 +23,7 @@ export default function IdeaCreatePage() {
      <div className="mx-auto w-full max-w-[640px] py-4">
       <div className="flex items-center justify-between ">
         <h1 className="text-xl font-bold flex items-center gap-2">
-          <Lightbulb className="h-6 w-6" />Criar novo pro  jeto</h1>
+          <Lightbulb className="h-6 w-6" />Criar novo projeto</h1>
       </div>
       </div>
       {/* CARD PRINCIPAL */}
@@ -47,8 +48,8 @@ export default function IdeaCreatePage() {
               size="lg"
               className="w-full font-semibold rounded-lg shadow-md
           bg-gradient-to-r from-[#07f7eb] to-[#9B6CFF]
-          hover:shadow-glow transition-all duration-300 
-          transform hover:scale-105 text-purple-950 drop-shadow-lg"
+          hover:shadow-glow transition-all duration-300 text-[#1e2830]
+          transform hover:scale-105 drop-shadow-lg"
               onClick={goToDescribe}
             >
               JÁ TENHO UMA IDEIA INICIAL
@@ -64,9 +65,9 @@ export default function IdeaCreatePage() {
             <Button
               size="lg"
               className="w-full font-semibold rounded-lg shadow-md
-          bg-gradient-hero hover:shadow-glow transition-all duration-300 
-          transform hover:scale-105 text-[#1e2830] drop-shadow-lg"
-              onClick={goToDescribe}
+                bg-gradient-hero hover:shadow-glow transition-all duration-300 
+                transform hover:scale-105 text-[#1e2830] drop-shadow-lg"
+              onClick={goToIdeor}
             >
               COMEÇAR COM A AJUDA DO IDEOR ✨
             </Button>
