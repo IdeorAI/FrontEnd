@@ -1,6 +1,7 @@
 // app/onboarding/page.tsx
 import type { Metadata } from "next";
-
+import { redirect } from "next/navigation";        
+import { createClient } from "@/lib/supabase/server"; 
 import Header from "@/components/Header";
 import Hero from "@/components/hero"; 
 import ValueProposition from "@/components/ValueProposition";
@@ -14,7 +15,15 @@ export const metadata: Metadata = {
     "Do zero ao investimento: acompanhe os passos para criar sua startup com a ajuda da IA.",
 };
 
-export default function Page() {
+export default async function Page() {
+  // Verifica se já existe usuário logado
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Se já estiver autenticado, manda pro dashboard
+  if (user) redirect("/dashboard");
   return (
     <>
       <Header />

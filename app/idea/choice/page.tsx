@@ -98,7 +98,7 @@ export default function ChoicePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[880px] py-4 px-4">
+    <div className="mx-auto w-full max-w-[880px] py-4 space-y-4 px-4">
       <div className="flex items-center justify-between ">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Lightbulb className="h-6 w-6" />
