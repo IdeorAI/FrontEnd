@@ -15,7 +15,7 @@ export default function Header() {
               alt="Ideor.AI"
               width={176}
               height={53}
-              className="h-6 w-auto sm:h-8 md:h-10 lg:h-12"
+              className="h-9 w-auto sm:h-10 md:h-12 lg:h-14"
               priority
             />
           </Link>

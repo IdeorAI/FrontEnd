@@ -105,16 +105,8 @@ export default function SegmentIdeasPage() {
   const handleBack = () => router.replace("/idea/create");
 
   const handleClose = () => {
-    try {
-      router.replace("/dashboard");
-    } catch {
-      window.location.href = "/dashboard";
-    } finally {
-      setTimeout(() => {
-        window.location.href = "/dashboard";
-      }, 0);
-    }
-  };
+  router.replace("/dashboard");
+};
 
   const handleGenerateBySegment = async () => {
     setError("");
