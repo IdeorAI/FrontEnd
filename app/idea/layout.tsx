@@ -55,14 +55,13 @@ export default async function IdeaLayout({
               <Image
                 src={Logo}
                 alt="Ideor.AI"
-                width={202} // 176 * 1.15 ≈ 202
-                height={61} // 53 * 1.15 ≈ 61
-                className="h-13 w-auto sm:h-[52px] md:h-[55px]"
+                width={176}
+                height={53}
+                className="h-6 w-auto sm:h-8 md:h-10 lg:h-12"
                 priority
               />
             </Link>
           </div>
-
           {/* Ações (direita) */}
           <nav className="flex items-center gap-4 text-sm">
             <span className="hidden md:inline opacity-80">

@@ -86,13 +86,23 @@ export default function TitlePage() {
       return;
     }
 
+    // (Opcional) Limite de tamanho da descrição para evitar textos exagerados
+    const desc = description?.trim() ?? "";
+    if (desc.length > 2000) {
+      setError("A descrição deve ter no máximo 2000 caracteres.");
+      return;
+    }
+
     setSaving(true);
     try {
       if (existsProject) {
-        // Atualiza somente o nome
+        // Agora atualiza nome E descrição
         const { error } = await supabase
           .from("projects")
-          .update({ name: trimmed })
+          .update({
+            name: trimmed,
+            description: desc || null,
+          })
           .eq("owner_id", user.id);
 
         if (error) {
@@ -105,7 +115,7 @@ export default function TitlePage() {
         const { error } = await supabase.from("projects").insert({
           owner_id: user.id,
           name: trimmed,
-          description: description || null,
+          description: desc || null,
           category: category || null,
         });
 
@@ -149,7 +159,7 @@ export default function TitlePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[640px] py-4">
+    <div className="mx-auto w/full max-w-[640px] py-4">
       <div className="flex items-center justify-between ">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Lightbulb className="h-6 w-6" />
@@ -190,17 +200,27 @@ export default function TitlePage() {
               </div>
             </div>
 
-            {/* Descrição selecionada */}
+            {/* Descrição (AGORA EDITÁVEL) */}
             <div>
-              <div className="text-sm font-medium mb-1">
-                Descrição selecionada:
-              </div>
-              <div className="rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-white/90">
-                {description || "Você ainda não selecionou uma descrição."}
+              <div className="text-sm font-medium mb-1">Descrição:</div>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Descreva brevemente seu projeto"
+                maxLength={2000}
+                rows={5}
+                className="
+                  w-full rounded-lg border border-white/10 bg-white/5
+                  p-3 text-sm text-white/90 placeholder:text-white/40
+                  focus:outline-none focus:ring-2 focus:ring-white/20
+                "
+              />
+              <div className="mt-1 text-right text-xs text-white/60">
+                {description?.length ?? 0}/2000
               </div>
             </div>
 
-            {/* Categoria selecionada */}
+            {/* Categoria selecionada (somente leitura) */}
             <div>
               <div className="text-sm font-medium mb-1">
                 Categoria selecionada:
