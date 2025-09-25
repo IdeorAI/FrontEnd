@@ -29,7 +29,7 @@ import { X, ChevronLeft, Lightbulb, Check, ChevronsUpDown } from "lucide-react";
 import type { PostgrestError } from "@supabase/supabase-js";
 import categories from "@/lib/data/categories.json";
 
-type IdeasResponse = { ideas: string[] };
+type IdeasResponse = { ideas: string[]; requestId?: string };
 
 function safeStringify(value: unknown) {
   try {
@@ -42,23 +42,38 @@ function safeStringify(value: unknown) {
 function getErrorMessage(err: unknown): string {
   if (!err) return "Erro desconhecido";
   if (typeof err === "string") return err;
-  const e = err as Partial<PostgrestError> & { message?: string; error?: string; detail?: string };
+  const e = err as Partial<PostgrestError> & {
+    message?: string;
+    error?: string;
+    detail?: string;
+  };
   return e.message || e.error || e.details || e.detail || "Falha na operação";
 }
 
 function apiBase(): string {
-  const fromEnv = (process.env.NEXT_PUBLIC_BACKEND_URL || "").replace(/\/$/, "");
+  const fromEnv = (process.env.NEXT_PUBLIC_BACKEND_URL || "").replace(
+    /\/$/,
+    ""
+  );
   if (fromEnv) return fromEnv;
   if (typeof window !== "undefined") return window.location.origin;
   return "";
 }
 
-async function requestIdeasBySegment(segmentLabel: string, count = 4): Promise<IdeasResponse> {
-  const url = `${apiBase()}/api/GeminiAI/suggest-by-segment`;
+// NOVO: usa o endpoint que já GERA e SALVA no backend (1 chamada só)
+async function requestSuggestAndSave(
+  segmentLabel: string,
+  ownerId: string,
+  count = 4
+): Promise<IdeasResponse> {
+  const url = `${apiBase()}/api/GeminiAI/suggest-and-save`;
   const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" },
-    body: JSON.stringify({ segmentDescription: segmentLabel, count }),
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-cache",
+    },
+    body: JSON.stringify({ ownerId, segmentDescription: segmentLabel, count }),
     cache: "no-store",
   });
 
@@ -70,7 +85,9 @@ async function requestIdeasBySegment(segmentLabel: string, count = 4): Promise<I
     } catch {
       /* noop */
     }
-    throw new Error(`Falha ao gerar ideias (${res.status}). ${detail}`.trim());
+    throw new Error(
+      `Falha ao gerar/salvar ideias (${res.status}). ${detail}`.trim()
+    );
   }
   return (await res.json()) as IdeasResponse;
 }
@@ -105,8 +122,8 @@ export default function SegmentIdeasPage() {
   const handleBack = () => router.replace("/idea/create");
 
   const handleClose = () => {
-  router.replace("/dashboard");
-};
+    router.replace("/dashboard");
+  };
 
   const handleGenerateBySegment = async () => {
     setError("");
@@ -120,53 +137,21 @@ export default function SegmentIdeasPage() {
       return;
     }
 
-    const supabase = createClient();
     setIsLoading(true);
 
     try {
       const categoryLabel =
         categories.find((c) => c.value === category)?.label || category;
 
-      // 1) Gerar 4 ideias no backend
-      const ideasResponse = await requestIdeasBySegment(categoryLabel, 4);
-      if (!Array.isArray(ideasResponse.ideas) || ideasResponse.ideas.length === 0) {
-        throw new Error("Backend não retornou ideias.");
-      }
-      // Log para depuração local (não quebra produção)
-      console.log("Ideias (backend):", ideasResponse.ideas);
+      // 1) Chamada ÚNICA ao backend: gera e salva no Supabase
+      const ideasResponse = await requestSuggestAndSave(
+        categoryLabel,
+        user.id,
+        4
+      );
+      console.log("Ideias (geradas e salvas no backend):", ideasResponse.ideas);
 
-      // 2) UPDATE ÚNICO: category + generated_options (com throwOnError)
-      const updateRes = await supabase
-        .from("projects")
-        .update({
-          category,
-          description: null,
-          generated_options: ideasResponse.ideas,
-        })
-        .eq("owner_id", user.id)
-        .select("id, generated_options")
-        .throwOnError();
-
-      // Se o PostgREST permitir update mas bloquear RETURNING pela policy,
-      // updateRes.data pode vir [] — então vamos revalidar via fetch simples:
-      const { data: checkRow, error: checkErr } = await supabase
-        .from("projects")
-        .select("generated_options")
-        .eq("owner_id", user.id)
-        .single();
-
-      if (checkErr) {
-        console.error("Revalidação falhou:", safeStringify(checkErr));
-        throw new Error(getErrorMessage(checkErr));
-      }
-
-      if (!checkRow?.generated_options || checkRow.generated_options.length === 0) {
-        // Nada salvo -> abortar fluxo
-        console.error("Revalidação: generated_options vazio após UPDATE.", safeStringify(updateRes));
-        throw new Error("Não foi possível salvar as ideias no banco.");
-      }
-
-      // 3) Redirecionar
+      // 2) Redirecionar
       router.replace("/idea/ideorchoice");
     } catch (err: unknown) {
       console.error("Falha ao gerar/salvar ideias:", safeStringify(err));
@@ -209,7 +194,8 @@ export default function SegmentIdeasPage() {
         <CardHeader>
           <CardTitle>Escolha um segmento</CardTitle>
           <CardDescription>
-            Selecione um segmento e o Ideor vai gerar <strong>4 ideias inovadoras</strong> com base nessa escolha.
+            Selecione um segmento e o Ideor vai gerar{" "}
+            <strong>4 ideias inovadoras</strong> com base nessa escolha.
           </CardDescription>
         </CardHeader>
 
@@ -235,7 +221,9 @@ export default function SegmentIdeasPage() {
                     className="w-full justify-between"
                   >
                     {selectedCategory
-                      ? categories.find((category) => category.value === selectedCategory)?.label
+                      ? categories.find(
+                          (category) => category.value === selectedCategory
+                        )?.label
                       : "Selecione um segmento."}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
@@ -252,14 +240,18 @@ export default function SegmentIdeasPage() {
                             value={category.value}
                             onSelect={(currentValue) => {
                               setSelectedCategory(
-                                currentValue === selectedCategory ? "" : currentValue
+                                currentValue === selectedCategory
+                                  ? ""
+                                  : currentValue
                               );
                               setOpen(false);
                             }}
                           >
                             <Check
                               className={`mr-2 h-4 w-4 ${
-                                selectedCategory === category.value ? "opacity-100" : "opacity-0"
+                                selectedCategory === category.value
+                                  ? "opacity-100"
+                                  : "opacity-0"
                               }`}
                             />
                             <div className="flex flex-col">
@@ -283,7 +275,11 @@ export default function SegmentIdeasPage() {
               <ChevronLeft className="mr-2 h-4 w-4" />
               Voltar
             </Button>
-            <Button type="button" onClick={handleGenerateBySegment} disabled={isLoading || !selectedCategory}>
+            <Button
+              type="button"
+              onClick={handleGenerateBySegment}
+              disabled={isLoading || !selectedCategory}
+            >
               {isLoading ? "Gerando..." : "Gerar ideias"}
             </Button>
           </div>
