@@ -2,10 +2,22 @@
 "use client";
 
 import * as React from "react"
-import { Lightbulb, Home, BarChart, Settings, User, Menu, X } from "lucide-react"
-import { useRouter, usePathname } from "next/navigation"
+import { Lightbulb, Home, BarChart, Settings, User, Menu, X, Trash2 } from "lucide-react"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { deleteProject } from "@/app/projeto/dash/actions"
+import { RocketLoading } from "@/components/rocket-loading"
 
 interface AppSidebarProps {
   user?: {
@@ -18,7 +30,36 @@ interface AppSidebarProps {
 export function AppSidebar({ user, projectName }: AppSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+
+  const handleDeleteProject = async () => {
+    const projectId = searchParams.get("project_id");
+    if (!projectId) {
+      console.error("Nenhum project_id encontrado na URL");
+      alert("ID do projeto não encontrado na URL");
+      setShowDeleteDialog(false);
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      console.log("Excluindo projeto:", projectId);
+      await deleteProject(projectId);
+      // O redirect acontece dentro da action
+    } catch (error) {
+      // Ignorar erro NEXT_REDIRECT pois é esperado durante redirecionamento
+      if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) {
+        return;
+      }
+      console.error("Erro ao excluir projeto:", error);
+      alert(`Erro ao excluir o projeto: ${error instanceof Error ? error.message : "Erro desconhecido"}`);
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
 
   const menuItems = [
     {
@@ -70,6 +111,9 @@ export function AppSidebar({ user, projectName }: AppSidebarProps) {
 
   return (
     <>
+      {/* Loading de exclusão */}
+      {isDeleting && <RocketLoading message="Excluindo projeto..." />}
+
       {/* Botão Hamburguer para Mobile */}
       <Button
         variant="ghost"
@@ -143,8 +187,42 @@ export function AppSidebar({ user, projectName }: AppSidebarProps) {
               </div>
             </div>
           ))}
+
+          {/* Botão Excluir Projeto */}
+          <div className="px-4 py-2 mt-4 border-t pt-4">
+            <Button
+              variant="destructive"
+              className="w-full justify-start"
+              onClick={() => setShowDeleteDialog(true)}
+            >
+              <Trash2 className="h-5 w-5 mr-3" />
+              Excluir Projeto
+            </Button>
+          </div>
         </div>
       </div>
+
+      {/* Dialog de Confirmação */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O projeto será excluído permanentemente do banco de dados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteProject}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Conteúdo principal com margem responsiva */}
       <main className={cn(

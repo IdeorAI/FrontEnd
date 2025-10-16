@@ -26,7 +26,10 @@ export default async function DashboardLayout({
   return (
     <div className="flex min-h-screen">
       <AppSidebar user={userProps} />
-      <main className="flex-1 lg:ml-64 p-6">{children}</main>
+      <div className="flex-1 lg:ml-64">
+        <div className="h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
+        <main className="p-6">{children}</main>
+      </div>
     </div>
   );
 }
