@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm:*)",
+      "Bash(npx shadcn:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm install:*)",
+      "Bash(if exist \"node_modules\\.cache\" rmdir /s /q \"node_modules\\.cache\")",
+      "Read(//g/IdeorAI/backend/IdeorAI.Api/Client/**)",
+      "Read(//g/IdeorAI/backend/IdeorAI.Api/Controllers/**)",
+      "Read(//g/IdeorAI/backend/IdeorAI.Api/**)",
+      "Bash(curl -s http://localhost:5110/api/GeminiAI/suggest)",
+      "Read(//g/IdeorAI/**)",
+      "Bash(docker-compose:*)",
+      "Bash(cat:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

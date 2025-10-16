@@ -115,4 +115,18 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Animação personalizada para o foguete */
+  @keyframes bounce-slow {
+    0%, 100% {
+      transform: translateY(0) rotate(45deg);
+    }
+    50% {
+      transform: translateY(-20px) rotate(45deg);
+    }
+  }
+
+  .animate-bounce-slow {
+    animation: bounce-slow 2s ease-in-out infinite;
+  }
 }

@@ -1,7 +1,7 @@
+// app/idea/ideorseg/page.tsx
 "use client";
-
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/lib/supabase/use-user";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Command,
   CommandEmpty,
@@ -20,144 +21,82 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { X, ChevronLeft, Lightbulb, Check, ChevronsUpDown } from "lucide-react";
-import type { PostgrestError } from "@supabase/supabase-js";
 import categories from "@/lib/data/categories.json";
-
-type IdeasResponse = { ideas: string[]; requestId?: string };
-
-function safeStringify(value: unknown) {
-  try {
-    return JSON.stringify(value, null, 2);
-  } catch {
-    return String(value);
-  }
-}
-
-function getErrorMessage(err: unknown): string {
-  if (!err) return "Erro desconhecido";
-  if (typeof err === "string") return err;
-  const e = err as Partial<PostgrestError> & {
-    message?: string;
-    error?: string;
-    detail?: string;
-  };
-  return e.message || e.error || e.details || e.detail || "Falha na operação";
-}
-
-function apiBase(): string {
-  const fromEnv = (process.env.NEXT_PUBLIC_BACKEND_URL || "").replace(
-    /\/$/,
-    ""
-  );
-  if (fromEnv) return fromEnv;
-  if (typeof window !== "undefined") return window.location.origin;
-  return "";
-}
-
-// NOVO: usa o endpoint que já GERA e SALVA no backend (1 chamada só)
-async function requestSuggestAndSave(
-  segmentLabel: string,
-  ownerId: string,
-  count = 4
-): Promise<IdeasResponse> {
-  const url = `${apiBase()}/api/GeminiAI/suggest-and-save`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Cache-Control": "no-cache",
-    },
-    body: JSON.stringify({ ownerId, segmentDescription: segmentLabel, count }),
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    let detail = "";
-    try {
-      const j = await res.json();
-      detail = j?.error || j?.detail || "";
-    } catch {
-      /* noop */
-    }
-    throw new Error(
-      `Falha ao gerar/salvar ideias (${res.status}). ${detail}`.trim()
-    );
-  }
-  return (await res.json()) as IdeasResponse;
-}
+import { generateStartupIdeas } from "@/lib/gemini-api";
 
 export default function SegmentIdeasPage() {
+  const router = useRouter();
+  const sp = useSearchParams();
+  const projectId = sp.get("project_id");
+  const { user, loading: userLoading } = useUser();
+  const supabase = createClient();
+
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingStage, setLoadingStage] = useState<'idle' | 'generating'>('idle');
   const [error, setError] = useState("");
-  const router = useRouter();
-  const { user, loading: userLoading } = useUser();
 
-  // Puxa a categoria atual (há unique em owner_id -> 1 projeto por usuário)
+  // carrega categoria do projeto (por id)
   useEffect(() => {
-    const fetchProjectCategory = async () => {
-      if (!user) return;
-      const supabase = createClient();
-      const { data, error } = await supabase
+    (async () => {
+      if (!user || !projectId) return;
+      const { data } = await supabase
         .from("projects")
         .select("category")
-        .eq("owner_id", user.id)
+        .eq("id", projectId)
         .maybeSingle();
+      setSelectedCategory(data?.category || "");
+    })().catch(console.error);
+  }, [user, projectId, supabase]);
 
-      if (!error && data) {
-        setSelectedCategory(data.category || "");
-      }
-    };
-
-    fetchProjectCategory();
-  }, [user]);
-
-  const handleBack = () => router.replace("/idea/create");
-
-  const handleClose = () => {
-    router.replace("/dashboard");
-  };
+  const handleBack = () => projectId && router.replace(`/idea/create?project_id=${projectId}`);
+  const handleClose = () => router.replace("/dashboard");
 
   const handleGenerateBySegment = async () => {
     setError("");
-    if (!user) {
-      setError("Usuário não autenticado");
-      return;
-    }
-    const category = selectedCategory;
-    if (!category) {
-      setError("Por favor, selecione um segmento");
-      return;
-    }
+    if (!user || !projectId) return setError("Falha de contexto do projeto.");
+    if (!selectedCategory) return setError("Selecione um segmento");
 
     setIsLoading(true);
-
+    setLoadingStage('generating');
     try {
       const categoryLabel =
-        categories.find((c) => c.value === category)?.label || category;
+        (await import("@/lib/data/categories.json")).default.find(
+          (c) => c.value === selectedCategory
+        )?.label || selectedCategory;
 
-      // 1) Chamada ÚNICA ao backend: gera e salva no Supabase
-      const ideasResponse = await requestSuggestAndSave(
-        categoryLabel,
-        user.id,
-        4
-      );
-      console.log("Ideias (geradas e salvas no backend):", ideasResponse.ideas);
+      // Backend agora salva automaticamente em background
+      const ideasResponse = await generateStartupIdeas({
+        seedIdea: "",
+        segmentDescription: categoryLabel,
+        count: 4,
+        projectId: projectId,
+        ownerId: user.id,
+        category: selectedCategory,
+      });
 
-      // 2) Redirecionar
-      router.replace("/idea/ideorchoice");
-    } catch (err: unknown) {
-      console.error("Falha ao gerar/salvar ideias:", safeStringify(err));
-      setError(getErrorMessage(err));
+      // Aguardar um pouco para garantir que o salvamento em background completou
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Atualizar o projeto com as ideias retornadas (garantir que esteja salvo)
+      await supabase
+        .from("projects")
+        .update({
+          generated_options: ideasResponse.ideas,
+          category: selectedCategory
+        })
+        .eq("id", projectId);
+
+      // Navega após garantir que está salvo
+      router.replace(`/idea/ideorchoice?project_id=${projectId}`);
+    } catch (e: any) {
+      setLoadingStage('idle');
+      setError(e?.message || "Falha ao gerar ideias.");
     } finally {
       setIsLoading(false);
+      setLoadingStage('idle');
     }
   };
 
@@ -271,7 +210,7 @@ export default function SegmentIdeasPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 sm:justify-end mt-6">
-            <Button type="button" variant="outline" onClick={handleBack}>
+            <Button type="button" variant="outline" onClick={handleBack} disabled={isLoading}>
               <ChevronLeft className="mr-2 h-4 w-4" />
               Voltar
             </Button>
@@ -280,7 +219,9 @@ export default function SegmentIdeasPage() {
               onClick={handleGenerateBySegment}
               disabled={isLoading || !selectedCategory}
             >
-              {isLoading ? "Gerando..." : "Gerar ideias"}
+              {loadingStage === 'generating' && "Gerando ideias..."}
+              {loadingStage === 'idle' && !isLoading && "Gerar ideias"}
+              {isLoading && loadingStage === 'idle' && "Processando..."}
             </Button>
           </div>
         </CardContent>

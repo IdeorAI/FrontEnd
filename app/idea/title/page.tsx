@@ -2,9 +2,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/lib/supabase/use-user";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,64 +16,45 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Lightbulb, ChevronLeft, Save } from "lucide-react";
-import type { PostgrestError } from "@supabase/supabase-js";
 import categories from "@/lib/data/categories.json";
-
-function getErrorMessage(err: unknown): string {
-  if (!err) return "Erro desconhecido";
-  if (typeof err === "string") return err;
-  if (err instanceof Error) return err.message;
-  const maybePg = err as Partial<PostgrestError>;
-  return maybePg.message || maybePg.details || maybePg.hint || "Erro ao salvar";
-}
 
 export default function TitlePage() {
   const router = useRouter();
-  const { user, loading: userLoading } = useUser();
+  const sp = useSearchParams();
+  const projectId = sp.get("project_id");
+  const { user } = useUser();
   const supabase = useMemo(() => createClient(), []);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState<string>("");
   const [category, setCategory] = useState<string>("");
-  const [existsProject, setExistsProject] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Carrega dados do projeto do usuário
   useEffect(() => {
-    const load = async () => {
-      if (!user) return;
+    (async () => {
+      if (!user || !projectId) return;
       const { data, error } = await supabase
         .from("projects")
         .select("name, description, category")
-        .eq("owner_id", user.id)
+        .eq("id", projectId)
         .maybeSingle();
 
-      if (error) {
-        setError(getErrorMessage(error));
-        return;
-      }
-
-      if (data) {
-        setExistsProject(true);
+      if (!error && data) {
         setName(data.name ?? "");
         setDescription(data.description ?? "");
         setCategory(data.category ?? "");
-      } else {
-        setExistsProject(false);
       }
-    };
+    })().catch(console.error);
+  }, [user, projectId, supabase]);
 
-    load();
-  }, [user, supabase]);
-
-  const handleBack = () => router.replace("/idea/choice");
+  const handleBack = () =>
+    projectId && router.replace(`/idea/choice?project_id=${projectId}`);
 
   const handleSave = async () => {
     setError("");
-
-    if (!user) {
-      setError("Usuário não autenticado.");
+    if (!user || !projectId) {
+      setError("Falha de contexto do projeto.");
       return;
     }
 
@@ -81,74 +63,36 @@ export default function TitlePage() {
       setError("O nome do projeto é obrigatório.");
       return;
     }
-    if (trimmed.length > 100) {
-      setError("O nome do projeto deve ter no máximo 100 caracteres.");
-      return;
-    }
 
-    // (Opcional) Limite de tamanho da descrição para evitar textos exagerados
-    const desc = description?.trim() ?? "";
-    if (desc.length > 2000) {
-      setError("A descrição deve ter no máximo 2000 caracteres.");
-      return;
-    }
+    // garantir que respeita o CHECK (<= 400)
+    const trimmedDesc = (description || "").slice(0, 400);
 
     setSaving(true);
     try {
-      if (existsProject) {
-        // Agora atualiza nome E descrição
-        const { error } = await supabase
-          .from("projects")
-          .update({
-            name: trimmed,
-            description: desc || null,
-          })
-          .eq("owner_id", user.id);
+      const { error } = await supabase
+        .from("projects")
+        .update({ name: trimmed, description: trimmedDesc || null })
+        .eq("id", projectId);
 
-        if (error) {
-          setError(getErrorMessage(error));
-          setSaving(false);
-          return;
-        }
-      } else {
-        // Não havia projeto ainda: cria um novo mínimo
-        const { error } = await supabase.from("projects").insert({
-          owner_id: user.id,
-          name: trimmed,
-          description: desc || null,
-          category: category || null,
-        });
-
-        if (error) {
-          setError(getErrorMessage(error));
-          setSaving(false);
-          return;
-        }
+      if (error) {
+        setError(error.message || "Erro ao salvar");
+        return;
       }
-
       router.replace("/dashboard");
-    } catch (e) {
-      setError(getErrorMessage(e));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Erro ao salvar");
     } finally {
       setSaving(false);
     }
   };
 
-  // Função para obter o label da categoria a partir do value
+  // label da categoria a partir do value
   const getCategoryLabel = (categoryValue: string) => {
-    const foundCategory = categories.find((cat) => cat.value === categoryValue);
-    return foundCategory
-      ? foundCategory.label
-      : "Nenhuma categoria selecionada";
-  };
-
-  if (userLoading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center text-muted-foreground">
-        Carregando...
-      </div>
+    const foundCategory = categories.find(
+      (cat: { value: string; label: string }) => cat.value === categoryValue
     );
-  }
+    return foundCategory ? foundCategory.label : "Nenhuma categoria selecionada";
+  };
 
   if (!user) {
     return (
@@ -159,13 +103,14 @@ export default function TitlePage() {
   }
 
   return (
-    <div className="mx-auto w/full max-w-[640px] py-4">
-      <div className="flex items-center justify-between ">
+    <div className="mx-auto w-full max-w-[640px] py-4">
+      <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Lightbulb className="h-6 w-6" />
           Tenho uma ideia inicial
         </h1>
       </div>
+
       {/* Card container */}
       <div
         className="
@@ -190,7 +135,9 @@ export default function TitlePage() {
             <div>
               <Input
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setName(e.target.value)
+                }
                 placeholder="Digite o nome do projeto"
                 maxLength={100}
                 className="h-10"
@@ -200,14 +147,16 @@ export default function TitlePage() {
               </div>
             </div>
 
-            {/* Descrição (AGORA EDITÁVEL) */}
+            {/* Descrição (editável) */}
             <div>
               <div className="text-sm font-medium mb-1">Descrição:</div>
               <textarea
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Descreva brevemente seu projeto"
-                maxLength={2000}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                  setDescription(e.target.value)
+                }
+                placeholder="Descreva brevemente seu projeto (máx. 400 caracteres)"
+                maxLength={400}
                 rows={5}
                 className="
                   w-full rounded-lg border border-white/10 bg-white/5
@@ -216,7 +165,7 @@ export default function TitlePage() {
                 "
               />
               <div className="mt-1 text-right text-xs text-white/60">
-                {description?.length ?? 0}/2000
+                {description?.length ?? 0}/400
               </div>
             </div>
 
@@ -253,7 +202,7 @@ export default function TitlePage() {
                   "Salvando..."
                 ) : (
                   <>
-                    <Save className=" mr-2 h-4 w-4" />
+                    <Save className="mr-2 h-4 w-4" />
                     Salvar
                   </>
                 )}

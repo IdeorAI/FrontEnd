@@ -1,4 +1,4 @@
-Roadmap de 9 Semanas 
+Roadmap de 9 Semanas
 Semana 1 – Setup e Fundamentos
 
 Configuração inicial dos repositórios (monorepo ou separados backend/frontend).
@@ -120,3 +120,60 @@ Preparar demo funcional para stakeholders/testadores.
 ⚡ Resultado ao final das 9 semanas:
 
 Usuário consegue entrar na plataforma, criar ou melhorar ideias via IA, iniciar um projeto, ver suas métricas visuais (score, valuation, badges, barra de evolução), navegar no dashboard, abrir tarefas, submeter à avaliação da IA e acompanhar a evolução do seu projeto.
+
+✅ Mudanças Implementadas
+
+1. SQL para o Supabase (orientacao.md:123-154)
+
+Criei o script SQL que adiciona duas novas colunas à tabela projects:
+
+- product_structure - Estrutura do produto (SaaS, Marketplace, App, API/Plataforma, Não definido)
+- target_audience - Público-alvo (B2B, B2C, Híbrido, Não definido)
+
+Você precisa executar este SQL no Supabase SQL Editor.
+
+2. Novas Páginas de Perguntas
+
+Criei duas páginas idênticas (uma para cada workflow) com as duas perguntas de múltipla escolha:
+
+- /app/idea/questions-assisted/page.tsx - Para o fluxo "Começar com ajuda do Ideor"
+  - Redireciona para /idea/ideorseg após salvar
+- /app/idea/questions-self/page.tsx - Para o fluxo "Já tenho uma ideia inicial"
+  - Redireciona para /idea/descreva após salvar
+
+Ambas as páginas:
+
+- Seguem o mesmo layout e estilo das páginas existentes
+- Salvam as respostas no Supabase antes de prosseguir
+- Incluem validação e tratamento de erros
+
+3. Atualização da Navegação (app/idea/create/page.tsx:63-65)
+
+Atualizei os botões na página /app/idea/create para redirecionar para as novas páginas de perguntas:
+
+- "JÁ TENHO UMA IDEIA INICIAL" → /idea/questions-self
+- "COMEÇAR COM A AJUDA DO IDEOR" → /idea/questions-assisted
+
+4. Componente UI RadioGroup
+
+Criei o componente components/ui/radio-group.tsx seguindo o padrão Radix UI do projeto, e instalei a dependência necessária.
+
+🔄 Novo Fluxo Completo
+
+Workflow com assistência do Ideor:
+
+1. /idea/create → escolhe "COMEÇAR COM A AJUDA DO IDEOR"
+2. /idea/questions-assisted → [NOVA] responde as 2 perguntas
+3. /idea/ideorseg → escolhe segmento
+4. /idea/ideorchoice → escolhe entre opções geradas
+5. /idea/title → define título final
+
+Workflow com menos assistência:
+
+1. /idea/create → escolhe "JÁ TENHO UMA IDEIA INICIAL"
+2. /idea/questions-self → [NOVA] responde as 2 perguntas
+3. /idea/descreva → descreve ideia e escolhe categoria
+4. /idea/choice → escolhe entre opções geradas
+5. /idea/title → define título final
+
+Lembre-se de executar o SQL no Supabase para adicionar as novas colunas!

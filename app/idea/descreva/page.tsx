@@ -1,8 +1,8 @@
-// app/idea/create/page.tsx
+// app/idea/descreva/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useUser } from "@/lib/supabase/use-user";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Command,
   CommandEmpty,
@@ -22,158 +23,119 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { X, ChevronLeft, Lightbulb, Check, ChevronsUpDown } from "lucide-react";
 import type { PostgrestError } from "@supabase/supabase-js";
 import categories from "@/lib/data/categories.json";
-import { generateStartupIdeas } from "@/lib/gemini-api";
+
+// importe sua função que chama o Gemini
+import { suggestAndSaveIdeas } from "@/lib/gemini-api";
 
 function getErrorMessage(err: unknown): string {
   if (!err) return "Erro desconhecido";
-  if (typeof err === "string") return err;
-  if (err instanceof Error) return err.message;
-  // Supabase PostgrestError
-  const maybePg = err as Partial<PostgrestError>;
-  return (
-    maybePg.message ||
-    maybePg.details ||
-    maybePg.hint ||
-    "Erro ao criar projeto"
-  );
+  const e = err as Partial<PostgrestError>;
+  return e.message || e.details || e.hint || "Erro ao criar projeto";
 }
 
-export default function IdeaCreationPage() {
+export default function IdeaDescribePage() {
+  const router = useRouter();
+  const sp = useSearchParams();
+  const projectId = sp.get("project_id");
+  const { user } = useUser();
+  const supabase = createClient();
+
   const [projectDescription, setProjectDescription] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingStage, setLoadingStage] = useState<'idle' | 'saving' | 'generating'>('idle');
   const [error, setError] = useState("");
-  const router = useRouter();
-  const { user, loading: userLoading } = useUser();
 
+  // carrega o rascunho
   useEffect(() => {
-    const fetchProject = async () => {
-      if (!user) return;
-      const supabase = createClient();
-      const { data, error } = await supabase
+    (async () => {
+      if (!user || !projectId) return;
+      const { data } = await supabase
         .from("projects")
         .select("description, category")
-        .eq("owner_id", user.id)
+        .eq("id", projectId)
         .maybeSingle();
 
-      if (!error && data) {
-        setProjectDescription(data.description || "");
-        setSelectedCategory(data.category || "");
-      }
-    };
+      setProjectDescription(data?.description || "");
+      setSelectedCategory(data?.category || "");
+    })().catch(console.error);
+  }, [user, projectId, supabase]);
 
-    fetchProject();
-  }, [user]);
-
-  const handleBack = () => router.replace("/idea/create");
-
-  const handleClose = () => {
-    try {
-      router.replace("/dashboard");
-    } catch {
-      window.location.href = "/dashboard";
-    } finally {
-      setTimeout(() => {
-        window.location.href = "/dashboard";
-      }, 0);
-    }
-  };
+  const handleBack = () =>
+    projectId && router.replace(`/idea/create?project_id=${projectId}`);
+  const handleClose = () => router.replace("/dashboard");
 
   const handleSaveProject = async () => {
     setError("");
-    if (!user) {
-      setError("Usuário não autenticado");
-      return;
-    }
+    if (!user || !projectId) return setError("Falha de contexto do projeto.");
 
     const description = projectDescription.trim();
     const category = selectedCategory;
+    if (!description) return setError("A descrição do projeto é obrigatória");
+    if (!category) return setError("Por favor, selecione uma categoria");
 
-    if (description.length === 0) {
-      setError("A descrição do projeto é obrigatória");
-      return;
-    }
-    if (description.length > 400) {
-      setError("A descrição deve ter no máximo 400 caracteres");
-      return;
-    }
-    if (!category) {
-      setError("Por favor, selecione uma categoria");
-      return;
-    }
-
-    const supabase = createClient();
     setIsLoading(true);
-
     try {
-      // 1. Salvar no Supabase
+      // 1) Atualiza descrição + categoria no projeto (por id)
+      setLoadingStage('saving');
       const { error: updateError } = await supabase
         .from("projects")
-        .update({
-          description: description || null,
-          category: category,
-        })
-        .eq("owner_id", user.id);
+        .update({ description: description || null, category })
+        .eq("id", projectId);
 
       if (updateError) {
-        setError(getErrorMessage(updateError));
-        return;
+        setLoadingStage('idle');
+        return setError(getErrorMessage(updateError));
       }
 
-      // 2. Gerar ideias com Gemini
+      // 2) Gera ideias com Gemini E salva no Supabase via backend
+      setLoadingStage('generating');
       const categoryLabel =
         categories.find((c) => c.value === category)?.label || category;
 
-      const ideasResponse = await generateStartupIdeas({
+      console.log("Chamando suggest-and-save com:", {
+        ownerId: user.id,
+        projectId: projectId,
         seedIdea: description,
         segmentDescription: categoryLabel,
+        count: 3,
       });
 
-      // 3. Salvar as ideias geradas no Supabase
-      const { error: ideasError } = await supabase
+      const ideasResponse = await suggestAndSaveIdeas({
+        ownerId: user.id,
+        projectId: projectId,
+        seedIdea: description,
+        segmentDescription: categoryLabel,
+        count: 3,
+      });
+
+      console.log("Ideias geradas:", ideasResponse.ideas);
+
+      // Aguardar um pouco para garantir que o salvamento em background completou
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Atualizar o projeto com as ideias retornadas (garantir que esteja salvo)
+      await supabase
         .from("projects")
         .update({
-          generated_options: ideasResponse.ideas,
+          generated_options: ideasResponse.ideas
         })
-        .eq("owner_id", user.id);
+        .eq("id", projectId);
 
-      if (ideasError) {
-        console.error("Erro ao salvar opções:", ideasError);
-      }
-
-      // 4. Redirecionar para a página de escolha
-      router.replace("/idea/choice");
+      // 4) Redireciona mantendo o project_id
+      router.replace(`/idea/choice?project_id=${projectId}`);
     } catch (err: unknown) {
+      setLoadingStage('idle');
       setError(getErrorMessage(err));
     } finally {
       setIsLoading(false);
+      setLoadingStage('idle');
     }
   };
-
-  if (userLoading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center text-muted-foreground">
-        Carregando...
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center text-muted-foreground">
-        Você precisa estar autenticado para criar um projeto.
-      </div>
-    );
-  }
 
   return (
     <div className="mx-auto w-full max-w-[640px] py-4 space-y-4">
@@ -218,9 +180,7 @@ export default function IdeaCreationPage() {
                     className="w-full justify-between"
                   >
                     {selectedCategory
-                      ? categories.find(
-                          (category) => category.value === selectedCategory
-                        )?.label
+                      ? categories.find((c) => c.value === selectedCategory)?.label
                       : "Selecione uma categoria..."}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
@@ -235,11 +195,9 @@ export default function IdeaCreationPage() {
                           <CommandItem
                             key={category.value}
                             value={category.value}
-                            onSelect={(currentValue) => {
+                            onSelect={(currentValue: string) => {
                               setSelectedCategory(
-                                currentValue === selectedCategory
-                                  ? ""
-                                  : currentValue
+                                currentValue === selectedCategory ? "" : currentValue
                               );
                               setOpen(false);
                             }}
@@ -291,18 +249,19 @@ export default function IdeaCreationPage() {
 
           {/* Botões */}
           <div className="flex flex-col sm:flex-row gap-3 sm:justify-end mt-6">
-            <Button type="button" variant="outline" onClick={handleBack}>
+            <Button type="button" variant="outline" onClick={handleBack} disabled={isLoading}>
               <ChevronLeft className="mr-2 h-4 w-4" />
               Voltar
             </Button>
             <Button
               type="button"
               onClick={handleSaveProject}
-              disabled={
-                isLoading || !projectDescription.trim() || !selectedCategory
-              }
+              disabled={isLoading || !projectDescription.trim() || !selectedCategory}
             >
-              {isLoading ? "Salvando..." : "Enviar"}
+              {loadingStage === 'saving' && "Salvando..."}
+              {loadingStage === 'generating' && "Gerando ideias..."}
+              {loadingStage === 'idle' && !isLoading && "Enviar"}
+              {isLoading && loadingStage === 'idle' && "Processando..."}
             </Button>
           </div>
         </CardContent>
