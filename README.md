@@ -177,3 +177,4 @@ Workflow com menos assistência:
 5. /idea/title → define título final
 
 Lembre-se de executar o SQL no Supabase para adicionar as novas colunas!
+# Deploy trigger Thu, Oct 16, 2025  3:33:51 PM
