@@ -18,9 +18,18 @@ export const metadata: Metadata = {
 export default async function Page() {
   // Verifica se já existe usuário logado
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+
+  // Tentar obter usuário, mas não falhar se não houver token válido
+  let user = null;
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (!error) {
+      user = data.user;
+    }
+  } catch (error) {
+    // Ignorar erros de auth - visitante não autenticado
+    console.log("No authenticated user (expected for first-time visitors)");
+  }
 
   // Se já estiver autenticado, manda pro dashboard
   if (user) redirect("/dashboard");

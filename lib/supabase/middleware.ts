@@ -25,8 +25,17 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const { data } = await supabase.auth.getUser();
-  const user = data.user;
+  // Tentar obter usuário, mas não falhar se o token for inválido
+  let user = null;
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    if (!error) {
+      user = data.user;
+    }
+  } catch (error) {
+    // Ignorar erros de refresh token - usuário não autenticado
+    console.log("[middleware] Auth check failed (expected for non-authenticated users)");
+  }
 
   const pathname = request.nextUrl.pathname;
   const isAuthRoute =
