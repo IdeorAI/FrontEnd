@@ -22,13 +22,20 @@ export function createClient() {
     throw error;
   }
 
-  return createBrowserClient(url, anon, {
-    auth: {
-      // mantém sessão no localStorage (necessário pro PKCE code_verifier)
-      persistSession: true,
-      autoRefreshToken: true,
-      // vamos nós mesmos tratar o code no /auth/callback
-      detectSessionInUrl: false,
-    },
-  });
+  try {
+    const client = createBrowserClient(url, anon, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true, // Mudado para true
+        flowType: 'pkce', // Especificar explicitamente
+      },
+    });
+
+    console.log('[Supabase Client] Created successfully');
+    return client;
+  } catch (error) {
+    console.error('[Supabase Client] Failed to create:', error);
+    throw error;
+  }
 }
