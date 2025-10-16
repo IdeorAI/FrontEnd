@@ -9,14 +9,14 @@ import { ProjectCardLink } from "@/components/project-card-link";
 import { CreateProjectButton } from "@/components/create-project-button";
 
 type PageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     q?: string;
     cat?: string;
     score?: string; // 3 | 5 | 7 | 9
     val?: string; // lte_1k | gt_1k | gt_5k | ...
     status?: string; // dev | done
     sort?: string; // created_asc, created_desc, updated_desc, score_desc, valuation_desc, name_asc
-  };
+  }>;
 };
 
 export default async function Page(props: PageProps) {
