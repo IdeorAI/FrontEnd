@@ -32,7 +32,7 @@ export async function updateSession(request: NextRequest) {
     if (!error) {
       user = data.user;
     }
-  } catch (error) {
+  } catch {
     // Ignorar erros de refresh token - usuário não autenticado
     console.log("[middleware] Auth check failed (expected for non-authenticated users)");
   }

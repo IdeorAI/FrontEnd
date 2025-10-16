@@ -91,9 +91,10 @@ export default function SegmentIdeasPage() {
 
       // Navega após garantir que está salvo
       router.replace(`/idea/ideorchoice?project_id=${projectId}`);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setLoadingStage('idle');
-      setError(e?.message || "Falha ao gerar ideias.");
+      const errorMessage = e instanceof Error ? e.message : "Falha ao gerar ideias.";
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
       setLoadingStage('idle');

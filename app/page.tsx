@@ -26,7 +26,7 @@ export default async function Page() {
     if (!error) {
       user = data.user;
     }
-  } catch (error) {
+  } catch {
     // Ignorar erros de auth - visitante não autenticado
     console.log("No authenticated user (expected for first-time visitors)");
   }
