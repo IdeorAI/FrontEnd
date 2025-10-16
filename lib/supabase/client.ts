@@ -1,12 +1,25 @@
 import { createBrowserClient } from "@supabase/ssr";
 
 export function createClient() {
-  // No browser, as variáveis de ambiente vêm do objeto global
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  // Garantir que estamos pegando as variáveis corretamente
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+               process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY;
+
+  // Debug detalhado
+  if (typeof window !== 'undefined') {
+    console.log('[Supabase Client Debug]', {
+      hasUrl: !!url,
+      hasAnon: !!anon,
+      urlValue: url,
+      anonPrefix: anon?.substring(0, 20) + '...'
+    });
+  }
 
   if (!url || !anon) {
-    throw new Error('Missing Supabase environment variables');
+    const error = new Error(`Missing Supabase environment variables. URL: ${!!url}, Anon: ${!!anon}`);
+    console.error(error);
+    throw error;
   }
 
   return createBrowserClient(url, anon, {
