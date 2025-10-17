@@ -59,18 +59,27 @@ export function createClient() {
     throw error;
   }
 
-  // Custom fetch com sanitização de headers
+  // Custom fetch com sanitização completa de headers e RequestInit
   const customFetch: typeof fetch = (input, init) => {
     try {
-      console.log('[Supabase Custom Fetch] Called with:', {
+      console.log('[Supabase Custom Fetch] 🔍 Original request:', {
         url: input.toString(),
         method: init?.method || 'GET',
         hasHeaders: !!init?.headers,
         headers: init?.headers,
+        fullInit: init,
       });
 
+      // Se não há init, fazer fetch normal
+      if (!init) {
+        return fetch(input);
+      }
+
+      // Criar objeto limpo do RequestInit
+      const cleanedInit: RequestInit = {};
+
       // Limpar e validar headers
-      if (init?.headers) {
+      if (init.headers) {
         const cleanedHeaders: Record<string, string> = {};
         let hasInvalidHeaders = false;
 
@@ -79,7 +88,7 @@ export function createClient() {
         if (headers instanceof Headers) {
           headers.forEach((value, key) => {
             if (value === undefined || value === null || value === 'undefined' || value === 'null' || value === '') {
-              console.error('[Supabase Custom Fetch] ❌ Invalid header removed:', { key, value });
+              console.error('[Supabase Custom Fetch] ❌ Invalid header removed:', { key, value, type: typeof value });
               hasInvalidHeaders = true;
             } else {
               cleanedHeaders[key] = String(value);
@@ -88,7 +97,7 @@ export function createClient() {
         } else if (Array.isArray(headers)) {
           headers.forEach(([key, value]) => {
             if (value === undefined || value === null || value === 'undefined' || value === 'null' || value === '') {
-              console.error('[Supabase Custom Fetch] ❌ Invalid header removed:', { key, value });
+              console.error('[Supabase Custom Fetch] ❌ Invalid header removed:', { key, value, type: typeof value });
               hasInvalidHeaders = true;
             } else {
               cleanedHeaders[key] = String(value);
@@ -97,7 +106,7 @@ export function createClient() {
         } else if (typeof headers === 'object') {
           Object.entries(headers).forEach(([key, value]) => {
             if (value === undefined || value === null || value === 'undefined' || value === 'null' || value === '') {
-              console.error('[Supabase Custom Fetch] ❌ Invalid header removed:', { key, value });
+              console.error('[Supabase Custom Fetch] ❌ Invalid header removed:', { key, value, type: typeof value });
               hasInvalidHeaders = true;
             } else {
               cleanedHeaders[key] = String(value);
@@ -106,23 +115,45 @@ export function createClient() {
         }
 
         if (hasInvalidHeaders) {
-          console.warn('[Supabase Custom Fetch] ⚠️ Cleaned headers:', cleanedHeaders);
-          init = { ...init, headers: cleanedHeaders };
+          console.warn('[Supabase Custom Fetch] ⚠️ Headers were cleaned');
         }
+        cleanedInit.headers = cleanedHeaders;
       }
 
-      console.log('[Supabase Custom Fetch] ✅ Calling fetch with:', {
-        url: input.toString(),
-        method: init?.method || 'GET',
-        headers: init?.headers,
+      // Copiar outros campos válidos do RequestInit, removendo undefined/null
+      const validFields: Array<keyof RequestInit> = [
+        'method', 'body', 'mode', 'credentials', 'cache',
+        'redirect', 'referrer', 'referrerPolicy', 'integrity',
+        'keepalive', 'signal', 'window'
+      ];
+
+      validFields.forEach((field) => {
+        const value = init[field];
+        if (value !== undefined && value !== null) {
+          // Validar que o valor não é uma string 'undefined' ou 'null'
+          if (typeof value === 'string' && (value === 'undefined' || value === 'null' || value === '')) {
+            console.error(`[Supabase Custom Fetch] ❌ Invalid ${field} removed:`, { field, value });
+            return;
+          }
+          (cleanedInit as Record<string, unknown>)[field] = value;
+        } else if (value === undefined || value === null) {
+          console.warn(`[Supabase Custom Fetch] ⚠️ Skipping undefined/null field: ${field}`);
+        }
       });
 
-      return fetch(input, init);
+      console.log('[Supabase Custom Fetch] ✅ Calling fetch with cleaned init:', {
+        url: input.toString(),
+        cleanedInit,
+      });
+
+      return fetch(input, cleanedInit);
     } catch (error) {
       console.error('[Supabase Custom Fetch] 💥 Error:', {
         error,
         message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
         url: input.toString(),
+        originalInit: init,
       });
       throw error;
     }
