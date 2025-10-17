@@ -57,12 +57,36 @@ export function createClient() {
         autoRefreshToken: true,
         detectSessionInUrl: true,
         flowType: 'pkce',
-        // Garantir que a URL de autenticação esteja correta
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
         storageKey: 'supabase-auth-token',
       },
       global: {
         headers: {
           'X-Client-Info': 'supabase-js-web',
+          'apikey': anon,
+        },
+        fetch: (url: RequestInfo | URL, options: RequestInit = {}) => {
+          // Garantir que todos os headers estão definidos corretamente
+          const headers = new Headers(options.headers);
+
+          if (!headers.has('apikey')) {
+            headers.set('apikey', anon);
+          }
+          if (!headers.has('Authorization')) {
+            headers.set('Authorization', `Bearer ${anon}`);
+          }
+
+          console.log('[Supabase Fetch]', {
+            url: url.toString(),
+            method: options.method || 'GET',
+            hasApiKey: headers.has('apikey'),
+            hasAuth: headers.has('Authorization'),
+          });
+
+          return fetch(url, {
+            ...options,
+            headers,
+          });
         },
       },
     });
