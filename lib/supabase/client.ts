@@ -93,13 +93,22 @@ export function createClient() {
           }
 
           // Converter para string
-          const stringValue = String(value);
+          let stringValue = String(value);
 
           // Validar se a string resultante é válida
           if (stringValue === 'undefined' || stringValue === 'null' || stringValue.trim() === '') {
             console.error('[Supabase Custom Fetch] ❌ Invalid header value (string check):', { key, value, stringValue });
             hasInvalidHeaders = true;
             return;
+          }
+
+          // Sanitizar: remover caracteres de controle e invisíveis (mas manter caracteres válidos)
+          // Headers HTTP só podem conter caracteres ASCII imprimíveis (32-126) e alguns específicos
+          const originalLength = stringValue.length;
+          stringValue = stringValue.replace(/[\x00-\x1F\x7F-\x9F]/g, ''); // Remove caracteres de controle
+
+          if (stringValue.length !== originalLength) {
+            console.warn(`[Supabase Custom Fetch] ⚠️ Removed ${originalLength - stringValue.length} control characters from header "${key}"`);
           }
 
           // Tentar adicionar o header com try-catch
