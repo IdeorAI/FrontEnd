@@ -1,4 +1,4 @@
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 export function createClient() {
   // Acessar variáveis de ambiente de forma compatível com build de produção
@@ -51,20 +51,16 @@ export function createClient() {
   }
 
   try {
-    // Configuração simplificada - deixar o Supabase SDK gerenciar os headers
-    const client = createBrowserClient(url, anon, {
+    // Usar cliente tradicional do Supabase ao invés de SSR
+    const client = createSupabaseClient(url, anon, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        flowType: 'pkce',
-        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-        storageKey: 'supabase-auth-token',
       },
-      // Remover configuração global customizada que pode estar causando problemas
     });
 
-    console.log('[Supabase Client] Created successfully', {
+    console.log('[Supabase Client] Created successfully (traditional client)', {
       authUrl: `${url}/auth/v1`,
     });
     return client;
