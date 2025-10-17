@@ -59,6 +59,75 @@ export function createClient() {
     throw error;
   }
 
+  // Custom fetch com sanitização de headers
+  const customFetch: typeof fetch = (input, init) => {
+    try {
+      console.log('[Supabase Custom Fetch] Called with:', {
+        url: input.toString(),
+        method: init?.method || 'GET',
+        hasHeaders: !!init?.headers,
+        headers: init?.headers,
+      });
+
+      // Limpar e validar headers
+      if (init?.headers) {
+        const cleanedHeaders: Record<string, string> = {};
+        let hasInvalidHeaders = false;
+
+        // Processar headers baseado no tipo
+        const headers = init.headers;
+        if (headers instanceof Headers) {
+          headers.forEach((value, key) => {
+            if (value === undefined || value === null || value === 'undefined' || value === 'null' || value === '') {
+              console.error('[Supabase Custom Fetch] ❌ Invalid header removed:', { key, value });
+              hasInvalidHeaders = true;
+            } else {
+              cleanedHeaders[key] = String(value);
+            }
+          });
+        } else if (Array.isArray(headers)) {
+          headers.forEach(([key, value]) => {
+            if (value === undefined || value === null || value === 'undefined' || value === 'null' || value === '') {
+              console.error('[Supabase Custom Fetch] ❌ Invalid header removed:', { key, value });
+              hasInvalidHeaders = true;
+            } else {
+              cleanedHeaders[key] = String(value);
+            }
+          });
+        } else if (typeof headers === 'object') {
+          Object.entries(headers).forEach(([key, value]) => {
+            if (value === undefined || value === null || value === 'undefined' || value === 'null' || value === '') {
+              console.error('[Supabase Custom Fetch] ❌ Invalid header removed:', { key, value });
+              hasInvalidHeaders = true;
+            } else {
+              cleanedHeaders[key] = String(value);
+            }
+          });
+        }
+
+        if (hasInvalidHeaders) {
+          console.warn('[Supabase Custom Fetch] ⚠️ Cleaned headers:', cleanedHeaders);
+          init = { ...init, headers: cleanedHeaders };
+        }
+      }
+
+      console.log('[Supabase Custom Fetch] ✅ Calling fetch with:', {
+        url: input.toString(),
+        method: init?.method || 'GET',
+        headers: init?.headers,
+      });
+
+      return fetch(input, init);
+    } catch (error) {
+      console.error('[Supabase Custom Fetch] 💥 Error:', {
+        error,
+        message: error instanceof Error ? error.message : String(error),
+        url: input.toString(),
+      });
+      throw error;
+    }
+  };
+
   try {
     // Criar cliente apenas uma vez (singleton)
     supabaseInstance = createSupabaseClient(url, anon, {
@@ -67,10 +136,14 @@ export function createClient() {
         autoRefreshToken: true,
         detectSessionInUrl: true,
       },
+      global: {
+        fetch: customFetch,
+      },
     });
 
     console.log('[Supabase Client] Created NEW instance (singleton)', {
       authUrl: `${url}/auth/v1`,
+      usingCustomFetch: true,
     });
     return supabaseInstance;
   } catch (error) {
