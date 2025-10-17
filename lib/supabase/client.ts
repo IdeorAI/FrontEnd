@@ -83,39 +83,60 @@ export function createClient() {
         const cleanedHeaders = new Headers();
         let hasInvalidHeaders = false;
 
+        // Helper para validar e adicionar header com try-catch individual
+        const safeSetHeader = (key: string, value: unknown) => {
+          // Validações básicas
+          if (value === undefined || value === null || value === 'undefined' || value === 'null' || value === '') {
+            console.error('[Supabase Custom Fetch] ❌ Invalid header value (null/undefined/empty):', { key, value, type: typeof value });
+            hasInvalidHeaders = true;
+            return;
+          }
+
+          // Converter para string
+          const stringValue = String(value);
+
+          // Validar se a string resultante é válida
+          if (stringValue === 'undefined' || stringValue === 'null' || stringValue.trim() === '') {
+            console.error('[Supabase Custom Fetch] ❌ Invalid header value (string check):', { key, value, stringValue });
+            hasInvalidHeaders = true;
+            return;
+          }
+
+          // Tentar adicionar o header com try-catch
+          try {
+            cleanedHeaders.set(key, stringValue);
+            console.log(`[Supabase Custom Fetch] ✅ Header added: ${key} = ${stringValue.substring(0, 50)}...`);
+          } catch (error) {
+            console.error('[Supabase Custom Fetch] 💥 Failed to set header:', {
+              key,
+              value,
+              stringValue,
+              stringValueLength: stringValue.length,
+              error: error instanceof Error ? error.message : String(error),
+              charCodes: Array.from(stringValue.substring(0, 100)).map(c => c.charCodeAt(0)),
+            });
+            hasInvalidHeaders = true;
+          }
+        };
+
         // Processar headers baseado no tipo
         const headers = init.headers;
         if (headers instanceof Headers) {
           headers.forEach((value, key) => {
-            if (value === undefined || value === null || value === 'undefined' || value === 'null' || value === '') {
-              console.error('[Supabase Custom Fetch] ❌ Invalid header removed:', { key, value, type: typeof value });
-              hasInvalidHeaders = true;
-            } else {
-              cleanedHeaders.set(key, String(value));
-            }
+            safeSetHeader(key, value);
           });
         } else if (Array.isArray(headers)) {
           headers.forEach(([key, value]) => {
-            if (value === undefined || value === null || value === 'undefined' || value === 'null' || value === '') {
-              console.error('[Supabase Custom Fetch] ❌ Invalid header removed:', { key, value, type: typeof value });
-              hasInvalidHeaders = true;
-            } else {
-              cleanedHeaders.set(key, String(value));
-            }
+            safeSetHeader(key, value);
           });
         } else if (typeof headers === 'object') {
           Object.entries(headers).forEach(([key, value]) => {
-            if (value === undefined || value === null || value === 'undefined' || value === 'null' || value === '') {
-              console.error('[Supabase Custom Fetch] ❌ Invalid header removed:', { key, value, type: typeof value });
-              hasInvalidHeaders = true;
-            } else {
-              cleanedHeaders.set(key, String(value));
-            }
+            safeSetHeader(key, value);
           });
         }
 
         if (hasInvalidHeaders) {
-          console.warn('[Supabase Custom Fetch] ⚠️ Headers were cleaned');
+          console.warn('[Supabase Custom Fetch] ⚠️ Some headers were skipped due to invalid values');
         }
         cleanedInit.headers = cleanedHeaders;
       }
