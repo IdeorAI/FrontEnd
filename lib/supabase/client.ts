@@ -107,14 +107,27 @@ export function createClient() {
             cleanedHeaders.set(key, stringValue);
             console.log(`[Supabase Custom Fetch] ✅ Header added: ${key} = ${stringValue.substring(0, 50)}...`);
           } catch (error) {
-            console.error('[Supabase Custom Fetch] 💥 Failed to set header:', {
+            // Log expandido do erro
+            const errorDetails = {
               key,
               value,
+              valueType: typeof value,
+              valueConstructor: value?.constructor?.name,
               stringValue,
               stringValueLength: stringValue.length,
+              stringValuePreview: stringValue.substring(0, 100),
               error: error instanceof Error ? error.message : String(error),
+              errorStack: error instanceof Error ? error.stack : undefined,
               charCodes: Array.from(stringValue.substring(0, 100)).map(c => c.charCodeAt(0)),
-            });
+              hasNewlines: stringValue.includes('\n'),
+              hasCarriageReturn: stringValue.includes('\r'),
+              hasTabs: stringValue.includes('\t'),
+              hasNullBytes: stringValue.includes('\0'),
+            };
+            console.error('[Supabase Custom Fetch] 💥 Failed to set header (DETAILED):', errorDetails);
+            console.error(`[Supabase Custom Fetch] 💥 KEY: "${key}" | VALUE TYPE: ${typeof value} | STRING LENGTH: ${stringValue.length}`);
+            console.error(`[Supabase Custom Fetch] 💥 STRING PREVIEW: "${stringValue.substring(0, 200)}"`);
+            console.error('[Supabase Custom Fetch] 💥 Full stringValue:', stringValue);
             hasInvalidHeaders = true;
           }
         };
