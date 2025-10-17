@@ -66,9 +66,20 @@ export function createClient() {
           'apikey': anon,
         },
         fetch: (url: RequestInfo | URL, options: RequestInit = {}) => {
-          // Garantir que todos os headers estão definidos corretamente
-          const headers = new Headers(options.headers);
+          // Criar headers de forma segura, filtrando valores undefined/null
+          const headers = new Headers();
 
+          // Copiar headers existentes se houver
+          if (options.headers) {
+            const existingHeaders = new Headers(options.headers);
+            existingHeaders.forEach((value, key) => {
+              if (value !== undefined && value !== null && value !== 'undefined') {
+                headers.set(key, value);
+              }
+            });
+          }
+
+          // Garantir headers essenciais
           if (!headers.has('apikey')) {
             headers.set('apikey', anon);
           }
@@ -81,6 +92,7 @@ export function createClient() {
             method: options.method || 'GET',
             hasApiKey: headers.has('apikey'),
             hasAuth: headers.has('Authorization'),
+            headerCount: Array.from(headers.keys()).length,
           });
 
           return fetch(url, {
