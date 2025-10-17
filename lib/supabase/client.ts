@@ -78,9 +78,9 @@ export function createClient() {
       // Criar objeto limpo do RequestInit
       const cleanedInit: RequestInit = {};
 
-      // Limpar e validar headers
+      // Limpar e validar headers - usar Headers object nativo
       if (init.headers) {
-        const cleanedHeaders: Record<string, string> = {};
+        const cleanedHeaders = new Headers();
         let hasInvalidHeaders = false;
 
         // Processar headers baseado no tipo
@@ -91,7 +91,7 @@ export function createClient() {
               console.error('[Supabase Custom Fetch] ❌ Invalid header removed:', { key, value, type: typeof value });
               hasInvalidHeaders = true;
             } else {
-              cleanedHeaders[key] = String(value);
+              cleanedHeaders.set(key, String(value));
             }
           });
         } else if (Array.isArray(headers)) {
@@ -100,7 +100,7 @@ export function createClient() {
               console.error('[Supabase Custom Fetch] ❌ Invalid header removed:', { key, value, type: typeof value });
               hasInvalidHeaders = true;
             } else {
-              cleanedHeaders[key] = String(value);
+              cleanedHeaders.set(key, String(value));
             }
           });
         } else if (typeof headers === 'object') {
@@ -109,7 +109,7 @@ export function createClient() {
               console.error('[Supabase Custom Fetch] ❌ Invalid header removed:', { key, value, type: typeof value });
               hasInvalidHeaders = true;
             } else {
-              cleanedHeaders[key] = String(value);
+              cleanedHeaders.set(key, String(value));
             }
           });
         }
