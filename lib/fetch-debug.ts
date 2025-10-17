@@ -65,7 +65,8 @@ if (typeof window !== 'undefined') {
 
         Object.entries(init).forEach(([key, value]) => {
           if (value !== undefined && value !== null) {
-            cleanedInit[key as keyof RequestInit] = value as any;
+            // Type-safe assignment sem usar 'any'
+            (cleanedInit as Record<string, unknown>)[key] = value;
           } else {
             console.warn(`[Fetch Debug] ⚠️ Removing undefined field: ${key}`);
           }
