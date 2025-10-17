@@ -120,30 +120,49 @@ export function createClient() {
         cleanedInit.headers = cleanedHeaders;
       }
 
-      // Copiar outros campos válidos do RequestInit, removendo undefined/null
-      const validFields: Array<keyof RequestInit> = [
-        'method', 'body', 'mode', 'credentials', 'cache',
-        'redirect', 'referrer', 'referrerPolicy', 'integrity',
-        'keepalive', 'signal', 'window'
-      ];
-
-      validFields.forEach((field) => {
-        const value = init[field];
-        if (value !== undefined && value !== null) {
-          // Validar que o valor não é uma string 'undefined' ou 'null'
-          if (typeof value === 'string' && (value === 'undefined' || value === 'null' || value === '')) {
-            console.error(`[Supabase Custom Fetch] ❌ Invalid ${field} removed:`, { field, value });
-            return;
-          }
-          (cleanedInit as Record<string, unknown>)[field] = value;
-        } else if (value === undefined || value === null) {
-          console.warn(`[Supabase Custom Fetch] ⚠️ Skipping undefined/null field: ${field}`);
-        }
-      });
+      // Copiar outros campos válidos do RequestInit, apenas se existem
+      if (init.method !== undefined && init.method !== null) {
+        cleanedInit.method = init.method;
+      }
+      if (init.body !== undefined && init.body !== null) {
+        cleanedInit.body = init.body;
+      }
+      if (init.mode !== undefined && init.mode !== null) {
+        cleanedInit.mode = init.mode;
+      }
+      if (init.credentials !== undefined && init.credentials !== null) {
+        cleanedInit.credentials = init.credentials;
+      }
+      if (init.cache !== undefined && init.cache !== null) {
+        cleanedInit.cache = init.cache;
+      }
+      if (init.redirect !== undefined && init.redirect !== null) {
+        cleanedInit.redirect = init.redirect;
+      }
+      if (init.referrer !== undefined && init.referrer !== null) {
+        cleanedInit.referrer = init.referrer;
+      }
+      if (init.referrerPolicy !== undefined && init.referrerPolicy !== null) {
+        cleanedInit.referrerPolicy = init.referrerPolicy;
+      }
+      if (init.integrity !== undefined && init.integrity !== null) {
+        cleanedInit.integrity = init.integrity;
+      }
+      if (init.keepalive !== undefined && init.keepalive !== null) {
+        cleanedInit.keepalive = init.keepalive;
+      }
+      if (init.signal !== undefined && init.signal !== null) {
+        cleanedInit.signal = init.signal;
+      }
 
       console.log('[Supabase Custom Fetch] ✅ Calling fetch with cleaned init:', {
         url: input.toString(),
-        cleanedInit,
+        method: cleanedInit.method,
+        hasBody: !!cleanedInit.body,
+        hasHeaders: !!cleanedInit.headers,
+        headersCount: cleanedInit.headers ? Object.keys(cleanedInit.headers).length : 0,
+        allKeys: Object.keys(cleanedInit),
+        fullCleanedInit: JSON.stringify(cleanedInit, null, 2),
       });
 
       return fetch(input, cleanedInit);
