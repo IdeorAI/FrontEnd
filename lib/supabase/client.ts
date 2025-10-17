@@ -105,7 +105,7 @@ export function createClient() {
           // Detectar e logar caracteres de controle ANTES de remover
           const controlCharMatches = stringValue.match(/[\x00-\x1F\x7F-\x9F]/g);
           if (controlCharMatches) {
-            const charInfo = controlCharMatches.map((char, idx) => ({
+            const charInfo = controlCharMatches.map((char) => ({
               index: stringValue.indexOf(char),
               char: char,
               charCode: char.charCodeAt(0),
