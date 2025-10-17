@@ -78,9 +78,9 @@ export function createClient() {
       // Criar objeto limpo do RequestInit
       const cleanedInit: RequestInit = {};
 
-      // Limpar e validar headers - usar Headers object nativo
+      // Limpar e validar headers - usar objeto plano (Record)
       if (init.headers) {
-        const cleanedHeaders = new Headers();
+        const cleanedHeaders: Record<string, string> = {};
         let hasInvalidHeaders = false;
 
         // Helper para validar e adicionar header com try-catch individual
@@ -119,19 +119,27 @@ export function createClient() {
             console.error(`[Supabase Custom Fetch] 🚨 Last 50 chars:`, stringValue.substring(stringValue.length - 50));
           }
 
-          // Sanitizar: remover TODOS os espaços em branco (whitespace) incluindo newlines, tabs, espaços
-          // JWTs e tokens não devem ter whitespace - isso corrige o problema do Vercel quebrar linhas longas
+          // Sanitizar: remover apenas newlines, tabs e múltiplos espaços
+          // Mas PRESERVAR espaços únicos importantes (como entre "Bearer" e o token)
           const originalLength = stringValue.length;
-          stringValue = stringValue.replace(/\s/g, ''); // Remove ALL whitespace (\n, \r, \t, espaços, etc)
+
+          // Remover newlines, carriage returns, tabs
+          stringValue = stringValue.replace(/[\n\r\t]/g, '');
+
+          // Remover espaços múltiplos e reduzir para um único espaço
+          stringValue = stringValue.replace(/ +/g, ' ');
+
+          // Trim espaços no início e fim
+          stringValue = stringValue.trim();
 
           if (stringValue.length !== originalLength) {
-            console.warn(`[Supabase Custom Fetch] ⚠️ Removed ${originalLength - stringValue.length} whitespace character(s) from header "${key}"`);
+            console.warn(`[Supabase Custom Fetch] ⚠️ Sanitized ${originalLength - stringValue.length} whitespace character(s) from header "${key}"`);
             console.warn(`[Supabase Custom Fetch] ⚠️ Original length: ${originalLength}, New length: ${stringValue.length}`);
           }
 
-          // Tentar adicionar o header com try-catch
+          // Tentar adicionar o header
           try {
-            cleanedHeaders.set(key, stringValue);
+            cleanedHeaders[key] = stringValue;
             console.log(`[Supabase Custom Fetch] ✅ Header added: ${key} = ${stringValue.substring(0, 50)}...`);
           } catch (error) {
             // Log expandido do erro
