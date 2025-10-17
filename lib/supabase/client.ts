@@ -1,6 +1,15 @@
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { createClient as createSupabaseClient, SupabaseClient } from "@supabase/supabase-js";
+
+// Singleton instance - criar apenas uma vez
+let supabaseInstance: SupabaseClient | null = null;
 
 export function createClient() {
+  // Se já existe uma instância, retornar ela
+  if (supabaseInstance) {
+    console.log('[Supabase Client] Reusing existing instance');
+    return supabaseInstance;
+  }
+
   // Acessar variáveis de ambiente de forma compatível com build de produção
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = (
@@ -51,8 +60,8 @@ export function createClient() {
   }
 
   try {
-    // Usar cliente tradicional do Supabase ao invés de SSR
-    const client = createSupabaseClient(url, anon, {
+    // Criar cliente apenas uma vez (singleton)
+    supabaseInstance = createSupabaseClient(url, anon, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
@@ -60,10 +69,10 @@ export function createClient() {
       },
     });
 
-    console.log('[Supabase Client] Created successfully (traditional client)', {
+    console.log('[Supabase Client] Created NEW instance (singleton)', {
       authUrl: `${url}/auth/v1`,
     });
-    return client;
+    return supabaseInstance;
   } catch (error) {
     console.error('[Supabase Client] Failed to create:', error);
     throw error;
