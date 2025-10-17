@@ -119,13 +119,14 @@ export function createClient() {
             console.error(`[Supabase Custom Fetch] 🚨 Last 50 chars:`, stringValue.substring(stringValue.length - 50));
           }
 
-          // Sanitizar: remover caracteres de controle
+          // Sanitizar: remover TODOS os espaços em branco (whitespace) incluindo newlines, tabs, espaços
+          // JWTs e tokens não devem ter whitespace - isso corrige o problema do Vercel quebrar linhas longas
           const originalLength = stringValue.length;
-          stringValue = stringValue.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+          stringValue = stringValue.replace(/\s/g, ''); // Remove ALL whitespace (\n, \r, \t, espaços, etc)
 
           if (stringValue.length !== originalLength) {
-            console.warn(`[Supabase Custom Fetch] ⚠️ Removed ${originalLength - stringValue.length} control character(s) from header "${key}"`);
-            console.warn(`[Supabase Custom Fetch] ⚠️ New value length: ${stringValue.length}`);
+            console.warn(`[Supabase Custom Fetch] ⚠️ Removed ${originalLength - stringValue.length} whitespace character(s) from header "${key}"`);
+            console.warn(`[Supabase Custom Fetch] ⚠️ Original length: ${originalLength}, New length: ${stringValue.length}`);
           }
 
           // Tentar adicionar o header com try-catch
