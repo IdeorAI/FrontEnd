@@ -2,27 +2,49 @@ import { createBrowserClient } from "@supabase/ssr";
 
 export function createClient() {
   // Acessar variáveis de ambiente de forma compatível com build de produção
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = (
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY
-  )!;
+  );
 
-  // Debug detalhado (apenas em desenvolvimento)
-  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  // Debug detalhado sempre em produção para diagnosticar
+  if (typeof window !== 'undefined') {
     console.log('[Supabase Client Debug]', {
       hasUrl: !!url,
       hasAnon: !!anon,
       urlValue: url,
-      anonPrefix: anon?.substring(0, 20) + '...'
+      urlType: typeof url,
+      urlLength: url?.length,
+      anonPrefix: anon?.substring(0, 20) + '...',
+      anonType: typeof anon,
+      anonLength: anon?.length,
     });
   }
 
-  if (!url || !anon) {
+  // Validação rigorosa
+  if (!url || typeof url !== 'string' || url.trim() === '') {
     const error = new Error(
-      `Missing Supabase environment variables. ` +
-      `URL: ${!!url} (${url}), ` +
-      `Anon: ${!!anon}`
+      `Invalid NEXT_PUBLIC_SUPABASE_URL: ${JSON.stringify(url)}`
+    );
+    console.error(error);
+    throw error;
+  }
+
+  if (!anon || typeof anon !== 'string' || anon.trim() === '') {
+    const error = new Error(
+      `Invalid NEXT_PUBLIC_SUPABASE_ANON_KEY: ${JSON.stringify(anon)}`
+    );
+    console.error(error);
+    throw error;
+  }
+
+  // Validar formato da URL
+  try {
+    new URL(url);
+  } catch (e) {
+    const error = new Error(
+      `NEXT_PUBLIC_SUPABASE_URL is not a valid URL: ${url}`
     );
     console.error(error);
     throw error;
@@ -33,12 +55,21 @@ export function createClient() {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true, // Mudado para true
-        flowType: 'pkce', // Especificar explicitamente
+        detectSessionInUrl: true,
+        flowType: 'pkce',
+        // Garantir que a URL de autenticação esteja correta
+        storageKey: 'supabase-auth-token',
+      },
+      global: {
+        headers: {
+          'X-Client-Info': 'supabase-js-web',
+        },
       },
     });
 
-    console.log('[Supabase Client] Created successfully');
+    console.log('[Supabase Client] Created successfully', {
+      authUrl: `${url}/auth/v1`,
+    });
     return client;
   } catch (error) {
     console.error('[Supabase Client] Failed to create:', error);
