@@ -102,13 +102,30 @@ export function createClient() {
             return;
           }
 
-          // Sanitizar: remover caracteres de controle e invisíveis (mas manter caracteres válidos)
-          // Headers HTTP só podem conter caracteres ASCII imprimíveis (32-126) e alguns específicos
+          // Detectar e logar caracteres de controle ANTES de remover
+          const controlCharMatches = stringValue.match(/[\x00-\x1F\x7F-\x9F]/g);
+          if (controlCharMatches) {
+            const charInfo = controlCharMatches.map((char, idx) => ({
+              index: stringValue.indexOf(char),
+              char: char,
+              charCode: char.charCodeAt(0),
+              charName: char === '\n' ? '\\n' : char === '\r' ? '\\r' : char === '\t' ? '\\t' : char === '\0' ? '\\0' : `\\x${char.charCodeAt(0).toString(16).padStart(2, '0')}`,
+              surrounding: stringValue.substring(Math.max(0, stringValue.indexOf(char) - 10), stringValue.indexOf(char) + 10)
+            }));
+
+            console.error(`[Supabase Custom Fetch] 🚨 FOUND ${controlCharMatches.length} control character(s) in header "${key}":`, charInfo);
+            console.error(`[Supabase Custom Fetch] 🚨 Original value length: ${stringValue.length}`);
+            console.error(`[Supabase Custom Fetch] 🚨 First 50 chars:`, stringValue.substring(0, 50));
+            console.error(`[Supabase Custom Fetch] 🚨 Last 50 chars:`, stringValue.substring(stringValue.length - 50));
+          }
+
+          // Sanitizar: remover caracteres de controle
           const originalLength = stringValue.length;
-          stringValue = stringValue.replace(/[\x00-\x1F\x7F-\x9F]/g, ''); // Remove caracteres de controle
+          stringValue = stringValue.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
 
           if (stringValue.length !== originalLength) {
-            console.warn(`[Supabase Custom Fetch] ⚠️ Removed ${originalLength - stringValue.length} control characters from header "${key}"`);
+            console.warn(`[Supabase Custom Fetch] ⚠️ Removed ${originalLength - stringValue.length} control character(s) from header "${key}"`);
+            console.warn(`[Supabase Custom Fetch] ⚠️ New value length: ${stringValue.length}`);
           }
 
           // Tentar adicionar o header com try-catch
