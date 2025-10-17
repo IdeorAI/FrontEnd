@@ -51,6 +51,7 @@ export function createClient() {
   }
 
   try {
+    // Configuração simplificada - deixar o Supabase SDK gerenciar os headers
     const client = createBrowserClient(url, anon, {
       auth: {
         persistSession: true,
@@ -60,47 +61,7 @@ export function createClient() {
         storage: typeof window !== 'undefined' ? window.localStorage : undefined,
         storageKey: 'supabase-auth-token',
       },
-      global: {
-        headers: {
-          'X-Client-Info': 'supabase-js-web',
-          'apikey': anon,
-        },
-        fetch: (url: RequestInfo | URL, options: RequestInit = {}) => {
-          // Criar headers de forma segura, filtrando valores undefined/null
-          const headers = new Headers();
-
-          // Copiar headers existentes se houver
-          if (options.headers) {
-            const existingHeaders = new Headers(options.headers);
-            existingHeaders.forEach((value, key) => {
-              if (value !== undefined && value !== null && value !== 'undefined') {
-                headers.set(key, value);
-              }
-            });
-          }
-
-          // Garantir headers essenciais
-          if (!headers.has('apikey')) {
-            headers.set('apikey', anon);
-          }
-          if (!headers.has('Authorization')) {
-            headers.set('Authorization', `Bearer ${anon}`);
-          }
-
-          console.log('[Supabase Fetch]', {
-            url: url.toString(),
-            method: options.method || 'GET',
-            hasApiKey: headers.has('apikey'),
-            hasAuth: headers.has('Authorization'),
-            headerCount: Array.from(headers.keys()).length,
-          });
-
-          return fetch(url, {
-            ...options,
-            headers,
-          });
-        },
-      },
+      // Remover configuração global customizada que pode estar causando problemas
     });
 
     console.log('[Supabase Client] Created successfully', {
