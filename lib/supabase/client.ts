@@ -42,7 +42,7 @@ export function createClient() {
   // Validar formato da URL
   try {
     new URL(url);
-  } catch (e) {
+  } catch {
     const error = new Error(
       `NEXT_PUBLIC_SUPABASE_URL is not a valid URL: ${url}`
     );
