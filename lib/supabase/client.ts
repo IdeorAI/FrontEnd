@@ -119,20 +119,29 @@ export function createClient() {
             console.error(`[Supabase Custom Fetch] 🚨 Last 50 chars:`, stringValue.substring(stringValue.length - 50));
           }
 
-          // Sanitizar: remover newlines, tabs E os espaços ao redor deles
-          // O Vercel está inserindo padrões como "ABC    \n  DEF" que devem virar "ABCDEF"
-          // MAS preservar espaços legítimos como "Bearer TOKEN"
+          // Sanitizar headers corrompidos pelo Vercel
           const originalLength = stringValue.length;
 
-          // Primeiro: remover espaços ao redor de newlines/tabs (padrão Vercel)
-          // Isso transforma "ABC    \n  DEF" em "ABC\nDEF"
-          stringValue = stringValue.replace(/\s*[\n\r\t]\s*/g, '');
+          // ESTRATÉGIA:
+          // 1. Para headers "Authorization" → preservar apenas 1 espaço após "Bearer"
+          // 2. Para outros headers (apikey, etc) → remover TODOS os espaços
+          // 3. Sempre remover: \n, \r, \t e outros caracteres de controle
 
-          // Segundo: remover múltiplos espaços QUE NÃO SEJAM entre palavras
-          // Preservar espaço único entre "Bearer" e o token
-          stringValue = stringValue.replace(/  +/g, ''); // Remove 2+ espaços consecutivos
+          if (key.toLowerCase() === 'authorization' && stringValue.startsWith('Bearer ')) {
+            // Authorization: preservar "Bearer " + token limpo
+            const bearer = 'Bearer ';
+            const tokenPart = stringValue.substring(bearer.length);
 
-          // NÃO fazer trim - pode ter espaços válidos nas pontas em alguns casos
+            // Limpar o token: remover TODOS newlines, tabs, espaços
+            const cleanToken = tokenPart.replace(/[\s\n\r\t]/g, '');
+
+            // Reconstruir: "Bearer " + token limpo
+            stringValue = bearer + cleanToken;
+          } else {
+            // Outros headers (apikey, etc): remover TODOS os whitespaces
+            // JWTs são base64url - não devem ter NENHUM espaço
+            stringValue = stringValue.replace(/[\s\n\r\t]/g, '');
+          }
 
           if (stringValue.length !== originalLength) {
             console.warn(`[Supabase Custom Fetch] ⚠️ Sanitized ${originalLength - stringValue.length} whitespace character(s) from header "${key}"`);
