@@ -35,13 +35,28 @@ export function LoginForm({
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('[Login Form] 🔐 Attempting login...');
+      const result = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      if (error) throw error;
-      router.push("/dashboard"); // ajuste o destino
+
+      console.log('[Login Form] 📥 Login response:', {
+        hasError: !!result.error,
+        error: result.error,
+        hasData: !!result.data,
+        hasUser: !!result.data?.user,
+        userId: result.data?.user?.id,
+        hasSession: !!result.data?.session,
+        sessionToken: result.data?.session?.access_token?.substring(0, 50) + '...',
+      });
+
+      if (result.error) throw result.error;
+
+      console.log('[Login Form] ✅ Login successful, redirecting to /dashboard');
+      router.push("/dashboard");
     } catch (error: unknown) {
+      console.error('[Login Form] ❌ Login failed:', error);
       setError(error instanceof Error ? error.message : "Ocorreu um erro");
     } finally {
       setIsLoadingPassword(false);
