@@ -2,12 +2,26 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+// Função para sanitizar JWTs corrompidos pelo Vercel
+function sanitizeEnvVar(value: string | undefined): string | undefined {
+  if (!value) return value;
+
+  // Remover TODOS os whitespaces (newlines, tabs, espaços)
+  // JWTs são base64url encoded e não devem ter espaços
+  return value.replace(/[\s\n\r\t]/g, '');
+}
+
 export async function updateSession(request: NextRequest) {
   const response = NextResponse.next({ request });
 
-  const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anon =
+  // Sanitizar variáveis de ambiente antes de usar
+  let url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+  let anon =
     process.env.SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  // Aplicar sanitização
+  url = sanitizeEnvVar(url);
+  anon = sanitizeEnvVar(anon);
 
   if (!url || !anon) {
     // Sem variáveis? Só segue a requisição sem tentar autenticar.
