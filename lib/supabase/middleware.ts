@@ -43,20 +43,35 @@ export async function updateSession(request: NextRequest) {
   let user = null;
   try {
     const { data, error } = await supabase.auth.getUser();
+    console.log('[middleware] 🔍 Auth check result:', {
+      pathname: request.nextUrl.pathname,
+      hasError: !!error,
+      errorMessage: error?.message,
+      hasUser: !!data?.user,
+      userId: data?.user?.id,
+    });
     if (!error) {
       user = data.user;
     }
-  } catch {
+  } catch (err) {
     // Ignorar erros de refresh token - usuário não autenticado
-    console.log("[middleware] Auth check failed (expected for non-authenticated users)");
+    console.log("[middleware] ⚠️ Auth check failed:", err);
   }
 
   const pathname = request.nextUrl.pathname;
   const isAuthRoute =
     pathname.startsWith("/auth") || pathname.startsWith("/login");
 
+  console.log('[middleware] 🛡️ Protection check:', {
+    pathname,
+    hasUser: !!user,
+    isAuthRoute,
+    willRedirect: !user && !isAuthRoute && pathname !== "/",
+  });
+
   // Protege rotas autenticadas (ajuste conforme sua necessidade)
   if (!user && !isAuthRoute && pathname !== "/") {
+    console.log('[middleware] 🚫 Redirecting to /auth/login - no user found');
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);
