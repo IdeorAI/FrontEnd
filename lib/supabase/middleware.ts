@@ -28,10 +28,22 @@ export async function updateSession(request: NextRequest) {
     return response;
   }
 
+  // Log cookies recebidos
+  const allCookies = request.cookies.getAll();
+  console.log('[middleware] 🍪 Cookies received:', {
+    count: allCookies.length,
+    hasSupabaseCookies: allCookies.some(c => c.name.startsWith('sb-')),
+    cookieNames: allCookies.map(c => c.name),
+  });
+
   const supabase = createServerClient(url, anon, {
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll: (cookiesToSet) => {
+        console.log('[middleware] 🍪 Setting cookies:', {
+          count: cookiesToSet.length,
+          names: cookiesToSet.map(c => c.name),
+        });
         cookiesToSet.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options)
         );
