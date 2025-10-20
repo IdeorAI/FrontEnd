@@ -268,7 +268,8 @@ export function createClient() {
               error: responseData,
             });
           }
-        } catch (e) {
+        } catch {
+          // Response não é JSON, apenas logar metadados
           console.log('[Supabase Custom Fetch] 📥 Response (non-JSON):', {
             url: input.toString(),
             status: response.status,
