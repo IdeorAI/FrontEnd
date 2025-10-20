@@ -25,7 +25,7 @@ export default async function Page(props: PageProps) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/auth/login");
 
   // ----- montar query dinamicamente -----
   let query = supabase
