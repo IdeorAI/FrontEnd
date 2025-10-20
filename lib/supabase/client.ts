@@ -245,7 +245,40 @@ export function createClient() {
         fullCleanedInit: JSON.stringify(cleanedInit, null, 2),
       });
 
-      return fetch(input, cleanedInit);
+      // Fazer fetch e logar resposta
+      return fetch(input, cleanedInit).then(async (response) => {
+        const clonedResponse = response.clone();
+
+        try {
+          const responseData = await clonedResponse.json();
+          console.log('[Supabase Custom Fetch] 📥 Response received:', {
+            url: input.toString(),
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok,
+            headers: Object.fromEntries(response.headers.entries()),
+            data: responseData,
+          });
+
+          // Se tiver erro, logar com destaque
+          if (!response.ok) {
+            console.error('[Supabase Custom Fetch] ❌ Response ERROR:', {
+              status: response.status,
+              statusText: response.statusText,
+              error: responseData,
+            });
+          }
+        } catch (e) {
+          console.log('[Supabase Custom Fetch] 📥 Response (non-JSON):', {
+            url: input.toString(),
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok,
+          });
+        }
+
+        return response;
+      });
     } catch (error) {
       console.error('[Supabase Custom Fetch] 💥 Error:', {
         error,
