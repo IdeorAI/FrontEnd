@@ -13,7 +13,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2, LogIn, Mail, Lock } from "lucide-react";
 
@@ -26,7 +25,6 @@ export function LoginForm({
   const [error, setError] = useState<string | null>(null);
   const [isLoadingPassword, setIsLoadingPassword] = useState(false);
   const [isLoadingOAuth, setIsLoadingOAuth] = useState(false);
-  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
