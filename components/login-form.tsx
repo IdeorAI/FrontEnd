@@ -53,7 +53,18 @@ export function LoginForm({
 
       if (result.error) throw result.error;
 
+      // Verificar cookies
+      console.log('[Login Form] 🍪 Checking cookies after login:', {
+        allCookies: document.cookie,
+        hasSupabaseCookies: document.cookie.includes('sb-'),
+      });
+
       console.log('[Login Form] ✅ Login successful, redirecting to /dashboard');
+
+      // Dar tempo para cookies serem salvos antes de redirecionar
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      console.log('[Login Form] 🔄 Executing redirect now...');
       router.push("/dashboard");
     } catch (error: unknown) {
       console.error('[Login Form] ❌ Login failed:', error);
