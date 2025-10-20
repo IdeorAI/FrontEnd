@@ -62,10 +62,13 @@ export function LoginForm({
       console.log('[Login Form] ✅ Login successful, redirecting to /dashboard');
 
       // Dar tempo para cookies serem salvos antes de redirecionar
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       console.log('[Login Form] 🔄 Executing redirect now...');
-      router.push("/dashboard");
+
+      // Usar window.location.href para garantir que o browser recarregue
+      // e o middleware leia os cookies corretamente
+      window.location.href = "/dashboard";
     } catch (error: unknown) {
       console.error('[Login Form] ❌ Login failed:', error);
       setError(error instanceof Error ? error.message : "Ocorreu um erro");
