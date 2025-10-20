@@ -1,14 +1,15 @@
-import { createClient as createSupabaseClient, SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Singleton instance - criar apenas uma vez
 let supabaseInstance: SupabaseClient | null = null;
 
 export function createClient() {
-  // Se já existe uma instância, retornar ela
-  if (supabaseInstance) {
-    console.log('[Supabase Client] Reusing existing instance');
-    return supabaseInstance;
-  }
+  // IMPORTANTE: Não usar singleton no browser client para garantir que cookies sejam lidos sempre
+  // if (supabaseInstance) {
+  //   console.log('[Supabase Client] Reusing existing instance');
+  //   return supabaseInstance;
+  // }
 
   // Acessar variáveis de ambiente de forma compatível com build de produção
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -293,21 +294,71 @@ export function createClient() {
   };
 
   try {
-    // Criar cliente apenas uma vez (singleton)
-    supabaseInstance = createSupabaseClient(url, anon, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
+    // Sanitizar variáveis ANTES de criar o cliente
+    const cleanUrl = url?.replace(/[\s\n\r\t]/g, '');
+    const cleanAnon = anon?.replace(/[\s\n\r\t]/g, '');
+
+    if (!cleanUrl || !cleanAnon) {
+      throw new Error('Missing Supabase credentials after sanitization');
+    }
+
+    // Criar cliente usando @supabase/ssr que gerencia cookies automaticamente
+    supabaseInstance = createBrowserClient(cleanUrl, cleanAnon, {
+      cookies: {
+        get(name) {
+          // Ler cookie do document.cookie
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) {
+            const cookieValue = parts.pop()?.split(';').shift();
+            console.log(`[Supabase Client] 🍪 Getting cookie "${name}":`, cookieValue?.substring(0, 50) + '...');
+            return cookieValue;
+          }
+          return undefined;
+        },
+        set(name, value, options) {
+          // Salvar cookie no document.cookie
+          console.log(`[Supabase Client] 🍪 Setting cookie "${name}":`, {
+            valueLength: value.length,
+            options,
+          });
+
+          let cookie = `${name}=${value}`;
+
+          if (options?.maxAge) {
+            cookie += `; max-age=${options.maxAge}`;
+          }
+          if (options?.path) {
+            cookie += `; path=${options.path}`;
+          }
+          if (options?.domain) {
+            cookie += `; domain=${options.domain}`;
+          }
+          if (options?.sameSite) {
+            cookie += `; samesite=${options.sameSite}`;
+          }
+          if (options?.secure) {
+            cookie += '; secure';
+          }
+
+          document.cookie = cookie;
+          console.log(`[Supabase Client] 🍪 Cookie "${name}" set successfully`);
+        },
+        remove(name, options) {
+          // Remover cookie
+          console.log(`[Supabase Client] 🍪 Removing cookie "${name}"`);
+          this.set(name, '', { ...options, maxAge: 0 });
+        },
       },
       global: {
         fetch: customFetch,
       },
     });
 
-    console.log('[Supabase Client] Created NEW instance (singleton)', {
-      authUrl: `${url}/auth/v1`,
+    console.log('[Supabase Client] Created NEW browser client', {
+      authUrl: `${cleanUrl}/auth/v1`,
       usingCustomFetch: true,
+      cookieManagement: 'manual',
     });
     return supabaseInstance;
   } catch (error) {
