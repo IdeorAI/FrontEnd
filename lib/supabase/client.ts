@@ -119,18 +119,20 @@ export function createClient() {
             console.error(`[Supabase Custom Fetch] 🚨 Last 50 chars:`, stringValue.substring(stringValue.length - 50));
           }
 
-          // Sanitizar: remover apenas newlines, tabs e múltiplos espaços
-          // Mas PRESERVAR espaços únicos importantes (como entre "Bearer" e o token)
+          // Sanitizar: remover newlines, tabs E os espaços ao redor deles
+          // O Vercel está inserindo padrões como "ABC    \n  DEF" que devem virar "ABCDEF"
+          // MAS preservar espaços legítimos como "Bearer TOKEN"
           const originalLength = stringValue.length;
 
-          // Remover newlines, carriage returns, tabs
-          stringValue = stringValue.replace(/[\n\r\t]/g, '');
+          // Primeiro: remover espaços ao redor de newlines/tabs (padrão Vercel)
+          // Isso transforma "ABC    \n  DEF" em "ABC\nDEF"
+          stringValue = stringValue.replace(/\s*[\n\r\t]\s*/g, '');
 
-          // Remover espaços múltiplos e reduzir para um único espaço
-          stringValue = stringValue.replace(/ +/g, ' ');
+          // Segundo: remover múltiplos espaços QUE NÃO SEJAM entre palavras
+          // Preservar espaço único entre "Bearer" e o token
+          stringValue = stringValue.replace(/  +/g, ''); // Remove 2+ espaços consecutivos
 
-          // Trim espaços no início e fim
-          stringValue = stringValue.trim();
+          // NÃO fazer trim - pode ter espaços válidos nas pontas em alguns casos
 
           if (stringValue.length !== originalLength) {
             console.warn(`[Supabase Custom Fetch] ⚠️ Sanitized ${originalLength - stringValue.length} whitespace character(s) from header "${key}"`);
