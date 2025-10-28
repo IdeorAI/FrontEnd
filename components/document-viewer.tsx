@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,11 +28,16 @@ export function DocumentViewer({
   );
 
   // Parse JSON content
-  let parsedContent: any;
+  let parsedContent: Record<string, unknown>;
+  let hasError = false;
+  let errorMessage = "";
+
   try {
-    parsedContent = JSON.parse(content);
+    parsedContent = JSON.parse(content) as Record<string, unknown>;
   } catch {
-    parsedContent = { error: "Conteúdo inválido" };
+    parsedContent = {};
+    hasError = true;
+    errorMessage = "Conteúdo inválido";
   }
 
   const toggleSection = (key: string) => {
@@ -47,7 +52,7 @@ export function DocumentViewer({
     });
   };
 
-  const renderValue = (value: any, depth = 0): JSX.Element => {
+  const renderValue = (value: unknown, depth = 0): React.JSX.Element => {
     if (value === null || value === undefined) {
       return <span className="text-gray-400 italic">Não definido</span>;
     }
@@ -145,8 +150,8 @@ export function DocumentViewer({
         <h3 className="text-lg font-semibold text-[#8c7dff]">
           Documento Gerado
         </h3>
-        {parsedContent.error ? (
-          <p className="text-red-600">{parsedContent.error}</p>
+        {hasError ? (
+          <p className="text-red-600">{errorMessage}</p>
         ) : (
           <div className="space-y-4">{renderValue(parsedContent)}</div>
         )}
