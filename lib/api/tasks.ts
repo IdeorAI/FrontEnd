@@ -9,7 +9,7 @@ export interface ProjectTask {
   phase: string;
   content?: string;
   status: 'draft' | 'submitted' | 'evaluated';
-  evaluationResult?: Record<string, any>;
+  evaluationResult?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
   evaluationsCount: number;

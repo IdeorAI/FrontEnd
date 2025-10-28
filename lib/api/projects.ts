@@ -12,7 +12,7 @@ export interface Project {
   productStructure?: string;
   targetAudience?: string;
   generatedOptions?: string[];
-  progressBreakdown?: Record<string, any>;
+  progressBreakdown?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
   tasksCount: number;
