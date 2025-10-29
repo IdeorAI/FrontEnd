@@ -38,7 +38,7 @@ export default async function DashboardLayout({
       <AppSidebar user={userProps} projectName={projectName} />
       <div className="flex-1 lg:ml-64">
         <div className="h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
-        <main className="p-6">{children}</main>
+        <main className="p-4 lg:p-6">{children}</main>
       </div>
     </div>
   )

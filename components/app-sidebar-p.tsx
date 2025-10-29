@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react"
-import { Lightbulb, Home, BarChart, Settings, User, Menu, X, Trash2 } from "lucide-react"
+import { Home, Settings, User, Menu, X, Trash2, ListChecks, ChevronDown, Rocket, Users, FileText } from "lucide-react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -16,6 +16,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import { deleteProject } from "@/app/projeto/dash/actions"
 import { RocketLoading } from "@/components/rocket-loading"
 
@@ -34,6 +39,7 @@ export function AppSidebar({ user, projectName }: AppSidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const [isTasksOpen, setIsTasksOpen] = React.useState(false);
 
   const handleDeleteProject = async () => {
     const projectId = searchParams.get("project_id");
@@ -61,6 +67,8 @@ export function AppSidebar({ user, projectName }: AppSidebarProps) {
     }
   };
 
+  const projectId = searchParams.get("project_id");
+
   const menuItems = [
     {
       title: "Geral",
@@ -68,25 +76,54 @@ export function AppSidebar({ user, projectName }: AppSidebarProps) {
         {
           title: "Dashboard",
           icon: Home,
-          href: "/dashboard",
-          active: pathname === "/dashboard",
-        },
-        {
-          title: "Ideia Inicial",
-          icon: Lightbulb,
-          href: "/idea/create",
-          active: pathname === "/idea/create",
+          href: `/projeto/dash${projectId ? `?project_id=${projectId}` : ""}`,
+          active: pathname === "/projeto/dash",
         },
       ],
     },
     {
-      title: "Análise",
+      title: "Desenvolvimento",
       items: [
         {
-          title: "Métricas",
-          icon: BarChart,
-          href: "/metrics",
-          active: pathname === "/metrics",
+          title: "Tasks",
+          icon: ListChecks,
+          expandable: true,
+          subitems: [
+            {
+              title: "Problema e Oportunidade (etapa1)",
+              href: projectId ? `/projeto/${projectId}/fase2/etapa1` : "#",
+            },
+            {
+              title: "Pesquisa de Mercado (etapa2)",
+              href: projectId ? `/projeto/${projectId}/fase2/etapa2` : "#",
+            },
+            {
+              title: "Proposta de Valor (etapa3)",
+              href: projectId ? `/projeto/${projectId}/fase2/etapa3` : "#",
+            },
+            {
+              title: "Modelo de Negócio (etapa4)",
+              href: projectId ? `/projeto/${projectId}/fase2/etapa4` : "#",
+            },
+          ],
+        },
+        {
+          title: "MVP (etapa5)",
+          icon: Rocket,
+          href: projectId ? `/projeto/${projectId}/fase2/etapa5` : "#",
+          active: pathname.includes("/fase2/etapa5"),
+        },
+        {
+          title: "Equipe (etapa6)",
+          icon: Users,
+          href: projectId ? `/projeto/${projectId}/fase2/etapa6` : "#",
+          active: pathname.includes("/fase2/etapa6"),
+        },
+        {
+          title: "Pitch Deck + Plano + Resumo (etapa7)",
+          icon: FileText,
+          href: projectId ? `/projeto/${projectId}/fase2/etapa7` : "#",
+          active: pathname.includes("/fase2/etapa7"),
         },
       ],
     },
@@ -166,24 +203,77 @@ export function AppSidebar({ user, projectName }: AppSidebarProps) {
                 {group.title}
               </div>
               <div className="space-y-1">
-                {group.items.map((item, itemIndex) => (
-                  <button
-                    key={itemIndex}
-                    onClick={() => {
-                      router.push(item.href);
-                      setIsMobileOpen(false);
-                    }}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-3 rounded-md transition-colors text-sm", // py-3 maior para mobile
-                      item.active
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-accent hover:text-accent-foreground text-foreground"
-                    )}
-                  >
-                    <item.icon className="h-5 w-5" /> {/* Ícones maiores */}
-                    <span>{item.title}</span>
-                  </button>
-                ))}
+                {group.items.map((item, itemIndex) => {
+                  // Item expansível (Tasks)
+                  if (item.expandable && item.subitems) {
+                    return (
+                      <Collapsible
+                        key={itemIndex}
+                        open={isTasksOpen}
+                        onOpenChange={setIsTasksOpen}
+                      >
+                        <CollapsibleTrigger asChild>
+                          <button
+                            className={cn(
+                              "w-full flex items-center gap-3 px-3 py-3 rounded-md transition-colors text-sm",
+                              "hover:bg-accent hover:text-accent-foreground text-foreground"
+                            )}
+                          >
+                            <item.icon className="h-5 w-5" />
+                            <span className="flex-1 text-left">{item.title}</span>
+                            <ChevronDown
+                              className={cn(
+                                "h-4 w-4 transition-transform",
+                                isTasksOpen && "rotate-180"
+                              )}
+                            />
+                          </button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="pl-8 space-y-1 mt-1">
+                          {item.subitems.map((subitem, subIndex) => (
+                            <button
+                              key={subIndex}
+                              onClick={() => {
+                                router.push(subitem.href);
+                                setIsMobileOpen(false);
+                              }}
+                              className={cn(
+                                "w-full flex items-start gap-2 px-3 py-2 rounded-md transition-colors text-xs",
+                                pathname.includes(subitem.href.split('/').pop() || '')
+                                  ? "bg-primary/10 text-primary"
+                                  : "hover:bg-accent hover:text-accent-foreground text-muted-foreground"
+                              )}
+                            >
+                              <span className="text-left">{subitem.title}</span>
+                            </button>
+                          ))}
+                        </CollapsibleContent>
+                      </Collapsible>
+                    );
+                  }
+
+                  // Item normal
+                  return (
+                    <button
+                      key={itemIndex}
+                      onClick={() => {
+                        if (item.href) {
+                          router.push(item.href);
+                          setIsMobileOpen(false);
+                        }
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-3 rounded-md transition-colors text-sm",
+                        item.active
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-accent hover:text-accent-foreground text-foreground"
+                      )}
+                    >
+                      {item.icon && <item.icon className="h-5 w-5" />}
+                      <span>{item.title}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           ))}
