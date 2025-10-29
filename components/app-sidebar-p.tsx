@@ -30,9 +30,10 @@ interface AppSidebarProps {
     email: string;
   };
   projectName?: string;
+  onCardOpen?: (cardId: string) => void;
 }
 
-export function AppSidebar({ user, projectName }: AppSidebarProps) {
+export function AppSidebar({ user, projectName, onCardOpen }: AppSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -69,7 +70,22 @@ export function AppSidebar({ user, projectName }: AppSidebarProps) {
 
   const projectId = searchParams.get("project_id");
 
-  const menuItems = [
+  type MenuItem = {
+    title: string;
+    icon?: React.ComponentType<{ className?: string }>;
+    href?: string;
+    active?: boolean;
+    cardId?: string;
+    expandable?: boolean;
+    subitems?: { title: string; cardId?: string }[];
+  };
+
+  type MenuGroup = {
+    title: string;
+    items: MenuItem[];
+  };
+
+  const menuItems: MenuGroup[] = [
     {
       title: "Geral",
       items: [
@@ -88,42 +104,40 @@ export function AppSidebar({ user, projectName }: AppSidebarProps) {
           title: "Tasks",
           icon: ListChecks,
           expandable: true,
+          cardId: "tasks",
           subitems: [
             {
-              title: "Problema e Oportunidade (etapa1)",
-              href: projectId ? `/projeto/${projectId}/fase2/etapa1` : "#",
+              title: "Problema e Oportunidade",
+              cardId: "etapa1",
             },
             {
-              title: "Pesquisa de Mercado (etapa2)",
-              href: projectId ? `/projeto/${projectId}/fase2/etapa2` : "#",
+              title: "Pesquisa de Mercado",
+              cardId: "etapa2",
             },
             {
-              title: "Proposta de Valor (etapa3)",
-              href: projectId ? `/projeto/${projectId}/fase2/etapa3` : "#",
+              title: "Proposta de Valor",
+              cardId: "etapa3",
             },
             {
-              title: "Modelo de Negócio (etapa4)",
-              href: projectId ? `/projeto/${projectId}/fase2/etapa4` : "#",
+              title: "Modelo de Negócio",
+              cardId: "etapa4",
             },
           ],
         },
         {
-          title: "MVP (etapa5)",
+          title: "MVP",
           icon: Rocket,
-          href: projectId ? `/projeto/${projectId}/fase2/etapa5` : "#",
-          active: pathname.includes("/fase2/etapa5"),
+          cardId: "etapa5",
         },
         {
-          title: "Equipe (etapa6)",
+          title: "Equipe",
           icon: Users,
-          href: projectId ? `/projeto/${projectId}/fase2/etapa6` : "#",
-          active: pathname.includes("/fase2/etapa6"),
+          cardId: "equipe",
         },
         {
-          title: "Pitch Deck + Plano + Resumo (etapa7)",
+          title: "Relatórios",
           icon: FileText,
-          href: projectId ? `/projeto/${projectId}/fase2/etapa7` : "#",
-          active: pathname.includes("/fase2/etapa7"),
+          cardId: "relatorios",
         },
       ],
     },
@@ -219,7 +233,7 @@ export function AppSidebar({ user, projectName }: AppSidebarProps) {
                               "hover:bg-accent hover:text-accent-foreground text-foreground"
                             )}
                           >
-                            <item.icon className="h-5 w-5" />
+                            {item.icon && <item.icon className="h-5 w-5" />}
                             <span className="flex-1 text-left">{item.title}</span>
                             <ChevronDown
                               className={cn(
@@ -234,14 +248,14 @@ export function AppSidebar({ user, projectName }: AppSidebarProps) {
                             <button
                               key={subIndex}
                               onClick={() => {
-                                router.push(subitem.href);
+                                if (onCardOpen && subitem.cardId) {
+                                  onCardOpen(subitem.cardId);
+                                }
                                 setIsMobileOpen(false);
                               }}
                               className={cn(
-                                "w-full flex items-start gap-2 px-3 py-2 rounded-md transition-colors text-xs",
-                                pathname.includes(subitem.href.split('/').pop() || '')
-                                  ? "bg-primary/10 text-primary"
-                                  : "hover:bg-accent hover:text-accent-foreground text-muted-foreground"
+                                "w-full flex items-start gap-2 px-3 py-2 rounded-md transition-colors text-sm",
+                                "hover:bg-accent hover:text-accent-foreground text-foreground"
                               )}
                             >
                               <span className="text-left">{subitem.title}</span>
@@ -257,7 +271,10 @@ export function AppSidebar({ user, projectName }: AppSidebarProps) {
                     <button
                       key={itemIndex}
                       onClick={() => {
-                        if (item.href) {
+                        if (item.cardId && onCardOpen) {
+                          onCardOpen(item.cardId);
+                          setIsMobileOpen(false);
+                        } else if (item.href) {
                           router.push(item.href);
                           setIsMobileOpen(false);
                         }

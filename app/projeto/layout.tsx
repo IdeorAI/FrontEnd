@@ -1,5 +1,5 @@
 // app/dashboard/layout.tsx
-import { AppSidebar } from "@/components/app-sidebar-p"
+import { ProjetoLayoutWrapper } from "@/components/projeto-layout-wrapper"
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 
@@ -34,12 +34,8 @@ export default async function DashboardLayout({
   const projectName = project?.name?.trim() || "Meu Projeto"
 
   return (
-    <div className="flex min-h-screen">
-      <AppSidebar user={userProps} projectName={projectName} />
-      <div className="flex-1 lg:ml-64">
-        <div className="h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
-        <main className="p-4 lg:p-6">{children}</main>
-      </div>
-    </div>
+    <ProjetoLayoutWrapper user={userProps} projectName={projectName}>
+      {children}
+    </ProjetoLayoutWrapper>
   )
 }

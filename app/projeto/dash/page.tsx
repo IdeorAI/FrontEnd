@@ -58,6 +58,20 @@ export default function Page() {
     loadData();
   }, [projectId]);
 
+  useEffect(() => {
+    // Listen for custom event from sidebar
+    const handleOpenCard = (event: Event) => {
+      const customEvent = event as CustomEvent<{ cardId: string }>;
+      setActiveDialog(customEvent.detail.cardId);
+    };
+
+    window.addEventListener("openCard", handleOpenCard);
+
+    return () => {
+      window.removeEventListener("openCard", handleOpenCard);
+    };
+  }, []);
+
   if (!user) return null;
 
   type UserMetadata = { full_name?: string } & Record<string, unknown>;
