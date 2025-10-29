@@ -128,9 +128,9 @@ export default async function Page(props: PageProps) {
           <p className="text-sm opacity-80">Bem-vindo(a), {displayName}</p>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <CreateProjectButton />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
           <LogoutButton />
+          <CreateProjectButton />
         </div>
       </div>
 
