@@ -330,15 +330,6 @@ export function AppSidebar({ user, projectName, onCardOpen }: AppSidebarProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Conteúdo principal com margem responsiva */}
-      <main className={cn(
-        "min-h-screen transition-margin",
-        "lg:ml-64", // Margem apenas em desktop
-        isMobileOpen ? "ml-64" : "ml-0" // Margem apenas quando sidebar aberto em mobile
-      )}>
-        {/* Seu conteúdo aqui */}
-      </main>
     </>
   );
 }
