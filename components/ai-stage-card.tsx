@@ -13,6 +13,7 @@ interface AIStageCardProps {
   onGenerate: (idea: string) => Promise<string>;
   onSave: (content: string) => Promise<void>;
   existingContent?: string;
+  initialIdea?: string;
 }
 
 export function AIStageCard({
@@ -22,8 +23,9 @@ export function AIStageCard({
   onGenerate,
   onSave,
   existingContent,
+  initialIdea = "",
 }: AIStageCardProps) {
-  const [idea, setIdea] = useState("");
+  const [idea, setIdea] = useState(initialIdea);
   const [generatedContent, setGeneratedContent] = useState(existingContent || "");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
