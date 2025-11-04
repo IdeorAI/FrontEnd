@@ -25,7 +25,7 @@ import { useSearchParams } from "next/navigation";
 
 export default function Page() {
   const [user, setUser] = useState<{ email?: string; user_metadata?: Record<string, unknown> } | null>(null);
-  const [project, setProject] = useState<{ name?: string; valuation?: number } | null>(null);
+  const [project, setProject] = useState<{ name?: string; valuation?: number; description?: string } | null>(null);
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
   const [etapaContent, setEtapaContent] = useState<Record<string, string>>({});
   const searchParams = useSearchParams();
@@ -284,6 +284,7 @@ export default function Page() {
           onGenerate={(idea) => handleGenerateEtapa('etapa2', idea)}
           onSave={(content) => handleSaveEtapa('etapa2', content)}
           existingContent={etapaContent['etapa2']}
+          initialIdea={project?.description || ""}
         />
       ),
     },
@@ -301,6 +302,7 @@ export default function Page() {
           onGenerate={(idea) => handleGenerateEtapa('etapa3', idea)}
           onSave={(content) => handleSaveEtapa('etapa3', content)}
           existingContent={etapaContent['etapa3']}
+          initialIdea={project?.description || ""}
         />
       ),
     },
@@ -318,6 +320,7 @@ export default function Page() {
           onGenerate={(idea) => handleGenerateEtapa('etapa4', idea)}
           onSave={(content) => handleSaveEtapa('etapa4', content)}
           existingContent={etapaContent['etapa4']}
+          initialIdea={project?.description || ""}
         />
       ),
     },
