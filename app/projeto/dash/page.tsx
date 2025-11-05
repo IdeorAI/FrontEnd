@@ -19,6 +19,7 @@ import {
   Rocket,
   Users,
   FileText,
+  Download,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
@@ -46,8 +47,6 @@ export default function Page() {
           phase: etapaId,
           inputs: {
             ideia: idea,
-            system_prompt: prompt.system,
-            user_prompt: prompt.user,
           },
         },
         user.email || ""
@@ -94,6 +93,46 @@ export default function Page() {
     } catch (error) {
       console.error("Erro ao salvar:", error);
       throw error;
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!projectId || !user) {
+      alert("Projeto ou usuário não encontrado");
+      return;
+    }
+
+    try {
+      const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const response = await fetch(
+        `${API_BASE}/api/projects/${projectId}/documents/export/pdf`,
+        {
+          method: 'GET',
+          headers: {
+            'x-user-id': user.email || '',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Falha ao gerar PDF');
+      }
+
+      // Baixar o arquivo
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Relatorio_Projeto_${projectId}_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      alert("PDF baixado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao baixar PDF:", error);
+      alert("Erro ao gerar PDF. Verifique se há documentos salvos.");
     }
   };
 
@@ -376,7 +415,26 @@ export default function Page() {
           <p className="text-sm text-muted-foreground">
             Acesse todos os documentos e relatórios gerados para o seu projeto.
           </p>
+
+          <div className="p-4 border rounded-lg bg-primary/5">
+            <h3 className="font-semibold mb-2 flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Relatório Completo (PDF)
+            </h3>
+            <p className="text-sm text-muted-foreground mb-3">
+              Baixe um PDF consolidado com todos os documentos gerados nas etapas do projeto.
+            </p>
+            <button
+              onClick={handleDownloadPDF}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+            >
+              <Download className="h-4 w-4" />
+              Baixar Relatório PDF
+            </button>
+          </div>
+
           <IdeasCheckboxes />
+
           <div className="p-4 border rounded-lg bg-muted/50">
             <p className="text-sm">
               Novos relatórios estarão disponíveis à medida que você completa as etapas do
