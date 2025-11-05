@@ -45,8 +45,21 @@ export function AIStageCard({
       setGeneratedContent(result);
       setShowSuccess(false);
     } catch (error) {
-      console.error("Erro ao gerar:", error);
-      alert("Erro ao gerar conteúdo com IA. Tente novamente.");
+      console.error("Erro detalhado ao gerar:", error);
+
+      // Mensagem de erro mais detalhada
+      let errorMessage = "Erro ao gerar conteúdo com IA.";
+
+      if (error instanceof TypeError && error.message.includes("fetch")) {
+        errorMessage += "\n\nProblema de conexão com o servidor. Verifique:\n" +
+                       "- Se o backend está rodando\n" +
+                       "- Se a variável NEXT_PUBLIC_API_URL está configurada\n" +
+                       "- Se há problemas de rede ou CORS";
+      } else if (error instanceof Error) {
+        errorMessage += `\n\nDetalhes: ${error.message}`;
+      }
+
+      alert(errorMessage);
     } finally {
       setIsGenerating(false);
     }
