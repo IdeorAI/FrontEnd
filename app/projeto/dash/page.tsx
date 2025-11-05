@@ -8,7 +8,6 @@ import { IdeasCheckboxes } from "@/components/ideas-checkboxes";
 import { CardDialog } from "@/components/card-dialog";
 import { AIStageCard } from "@/components/ai-stage-card";
 import { generateDocument } from "@/lib/api/documents";
-import { getSimplifiedPrompt } from "@/lib/simplified-prompts";
 import {
   ListChecks,
   TrendingUp,
@@ -37,8 +36,6 @@ export default function Page() {
     if (!projectId || !user) {
       throw new Error("Project ID ou usuário não encontrado");
     }
-
-    const prompt = getSimplifiedPrompt(etapaId, idea);
 
     try {
       const response = await generateDocument(
