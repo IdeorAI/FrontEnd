@@ -131,7 +131,7 @@ export default function Page() {
     }
   };
 
-  const handleDownloadPDF = async () => {
+  const handleDownloadPDF = async (phase?: string) => {
     if (!projectId || !user) {
       alert("Projeto ou usuário não encontrado");
       return;
@@ -147,15 +147,18 @@ export default function Page() {
       }
 
       const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-      const response = await fetch(
-        `${API_BASE}/api/projects/${projectId}/documents/export/pdf`,
-        {
-          method: 'GET',
-          headers: {
-            'x-user-id': currentUser.id,
-          },
-        }
-      );
+      const endpoint = phase
+        ? `${API_BASE}/api/projects/${projectId}/documents/export/pdf/${phase}`
+        : `${API_BASE}/api/projects/${projectId}/documents/export/pdf`;
+
+      console.log(`Baixando PDF${phase ? ` da fase ${phase}` : ' completo'}...`);
+
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        headers: {
+          'x-user-id': currentUser.id,
+        },
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -170,7 +173,9 @@ export default function Page() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Relatorio_Projeto_${projectId}_${new Date().toISOString().split('T')[0]}.pdf`;
+      a.download = phase
+        ? `Relatorio_${phase}_${new Date().toISOString().split('T')[0]}.pdf`
+        : `Relatorio_Projeto_${projectId}_${new Date().toISOString().split('T')[0]}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -474,15 +479,44 @@ export default function Page() {
               Baixe um PDF consolidado com todos os documentos gerados nas etapas do projeto.
             </p>
             <button
-              onClick={handleDownloadPDF}
+              onClick={() => handleDownloadPDF()}
               className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
             >
               <Download className="h-4 w-4" />
-              Baixar Relatório PDF
+              Baixar Relatório Completo
             </button>
           </div>
 
-          <IdeasCheckboxes />
+          <div className="space-y-3">
+            <h3 className="font-semibold text-sm">Relatórios por Etapa</h3>
+
+            {[
+              { id: 'etapa2', title: 'Pesquisa de Mercado', hasContent: !!etapaContent['etapa2'] },
+              { id: 'etapa3', title: 'Proposta de Valor', hasContent: !!etapaContent['etapa3'] },
+              { id: 'etapa4', title: 'Modelo de Negócio', hasContent: !!etapaContent['etapa4'] },
+            ].map((etapa) => (
+              <div key={etapa.id} className="p-3 border rounded-lg flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="font-medium text-sm">{etapa.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {etapa.hasContent ? 'Documento gerado' : 'Aguardando geração'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleDownloadPDF(etapa.id)}
+                  disabled={!etapa.hasContent}
+                  className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-md transition-colors ${
+                    etapa.hasContent
+                      ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                      : 'bg-muted text-muted-foreground cursor-not-allowed'
+                  }`}
+                >
+                  <Download className="h-3 w-3" />
+                  Baixar PDF
+                </button>
+              </div>
+            ))}
+          </div>
 
           <div className="p-4 border rounded-lg bg-muted/50">
             <p className="text-sm">
