@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { LogoutButton } from "@/components/logout-button";
 import { TeamAvatars } from "@/components/team-avatars";
-import { IdeasCheckboxes } from "@/components/ideas-checkboxes";
 import { CardDialog } from "@/components/card-dialog";
 import { AIStageCard } from "@/components/ai-stage-card";
 import { generateDocument } from "@/lib/api/documents";
