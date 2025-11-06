@@ -20,6 +20,14 @@ export async function generateDocument(
   data: GenerateDocumentDto,
   userId: string
 ): Promise<GenerateDocumentResponse> {
+  console.log('[generateDocument] Chamando API:', {
+    url: `${API_BASE}/api/projects/${projectId}/documents/generate`,
+    projectId,
+    phase: data.phase,
+    userId,
+    hasIdeia: !!data.inputs.ideia,
+  });
+
   const res = await fetch(`${API_BASE}/api/projects/${projectId}/documents/generate`, {
     method: 'POST',
     headers: {
@@ -29,8 +37,19 @@ export async function generateDocument(
     body: JSON.stringify(data),
   });
 
-  if (!res.ok) throw new Error('Failed to generate document');
-  return res.json();
+  if (!res.ok) {
+    const errorText = await res.text();
+    console.error('[generateDocument] Erro:', {
+      status: res.status,
+      statusText: res.statusText,
+      errorBody: errorText,
+    });
+    throw new Error(`Failed to generate document: ${res.status} - ${errorText}`);
+  }
+
+  const result = await res.json();
+  console.log('[generateDocument] Sucesso:', result);
+  return result;
 }
 
 export async function regenerateDocument(

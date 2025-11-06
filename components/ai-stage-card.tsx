@@ -149,7 +149,7 @@ export function AIStageCard({
               value={idea}
               onChange={(e) => setIdea(e.target.value)}
               rows={4}
-              className="resize-none"
+              className="resize-none lg:min-h-[200px]"
             />
             <Button
               onClick={handleGenerate}
