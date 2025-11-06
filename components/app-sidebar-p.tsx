@@ -92,8 +92,8 @@ export function AppSidebar({ user, projectName, onCardOpen }: AppSidebarProps) {
         {
           title: "Dashboard",
           icon: Home,
-          href: `/projeto/dash${projectId ? `?project_id=${projectId}` : ""}`,
-          active: pathname === "/projeto/dash",
+          href: "/dashboard",
+          active: pathname === "/dashboard",
         },
       ],
     },

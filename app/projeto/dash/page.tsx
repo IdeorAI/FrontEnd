@@ -38,6 +38,13 @@ export default function Page() {
     }
 
     try {
+      const supabase = createClient();
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+      if (!currentUser?.id) {
+        throw new Error("Usuário não autenticado");
+      }
+
       const response = await generateDocument(
         projectId,
         {
@@ -46,7 +53,7 @@ export default function Page() {
             ideia: idea,
           },
         },
-        user.email || ""
+        currentUser.id
       );
 
       return response.generatedContent;
@@ -64,23 +71,54 @@ export default function Page() {
     const supabase = createClient();
 
     try {
-      // Salvar ou atualizar na tabela tasks
-      const { error } = await supabase
+      // Verificar se já existe uma task para este projeto e fase
+      const { data: existingTask, error: searchError } = await supabase
         .from("tasks")
-        .upsert(
-          {
-            project_id: projectId,
-            phase: etapaId,
-            generated_content: content,
+        .select("id")
+        .eq("project_id", projectId)
+        .eq("phase", etapaId)
+        .maybeSingle();
+
+      if (searchError) {
+        console.error("Erro ao buscar task existente:", searchError);
+        throw new Error(`Erro ao buscar task: ${searchError.message}`);
+      }
+
+      let result;
+      if (existingTask) {
+        // Atualizar task existente
+        console.log("Atualizando task existente:", existingTask.id);
+        result = await supabase
+          .from("tasks")
+          .update({
+            content: content,
             status: "evaluated",
             updated_at: new Date().toISOString(),
-          },
-          {
-            onConflict: "project_id,phase",
-          }
-        );
+          })
+          .eq("id", existingTask.id)
+          .select();
+      } else {
+        // Criar nova task
+        console.log("Criando nova task para fase:", etapaId);
+        result = await supabase
+          .from("tasks")
+          .insert({
+            project_id: projectId,
+            phase: etapaId,
+            content: content,
+            title: `Etapa ${etapaId}`,
+            description: `Documento gerado para ${etapaId}`,
+            status: "evaluated",
+          })
+          .select();
+      }
 
-      if (error) throw error;
+      if (result.error) {
+        console.error("Erro detalhado ao salvar no Supabase:", result.error);
+        throw new Error(`Erro ao salvar: ${result.error.message}`);
+      }
+
+      console.log("Conteúdo salvo com sucesso:", result.data);
 
       // Atualizar estado local
       setEtapaContent((prev) => ({
@@ -100,20 +138,32 @@ export default function Page() {
     }
 
     try {
+      const supabase = createClient();
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+
+      if (!currentUser?.id) {
+        alert("Usuário não autenticado");
+        return;
+      }
+
       const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
       const response = await fetch(
         `${API_BASE}/api/projects/${projectId}/documents/export/pdf`,
         {
           method: 'GET',
           headers: {
-            'x-user-id': user.email || '',
+            'x-user-id': currentUser.id,
           },
         }
       );
 
       if (!response.ok) {
-        throw new Error('Falha ao gerar PDF');
+        const errorText = await response.text();
+        console.error("Erro ao gerar PDF (status:", response.status, "):", errorText);
+        throw new Error(`Falha ao gerar PDF: ${response.status} - ${errorText}`);
       }
+
+      console.log("PDF gerado com sucesso, baixando arquivo...");
 
       // Baixar o arquivo
       const blob = await response.blob();
@@ -129,7 +179,7 @@ export default function Page() {
       alert("PDF baixado com sucesso!");
     } catch (error) {
       console.error("Erro ao baixar PDF:", error);
-      alert("Erro ao gerar PDF. Verifique se há documentos salvos.");
+      alert(`Erro ao gerar PDF: ${error instanceof Error ? error.message : "Verifique se há documentos salvos."}`);
     }
   };
 
@@ -160,17 +210,19 @@ export default function Page() {
         }
 
         // Buscar conteúdo existente das etapas
-        const { data: tasksData } = await supabase
+        const { data: tasksData, error: tasksError } = await supabase
           .from("tasks")
-          .select("phase, generated_content")
+          .select("phase, content")
           .eq("project_id", projectId)
           .in("phase", ["etapa2", "etapa3", "etapa4"]);
 
-        if (tasksData) {
+        if (tasksError) {
+          console.error("Erro ao buscar tasks:", tasksError);
+        } else if (tasksData) {
           const contentMap: Record<string, string> = {};
-          tasksData.forEach((task) => {
-            if (task.generated_content) {
-              contentMap[task.phase] = task.generated_content;
+          tasksData.forEach((task: { phase: string; content: string | null }) => {
+            if (task.content) {
+              contentMap[task.phase] = task.content;
             }
           });
           setEtapaContent(contentMap);
