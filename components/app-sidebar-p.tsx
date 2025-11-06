@@ -68,8 +68,6 @@ export function AppSidebar({ user, projectName, onCardOpen }: AppSidebarProps) {
     }
   };
 
-  const projectId = searchParams.get("project_id");
-
   type MenuItem = {
     title: string;
     icon?: React.ComponentType<{ className?: string }>;
