@@ -565,12 +565,10 @@ export default function Page() {
         {/* Logo IDEOR (apenas imagem) */}
         <div className="flex items-center">
           <div className="relative w-12 h-12">
-            <Image
+            <img
               src="/assets/logo_branco.png"
               alt="IDEOR Logo"
-              width={48}
-              height={48}
-              className="object-contain"
+              className="object-contain w-full h-full"
             />
           </div>
         </div>
