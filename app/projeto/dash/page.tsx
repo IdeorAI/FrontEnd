@@ -30,13 +30,27 @@ import Image from "next/image";
 
 export default function Page() {
   const [user, setUser] = useState<{ email?: string; user_metadata?: Record<string, unknown> } | null>(null);
-  const [project, setProject] = useState<{ name?: string; valuation?: number; description?: string } | null>(null);
+  const [project, setProject] = useState<{ name?: string; valuation?: number; description?: string; created_at?: string } | null>(null);
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
   const [etapaContent, setEtapaContent] = useState<Record<string, string>>({});
   const [currentStage, setCurrentStage] = useState(1); // Etapa atual do projeto
-  const [completedStages, setCompletedStages] = useState<number[]>([]); // Etapas completas
+  const [completedStages, setCompletedStages] = useState<number[]>([0]); // Etapas completas (0=Início sempre completo)
   const searchParams = useSearchParams();
   const projectId = searchParams.get("project_id");
+
+  // Calcular medalha baseada no progresso
+  const getMedalha = () => {
+    const completedCount = completedStages.filter(s => s > 0).length; // Excluir "Início"
+    if (completedCount === 0) return { nome: "Iniciante", icon: Award, color: "text-gray-500" };
+    if (completedCount >= 1 && completedCount < 3) return { nome: "Visionário", icon: Award, color: "text-blue-500" };
+    if (completedCount >= 3 && completedCount < 5) return { nome: "Explorador", icon: Award, color: "text-purple-500" };
+    if (completedCount >= 5 && completedCount < 7) return { nome: "Construtor", icon: Award, color: "text-orange-500" };
+    if (completedCount >= 7) return { nome: "Escalador", icon: Award, color: "text-green-500" };
+    return { nome: "Iniciante", icon: Award, color: "text-gray-500" };
+  };
+
+  // Verificar se todas etapas estão completas (exceto Início)
+  const todasEtapasCompletas = completedStages.filter(s => s > 0).length >= 7;
 
   // Handlers para as etapas de IA
   const handleGenerateEtapa = async (etapaId: 'etapa2' | 'etapa3' | 'etapa4', idea: string): Promise<string> => {
@@ -550,49 +564,46 @@ export default function Page() {
     },
   ];
 
+  const medalhaAtual = getMedalha();
+
   return (
     <div className="space-y-6">
       {/* Novo Cabeçalho Superior */}
       <div className="flex items-center justify-between gap-4 pb-4 border-b">
-        {/* Logo IDEOR */}
-        <div className="flex items-center gap-3">
-          <div className="relative w-10 h-10">
+        {/* Logo IDEOR (apenas imagem) */}
+        <div className="flex items-center">
+          <div className="relative w-12 h-12">
             <Image
-              src="/assets/ideorLogo.png"
+              src="/assets/logo_branco.png"
               alt="IDEOR Logo"
-              width={40}
-              height={40}
+              width={48}
+              height={48}
               className="object-contain"
             />
           </div>
-          <span className="text-xl font-bold text-primary hidden sm:block">IDEOR</span>
         </div>
 
-        {/* Saudação Central */}
-        <div className="flex-1 text-center">
-          <h1 className="text-lg sm:text-xl font-semibold">
-            Olá, {userProps.name}
-          </h1>
+        {/* Título e Subtítulo do Projeto */}
+        <div className="flex-1 text-left ml-4">
           {project && (
-            <p className="text-xs text-muted-foreground mt-1">
-              {project.name}
-            </p>
+            <>
+              <h1 className="text-lg sm:text-xl font-bold text-foreground">
+                {project.name}
+              </h1>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Startup criada em {project.created_at ? new Date(project.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A'}
+              </p>
+            </>
           )}
         </div>
 
         {/* Badges e Notificações */}
-        <div className="flex items-center gap-2 sm:gap-4">
-          {/* Notificações */}
-          <button className="relative p-2 hover:bg-muted rounded-full transition-colors">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-          </button>
-
-          {/* Valuation Badge */}
+        <div className="flex items-center gap-3">
+          {/* Valuation Badge (50% maior) */}
           {project && project.valuation && (
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full">
-              <TrendingUp className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold">
+            <div className="hidden sm:flex items-center gap-2.5 px-5 py-2.5 bg-primary/10 rounded-full hover:bg-primary/15 transition-colors cursor-pointer">
+              <TrendingUp className="h-6 w-6 text-primary" />
+              <span className="text-base font-semibold">
                 {new Intl.NumberFormat("pt-BR", {
                   style: "currency",
                   currency: "BRL",
@@ -602,22 +613,37 @@ export default function Page() {
             </div>
           )}
 
-          {/* Score Badge */}
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/10 rounded-full">
-            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-            <span className="text-sm font-semibold">5.3</span>
+          {/* Score Badge (50% maior) */}
+          <div className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-yellow-500/10 rounded-full hover:bg-yellow-500/15 transition-colors cursor-pointer">
+            <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
+            <span className="text-base font-semibold">5.3</span>
           </div>
 
-          {/* Badges Badge */}
-          <button className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/10 rounded-full hover:bg-purple-500/20 transition-colors">
-            <Award className="h-4 w-4 text-purple-500" />
-            <span className="text-sm font-semibold">Badges</span>
+          {/* Medalha Badge (50% maior) - Baseado em progresso */}
+          <button className={`hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full transition-colors ${medalhaAtual.color === 'text-gray-500' ? 'bg-gray-500/10 hover:bg-gray-500/15' : 'bg-purple-500/10 hover:bg-purple-500/20'}`}>
+            <medalhaAtual.icon className={`h-6 w-6 ${medalhaAtual.color}`} />
+            <span className={`text-base font-semibold ${medalhaAtual.color}`}>{medalhaAtual.nome}</span>
           </button>
 
-          {/* Certificado Badge */}
-          <button className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 rounded-full hover:bg-blue-500/20 transition-colors">
-            <FileCheck2 className="h-4 w-4 text-blue-500" />
-            <span className="text-sm font-semibold">Certificado</span>
+          {/* Certificado Badge (50% maior) - On/Off baseado em etapas */}
+          <button
+            className={`hidden lg:flex items-center gap-2 px-5 py-2.5 rounded-full transition-colors ${
+              todasEtapasCompletas
+                ? 'bg-green-500/10 hover:bg-green-500/20'
+                : 'bg-muted hover:bg-muted/80 opacity-50 cursor-not-allowed'
+            }`}
+            disabled={!todasEtapasCompletas}
+          >
+            <FileCheck2 className={`h-6 w-6 ${todasEtapasCompletas ? 'text-green-500' : 'text-muted-foreground'}`} />
+            <span className={`text-base font-semibold ${todasEtapasCompletas ? 'text-green-500' : 'text-muted-foreground'}`}>
+              Certificado Ideor
+            </span>
+          </button>
+
+          {/* Notificações */}
+          <button className="relative p-3 hover:bg-muted rounded-full transition-colors">
+            <Bell className="h-6 w-6" />
+            <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full" />
           </button>
 
           {/* Logout */}

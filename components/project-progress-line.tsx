@@ -10,15 +10,15 @@ interface ProjectProgressLineProps {
 
 export function ProjectProgressLine({ currentStage, completedStages }: ProjectProgressLineProps) {
   const stages = [
-    { id: 0, label: "Início" },
-    { id: 1, label: "Problema" },
-    { id: 2, label: "Mercado" },
-    { id: 3, label: "Valor" },
-    { id: 4, label: "Modelo" },
-    { id: 5, label: "MVP" },
-    { id: 6, label: "Equipe" },
-    { id: 7, label: "Pitch" },
-    { id: 8, label: "Concluído" },
+    { id: 0, label: "Início", shortLabel: "Início" },
+    { id: 1, label: "Ideia e\nProblema", shortLabel: "Problema", medalha: null },
+    { id: 2, label: "Pesquisa de\nMercado", shortLabel: "Mercado", medalha: { nome: "Visionário", emoji: "🔭" } },
+    { id: 3, label: "Proposta de\nValor", shortLabel: "Valor", medalha: null },
+    { id: 4, label: "Modelo de\nNegócio", shortLabel: "Modelo", medalha: { nome: "Explorador", emoji: "🗺️" } },
+    { id: 5, label: "Definição do\nMVP", shortLabel: "MVP", medalha: null },
+    { id: 6, label: "Criação de\nEquipe", shortLabel: "Equipe", medalha: { nome: "Construtor", emoji: "🔨" } },
+    { id: 7, label: "Documentação", shortLabel: "Doc.", medalha: null },
+    { id: 8, label: "Captação", shortLabel: "Captação", medalha: { nome: "Escalador", emoji: "📈" } },
   ];
 
   const isCompleted = (stageId: number) => completedStages.includes(stageId);
@@ -47,6 +47,21 @@ export function ProjectProgressLine({ currentStage, completedStages }: ProjectPr
 
             return (
               <div key={stage.id} className="relative flex flex-col items-center group">
+                {/* Medalha acima do círculo (se existir) */}
+                {stage.medalha && completed && (
+                  <motion.div
+                    className="absolute -top-16 flex flex-col items-center"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 + 0.5, type: "spring" }}
+                  >
+                    <div className="text-3xl mb-1">{stage.medalha.emoji}</div>
+                    <div className="text-xs font-semibold text-primary bg-primary/10 px-2 py-1 rounded-full whitespace-nowrap">
+                      {stage.medalha.nome}
+                    </div>
+                  </motion.div>
+                )}
+
                 {/* Círculo */}
                 <motion.div
                   className={`
@@ -67,11 +82,12 @@ export function ProjectProgressLine({ currentStage, completedStages }: ProjectPr
                 >
                   {current && (
                     <motion.div
-                      initial={{ scale: 0, rotate: -180 }}
+                      initial={{ scale: 0, rotate: -90 }}
                       animate={{ scale: 1, rotate: 0 }}
                       transition={{ type: "spring", stiffness: 260, damping: 20 }}
                     >
-                      <Rocket className="h-5 w-5 text-primary" />
+                      {/* Foguete horizontal apontando para direita */}
+                      <Rocket className="h-5 w-5 text-primary rotate-45" />
                     </motion.div>
                   )}
                   {completed && !current && (
@@ -96,11 +112,11 @@ export function ProjectProgressLine({ currentStage, completedStages }: ProjectPr
                   )}
                 </motion.div>
 
-                {/* Label */}
+                {/* Label com quebra de linha */}
                 <motion.div
                   className={`
-                    mt-3 text-xs font-medium text-center whitespace-nowrap
-                    transition-colors
+                    mt-3 text-xs font-medium text-center whitespace-pre-line leading-tight
+                    transition-colors max-w-[60px]
                     ${
                       completed || current
                         ? "text-foreground"
@@ -124,22 +140,12 @@ export function ProjectProgressLine({ currentStage, completedStages }: ProjectPr
                   "
                 >
                   {completed ? "Concluída" : current ? "Em progresso" : "Pendente"}
+                  {stage.medalha && completed && ` • ${stage.medalha.nome}`}
                 </div>
               </div>
             );
           })}
         </div>
-
-        {/* Status text */}
-        <motion.div
-          className="mt-6 text-center text-sm text-muted-foreground"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-        >
-          Progresso: {completedStages.length} de {stages.length - 1} etapas concluídas
-          {currentStage < stages.length - 1 && ` • Etapa atual: ${stages[currentStage].label}`}
-        </motion.div>
       </div>
     </div>
   );
