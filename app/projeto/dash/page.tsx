@@ -6,6 +6,7 @@ import { LogoutButton } from "@/components/logout-button";
 import { TeamAvatars } from "@/components/team-avatars";
 import { CardDialog } from "@/components/card-dialog";
 import { AIStageCard } from "@/components/ai-stage-card";
+import { ProjectProgressLine } from "@/components/project-progress-line";
 import { generateDocument } from "@/lib/api/documents";
 import {
   ListChecks,
@@ -18,15 +19,22 @@ import {
   Users,
   FileText,
   Download,
+  Bell,
+  Star,
+  Award,
+  FileCheck2,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import Image from "next/image";
 
 export default function Page() {
   const [user, setUser] = useState<{ email?: string; user_metadata?: Record<string, unknown> } | null>(null);
   const [project, setProject] = useState<{ name?: string; valuation?: number; description?: string } | null>(null);
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
   const [etapaContent, setEtapaContent] = useState<Record<string, string>>({});
+  const [currentStage, setCurrentStage] = useState(1); // Etapa atual do projeto
+  const [completedStages, setCompletedStages] = useState<number[]>([]); // Etapas completas
   const searchParams = useSearchParams();
   const projectId = searchParams.get("project_id");
 
@@ -224,12 +232,26 @@ export default function Page() {
           console.error("Erro ao buscar tasks:", tasksError);
         } else if (tasksData) {
           const contentMap: Record<string, string> = {};
-          tasksData.forEach((task: { phase: string; content: string | null }) => {
+          const completed: number[] = [0]; // Início sempre completo
+
+          tasksData.forEach((task: { phase: string; content: string | null; status?: string }) => {
             if (task.content) {
               contentMap[task.phase] = task.content;
+
+              // Mapear fase para número (etapa2 -> 2, etapa3 -> 3, etc.)
+              const etapaNum = parseInt(task.phase.replace('etapa', ''));
+              if (!isNaN(etapaNum) && task.status === 'evaluated') {
+                completed.push(etapaNum);
+              }
             }
           });
+
           setEtapaContent(contentMap);
+          setCompletedStages(completed);
+
+          // Definir etapa atual como a próxima após a última completa
+          const maxCompleted = Math.max(...completed);
+          setCurrentStage(maxCompleted < 7 ? maxCompleted + 1 : 8);
         }
       }
     };
@@ -530,22 +552,83 @@ export default function Page() {
 
   return (
     <div className="space-y-6">
-      {/* Cabeçalho superior */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Dashboard do Projeto</h1>
-          <p className="text-sm opacity-80">Bem-vindo(a), {userProps.name}</p>
+      {/* Novo Cabeçalho Superior */}
+      <div className="flex items-center justify-between gap-4 pb-4 border-b">
+        {/* Logo IDEOR */}
+        <div className="flex items-center gap-3">
+          <div className="relative w-10 h-10">
+            <Image
+              src="/assets/ideorLogo.png"
+              alt="IDEOR Logo"
+              width={40}
+              height={40}
+              className="object-contain"
+            />
+          </div>
+          <span className="text-xl font-bold text-primary hidden sm:block">IDEOR</span>
+        </div>
+
+        {/* Saudação Central */}
+        <div className="flex-1 text-center">
+          <h1 className="text-lg sm:text-xl font-semibold">
+            Olá, {userProps.name}
+          </h1>
           {project && (
             <p className="text-xs text-muted-foreground mt-1">
-              Projeto: {project.name}
+              {project.name}
             </p>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
-          <LogoutButton />
+        {/* Badges e Notificações */}
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* Notificações */}
+          <button className="relative p-2 hover:bg-muted rounded-full transition-colors">
+            <Bell className="h-5 w-5" />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+          </button>
+
+          {/* Valuation Badge */}
+          {project && project.valuation && (
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full">
+              <TrendingUp className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold">
+                {new Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                  maximumFractionDigits: 0,
+                }).format(Number(project.valuation))}
+              </span>
+            </div>
+          )}
+
+          {/* Score Badge */}
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/10 rounded-full">
+            <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+            <span className="text-sm font-semibold">5.3</span>
+          </div>
+
+          {/* Badges Badge */}
+          <button className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/10 rounded-full hover:bg-purple-500/20 transition-colors">
+            <Award className="h-4 w-4 text-purple-500" />
+            <span className="text-sm font-semibold">Badges</span>
+          </button>
+
+          {/* Certificado Badge */}
+          <button className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 rounded-full hover:bg-blue-500/20 transition-colors">
+            <FileCheck2 className="h-4 w-4 text-blue-500" />
+            <span className="text-sm font-semibold">Certificado</span>
+          </button>
+
+          {/* Logout */}
+          <div className="ml-2">
+            <LogoutButton />
+          </div>
         </div>
       </div>
+
+      {/* Linha de Progressão */}
+      <ProjectProgressLine currentStage={currentStage} completedStages={completedStages} />
 
       {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
