@@ -289,14 +289,6 @@ export default function Page() {
 
   if (!user) return null;
 
-  type UserMetadata = { full_name?: string } & Record<string, unknown>;
-  const meta = user.user_metadata as UserMetadata;
-
-  const userProps = {
-    name: meta.full_name ?? user.email ?? "User",
-    email: user.email ?? "",
-  };
-
   // Definição dos cards
   const cards = [
     {
