@@ -26,7 +26,6 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import Image from "next/image";
 
 export default function Page() {
   const [user, setUser] = useState<{ email?: string; user_metadata?: Record<string, unknown> } | null>(null);
@@ -565,6 +564,7 @@ export default function Page() {
         {/* Logo IDEOR (apenas imagem) */}
         <div className="flex items-center">
           <div className="relative w-12 h-12">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/logo_branco.png"
               alt="IDEOR Logo"
