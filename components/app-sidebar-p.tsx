@@ -99,7 +99,7 @@ export function AppSidebar({ user, projectName, onCardOpen }: AppSidebarProps) {
       title: "Desenvolvimento",
       items: [
         {
-          title: "Tasks",
+          title: "Roadmap",
           icon: ListChecks,
           expandable: true,
           cardId: "tasks",

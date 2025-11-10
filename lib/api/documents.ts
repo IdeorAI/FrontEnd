@@ -20,6 +20,15 @@ export async function generateDocument(
   data: GenerateDocumentDto,
   userId: string
 ): Promise<GenerateDocumentResponse> {
+  console.log('[generateDocument] Configuração:', {
+    API_BASE,
+    origin: typeof window !== 'undefined' ? window.location.origin : 'N/A',
+    envVars: {
+      NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+      NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL,
+    }
+  });
+
   console.log('[generateDocument] Chamando API:', {
     url: `${API_BASE}/api/projects/${projectId}/documents/generate`,
     projectId,
@@ -28,28 +37,38 @@ export async function generateDocument(
     hasIdeia: !!data.inputs.ideia,
   });
 
-  const res = await fetch(`${API_BASE}/api/projects/${projectId}/documents/generate`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-user-id': userId,
-    },
-    body: JSON.stringify(data),
-  });
-
-  if (!res.ok) {
-    const errorText = await res.text();
-    console.error('[generateDocument] Erro:', {
-      status: res.status,
-      statusText: res.statusText,
-      errorBody: errorText,
+  try {
+    const res = await fetch(`${API_BASE}/api/projects/${projectId}/documents/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': userId,
+      },
+      body: JSON.stringify(data),
     });
-    throw new Error(`Failed to generate document: ${res.status} - ${errorText}`);
-  }
 
-  const result = await res.json();
-  console.log('[generateDocument] Sucesso:', result);
-  return result;
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('[generateDocument] Erro HTTP:', {
+        status: res.status,
+        statusText: res.statusText,
+        errorBody: errorText,
+      });
+      throw new Error(`Failed to generate document: ${res.status} - ${errorText}`);
+    }
+
+    const result = await res.json();
+    console.log('[generateDocument] Sucesso:', result);
+    return result;
+  } catch (error) {
+    console.error('[generateDocument] Erro de rede/fetch:', {
+      error,
+      errorName: error instanceof Error ? error.name : 'Unknown',
+      errorMessage: error instanceof Error ? error.message : String(error),
+      API_BASE,
+    });
+    throw error;
+  }
 }
 
 export async function regenerateDocument(
