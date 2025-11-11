@@ -58,7 +58,7 @@ export function ProjectProgressLine({ currentStage, completedStages }: ProjectPr
                       transition={{ delay: index * 0.1 + 0.5, type: "spring" }}
                     >
                       <div
-                        className={`text-3xl mb-1 transition-all duration-300 ${
+                        className={`text-lg mb-1 transition-all duration-300 ${
                           completed ? 'opacity-100 grayscale-0' : 'opacity-30 grayscale'
                         }`}
                       >
