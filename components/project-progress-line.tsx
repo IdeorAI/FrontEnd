@@ -49,10 +49,10 @@ export function ProjectProgressLine({ currentStage, completedStages }: ProjectPr
 
               return (
                 <div key={stage.id} className="relative flex flex-col items-center group" style={{ width: '70px' }}>
-                  {/* Medalha acima do círculo (sempre visível) */}
+                  {/* Medalha acima do círculo (sempre visível) - Aproximada dos círculos */}
                   {stage.medalha && (
                     <motion.div
-                      className="absolute -top-16 flex flex-col items-center"
+                      className="absolute -top-12 flex flex-col items-center"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 + 0.5, type: "spring" }}

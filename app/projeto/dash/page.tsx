@@ -561,9 +561,9 @@ export default function Page() {
     <div className="space-y-6">
       {/* Novo Cabeçalho Superior */}
       <div className="flex items-center justify-between gap-4 pb-4 border-b">
-        {/* Logo IDEOR (apenas imagem) - Aumentado 25% (48px -> 60px) */}
+        {/* Logo IDEOR (apenas imagem) - Reduzido 70% do tamanho anterior (60px -> 20px) */}
         <div className="flex items-center">
-          <div className="relative w-15 h-15">
+          <div className="relative w-5 h-5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/logo_branco.png"
