@@ -563,12 +563,12 @@ export default function Page() {
       <div className="flex items-center justify-between gap-4 pb-4 border-b">
         {/* Logo IDEOR (apenas imagem) - Reduzido 70% do tamanho anterior (60px -> 20px) */}
         <div className="flex items-center">
-          <div className="relative w-12 h-12">
+          <div className="relative w-13 h-13">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/logo_branco.png"
               alt="IDEOR Logo"
-              className="object-contain w-full h-full"
+              className="object-contain "
             />
           </div>
         </div>
