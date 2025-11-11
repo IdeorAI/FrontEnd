@@ -561,9 +561,9 @@ export default function Page() {
     <div className="space-y-6">
       {/* Novo Cabeçalho Superior */}
       <div className="flex items-center justify-between gap-4 pb-4 border-b">
-        {/* Logo IDEOR (apenas imagem) */}
+        {/* Logo IDEOR (apenas imagem) - Aumentado 25% (48px -> 60px) */}
         <div className="flex items-center">
-          <div className="relative w-12 h-12">
+          <div className="relative w-15 h-15">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/logo_branco.png"
@@ -609,9 +609,9 @@ export default function Page() {
             <span className="text-base font-semibold">5.3</span>
           </div>
 
-          {/* Medalha Badge (50% maior) - Baseado em progresso */}
+          {/* Medalha Badge - Ícone reduzido 50% (h-6 w-6 -> h-4 w-4) */}
           <button className={`hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full transition-colors ${medalhaAtual.color === 'text-gray-500' ? 'bg-gray-500/10 hover:bg-gray-500/15' : 'bg-purple-500/10 hover:bg-purple-500/20'}`}>
-            <medalhaAtual.icon className={`h-6 w-6 ${medalhaAtual.color}`} />
+            <medalhaAtual.icon className={`h-4 w-4 ${medalhaAtual.color}`} />
             <span className={`text-base font-semibold ${medalhaAtual.color}`}>{medalhaAtual.nome}</span>
           </button>
 
