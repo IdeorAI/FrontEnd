@@ -60,8 +60,8 @@ export default function NoCodeOptimization() {
 
           {/* Texto "Entre outros..." */}
           <div className="w-full md:w-auto text-center md:text-left mt-4 md:mt-0">
-            <span className="text-muted-foreground text-lg md:text-xl italic font-light">
-              Entre outros…
+            <span className="text-gray-700 dark:text-gray-400 text-lg md:text-xl italic font-light">
+              Entre outras…
             </span>
           </div>
         </div>
