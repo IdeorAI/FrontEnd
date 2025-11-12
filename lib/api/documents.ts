@@ -54,7 +54,25 @@ export async function generateDocument(
         statusText: res.statusText,
         errorBody: errorText,
       });
-      throw new Error(`Failed to generate document: ${res.status} - ${errorText}`);
+
+      // Melhorar mensagem de erro baseada no status code
+      let userFriendlyMessage = '';
+
+      if (res.status === 503 || errorText.includes('ServiceUnavailable') || errorText.includes('indisponível')) {
+        userFriendlyMessage = 'A API de IA está temporariamente indisponível. O sistema tentou 3 vezes automaticamente, mas não obteve sucesso. Por favor, aguarde alguns instantes e tente novamente.';
+      } else if (res.status === 429) {
+        userFriendlyMessage = 'Limite de requisições atingido. Por favor, aguarde alguns instantes e tente novamente.';
+      } else if (res.status === 400) {
+        userFriendlyMessage = 'Erro na solicitação. Verifique se o projeto e os dados estão corretos.';
+      } else if (res.status === 404) {
+        userFriendlyMessage = 'Projeto não encontrado. Verifique se você tem acesso ao projeto.';
+      } else if (res.status >= 500) {
+        userFriendlyMessage = 'Erro no servidor. Por favor, tente novamente em alguns instantes.';
+      } else {
+        userFriendlyMessage = `Erro ao gerar documento (${res.status}). Tente novamente.`;
+      }
+
+      throw new Error(userFriendlyMessage);
     }
 
     const result = await res.json();
@@ -67,7 +85,14 @@ export async function generateDocument(
       errorMessage: error instanceof Error ? error.message : String(error),
       API_BASE,
     });
-    throw error;
+
+    // Se já é um erro tratado, repassar
+    if (error instanceof Error && error.message.includes('API de IA')) {
+      throw error;
+    }
+
+    // Erro de rede/fetch genérico
+    throw new Error('Problema de conexão com o servidor. Verifique sua internet e tente novamente.');
   }
 }
 
