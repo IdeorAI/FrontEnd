@@ -564,12 +564,12 @@ export default function Page() {
       <div className="flex items-center justify-between gap-4 pb-4 border-b">
         {/* Logo IDEOR (apenas imagem) - Tamanho 52px */}
         <div className="flex items-center">
-          <div className="relative w-[52px] h-[52px]">
+          <div className="relative w-[65px] h-[65px]">
             <Image
               src="/assets/logo_branco.png"
               alt="IDEOR Logo"
-              width={52}
-              height={52}
+              width={65}
+              height={65}
               className="object-contain"
               priority
             />
