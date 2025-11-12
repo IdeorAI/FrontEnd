@@ -3,10 +3,12 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";        
 import { createClient } from "@/lib/supabase/server"; 
 import Header from "@/components/Header";
-import Hero from "@/components/hero"; 
+import Hero from "@/components/hero";
 import ValueProposition from "@/components/ValueProposition";
 import HowItWorks from "@/components/HowItWorks";
 import FinalCTA from "@/components/FinalCTA";
+import Oportunidade from "@/components/Oportunidade";
+import NoCodeOptimization from "@/components/NoCodeOptimization";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
@@ -42,6 +44,8 @@ export default async function Page() {
         <ValueProposition />
         <HowItWorks />
         <FinalCTA />
+        <Oportunidade />
+        <NoCodeOptimization />
       </main>
 
       <Footer />
