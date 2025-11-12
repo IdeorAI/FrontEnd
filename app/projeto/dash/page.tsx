@@ -8,6 +8,7 @@ import { CardDialog } from "@/components/card-dialog";
 import { AIStageCard } from "@/components/ai-stage-card";
 import { ProjectProgressLine } from "@/components/project-progress-line";
 import { generateDocument } from "@/lib/api/documents";
+import Image from "next/image";
 import {
   ListChecks,
   TrendingUp,
@@ -561,14 +562,16 @@ export default function Page() {
     <div className="space-y-6">
       {/* Novo Cabeçalho Superior */}
       <div className="flex items-center justify-between gap-4 pb-4 border-b">
-        {/* Logo IDEOR (apenas imagem) - Tamanho ideal 52px */}
+        {/* Logo IDEOR (apenas imagem) - Tamanho 52px */}
         <div className="flex items-center">
-          <div className="relative w-[66px] h-[66px]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+          <div className="relative w-[52px] h-[52px]">
+            <Image
               src="/assets/logo_branco.png"
               alt="IDEOR Logo"
-              className="object-contain "
+              width={52}
+              height={52}
+              className="object-contain"
+              priority
             />
           </div>
         </div>
