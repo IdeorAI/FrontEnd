@@ -60,10 +60,17 @@ export default function NoCodeOptimization() {
 
           {/* Texto "Entre outros..." */}
           <div className="w-full md:w-auto text-center md:text-left mt-4 md:mt-0">
-            <span className="text-gray-700 dark:text-gray-400 text-lg md:text-xl italic font-light">
+            <span className="text-gray-500 dark:text-gray-300 text-lg md:text-xl italic font-light">
               Entre outras…
             </span>
           </div>
+        </div>
+
+        {/* Frase sobre prompts otimizados */}
+        <div className="w-full text-center mt-8 md:mt-12">
+          <p className="text-base md:text-lg text-muted-foreground font-light leading-relaxed max-w-3xl mx-auto px-4">
+            Criamos um prompt otimizado para você criar seu projeto em qualquer plataforma de IA no-code.
+          </p>
         </div>
       </div>
     </section>
