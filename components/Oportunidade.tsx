@@ -2,10 +2,10 @@ import Image from "next/image";
 
 export default function Oportunidade() {
   return (
-    <section className="py-16 md:py-24 bg-gradient-to-b from-background to-muted/20">
+    <section className="py-12 md:py-16 bg-gradient-to-b from-background to-muted/20">
       <div className="container mx-auto px-4">
         {/* Título com destaque em gradiente */}
-        <h2 className="text-3xl md:text-5xl font-bold text-center mb-6 md:mb-8">
+        <h2 className="text-3xl md:text-5xl font-bold text-center mb-3 md:mb-4">
           Não perca o{" "}
           <span className="bg-gradient-to-r from-primary via-purple-500 to-secondary bg-clip-text text-transparent">
             timing!
