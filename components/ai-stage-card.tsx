@@ -43,7 +43,18 @@ export function AIStageCard({
     try {
       const result = await onGenerate(idea);
       setGeneratedContent(result);
-      setShowSuccess(false);
+
+      // ✨ NOVO: Salvar automaticamente após gerar
+      console.log("[AIStageCard] Conteúdo gerado, salvando automaticamente...");
+      try {
+        await onSave(result);
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
+        console.log("[AIStageCard] ✓ Conteúdo salvo automaticamente com sucesso!");
+      } catch (saveError) {
+        console.error("[AIStageCard] Erro ao salvar automaticamente:", saveError);
+        alert("Conteúdo gerado com sucesso, mas não foi salvo automaticamente. Use o botão Editar para salvar manualmente.");
+      }
     } catch (error) {
       console.error("Erro detalhado ao gerar:", error);
 
@@ -98,33 +109,79 @@ export function AIStageCard({
     setEditedContent("");
   };
 
+  // Função auxiliar para renderizar valores recursivamente
+  const renderValue = (value: unknown, depth: number = 0): React.ReactNode => {
+    // String simples
+    if (typeof value === "string") {
+      return <p className="text-sm leading-relaxed">{value}</p>;
+    }
+
+    // Número ou booleano
+    if (typeof value === "number" || typeof value === "boolean") {
+      return <p className="text-sm font-medium">{String(value)}</p>;
+    }
+
+    // Null ou undefined
+    if (value === null || value === undefined) {
+      return <p className="text-sm text-muted-foreground italic">Não definido</p>;
+    }
+
+    // Array
+    if (Array.isArray(value)) {
+      return (
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          {value.map((item, index) => (
+            <li key={index} className="text-sm">
+              {typeof item === "object" && item !== null ? (
+                <div className="ml-4 mt-1">{renderValue(item, depth + 1)}</div>
+              ) : (
+                <span>{String(item)}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      );
+    }
+
+    // Objeto aninhado
+    if (typeof value === "object" && value !== null) {
+      return (
+        <div className={`space-y-3 ${depth > 0 ? "ml-4 pl-3 border-l border-muted" : ""}`}>
+          {Object.entries(value).map(([subKey, subValue]) => (
+            <div key={subKey}>
+              <h5 className="font-medium text-sm text-foreground mb-1 capitalize">
+                {subKey.replace(/_/g, " ")}:
+              </h5>
+              {renderValue(subValue, depth + 1)}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return <p className="text-sm">{String(value)}</p>;
+  };
+
   const renderContent = (jsonString: string) => {
     try {
       const data = JSON.parse(jsonString);
       return (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {Object.entries(data).map(([key, value]) => (
-            <div key={key} className="border-l-2 border-primary pl-4">
-              <h4 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground mb-2">
+            <div key={key} className="border-l-4 border-primary/30 pl-4 py-2">
+              <h4 className="font-bold text-base mb-3 capitalize text-foreground">
                 {key.replace(/_/g, " ")}
               </h4>
-              <div className="text-sm">
-                {typeof value === "object" && value !== null ? (
-                  <pre className="whitespace-pre-wrap bg-muted p-3 rounded text-xs overflow-x-auto">
-                    {JSON.stringify(value, null, 2)}
-                  </pre>
-                ) : (
-                  <p>{String(value)}</p>
-                )}
-              </div>
+              <div>{renderValue(value)}</div>
             </div>
           ))}
         </div>
       );
     } catch {
+      // Se não for JSON válido, exibir como texto simples
       return (
-        <div className="bg-muted p-4 rounded">
-          <pre className="whitespace-pre-wrap text-sm">{jsonString}</pre>
+        <div className="bg-muted/50 p-4 rounded-lg">
+          <pre className="whitespace-pre-wrap text-sm font-sans">{jsonString}</pre>
         </div>
       );
     }
@@ -188,37 +245,10 @@ export function AIStageCard({
             <div className="border rounded-lg p-4 bg-card max-h-96 overflow-y-auto">
               {renderContent(generatedContent)}
             </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex-1"
-              >
-                {isSaving ? (
-                  <>
-                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Salvando...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Salvar no Supabase
-                  </>
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setGeneratedContent("");
-                  setIdea("");
-                }}
-              >
-                Gerar Novamente
-              </Button>
-            </div>
             {showSuccess && (
-              <div className="bg-green-100 dark:bg-green-900/20 border border-green-500 text-green-700 dark:text-green-400 px-4 py-3 rounded">
-                ✓ Conteúdo salvo com sucesso!
+              <div className="bg-green-100 dark:bg-green-900/20 border border-green-500 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg flex items-center gap-2">
+                <span className="text-lg">✓</span>
+                <span>Conteúdo gerado e salvo automaticamente com sucesso!</span>
               </div>
             )}
           </div>
