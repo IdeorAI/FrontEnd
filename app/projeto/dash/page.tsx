@@ -7,7 +7,7 @@ import { TeamAvatars } from "@/components/team-avatars";
 import { CardDialog } from "@/components/card-dialog";
 import { AIStageCard } from "@/components/ai-stage-card";
 import { ProjectProgressLine } from "@/components/project-progress-line";
-import { generateDocument } from "@/lib/api/documents";
+import { generateDocumentByStage } from "@/lib/gemini-documents";
 import Image from "next/image";
 import {
   ListChecks,
@@ -66,20 +66,24 @@ export default function Page() {
         throw new Error("Usuário não autenticado");
       }
 
-      const response = await generateDocument(
-        projectId,
-        {
-          phase: etapaId,
-          inputs: {
-            ideia: idea,
-          },
-        },
+      console.log("[DashPage] Gerando documento via Gemini direto...", { etapaId, ideaLength: idea.length });
+
+      // Gerar conteúdo diretamente via Gemini (frontend)
+      const geminiResponse = await generateDocumentByStage(
+        etapaId,
+        idea,
         currentUser.id
       );
 
-      return response.generatedContent;
+      console.log("[DashPage] Gemini respondeu:", {
+        contentLength: geminiResponse.content.length,
+        tokensUsed: geminiResponse.tokensUsed,
+        elapsedMs: geminiResponse.elapsedMs
+      });
+
+      return geminiResponse.content;
     } catch (error) {
-      console.error("Erro ao gerar documento:", error);
+      console.error("[DashPage] Erro ao gerar documento:", error);
       throw error;
     }
   };
