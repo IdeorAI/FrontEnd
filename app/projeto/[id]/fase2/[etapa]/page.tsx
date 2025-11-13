@@ -66,7 +66,7 @@ export default function EtapaPage() {
     fetchData();
   }, [projectId, etapa]);
 
-  const handleGenerate = async (values: Record<string, string>) => {
+  const handleGenerate = async (_values: Record<string, string>) => {
     if (!userId) return;
 
     if (!projectIdea) {
