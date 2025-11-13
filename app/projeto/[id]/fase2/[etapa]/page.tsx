@@ -66,6 +66,7 @@ export default function EtapaPage() {
     fetchData();
   }, [projectId, etapa]);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleGenerate = async (_values: Record<string, string>) => {
     if (!userId) return;
 
