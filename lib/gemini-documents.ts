@@ -280,7 +280,7 @@ async function callGeminiAPI(prompt: string): Promise<string> {
     throw new Error("API Key do Gemini não configurada. Configure NEXT_PUBLIC_GEMINI_API_KEY no .env.local");
   }
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`;
 
   console.log("[gemini-documents] Chamando Gemini API...");
   console.log("[gemini-documents] Prompt length:", prompt.length, "chars");
