@@ -308,29 +308,54 @@ export default function Page() {
           </p>
           <div className="space-y-3">
             {[
-              { num: 1, title: "Problema e Oportunidade", status: "pending" },
-              { num: 2, title: "Pesquisa de Mercado", status: "pending" },
-              { num: 3, title: "Proposta de Valor", status: "pending" },
-              { num: 4, title: "Modelo de Negócio", status: "pending" },
-              { num: 5, title: "MVP", status: "pending" },
-              { num: 6, title: "Equipe", status: "pending" },
-              { num: 7, title: "Pitch Deck + Plano + Resumo", status: "pending" },
-            ].map((etapa) => (
-              <div key={etapa.num} className="flex items-center gap-3 p-3 border rounded-lg">
-                <input
-                  type="checkbox"
-                  className="h-5 w-5"
-                  disabled
-                />
-                <div className="flex-1">
-                  <div className="font-medium">Etapa {etapa.num}</div>
-                  <div className="text-sm text-muted-foreground">{etapa.title}</div>
+              { num: 1, title: "Problema e Oportunidade", phase: "etapa1" },
+              { num: 2, title: "Pesquisa de Mercado", phase: "etapa2" },
+              { num: 3, title: "Proposta de Valor", phase: "etapa3" },
+              { num: 4, title: "Modelo de Negócio", phase: "etapa4" },
+              { num: 5, title: "MVP", phase: "etapa5" },
+              { num: 6, title: "Equipe", phase: "etapa6" },
+              { num: 7, title: "Pitch Deck + Plano + Resumo", phase: "etapa7" },
+            ].map((etapa) => {
+              const isCompleted = !!etapaContent[etapa.phase];
+              return (
+                <div
+                  key={etapa.num}
+                  className={`flex items-center gap-3 p-3 border rounded-lg transition-all ${
+                    isCompleted
+                      ? "bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800"
+                      : "bg-card"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    className="h-5 w-5 accent-green-600"
+                    checked={isCompleted}
+                    disabled
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium">Etapa {etapa.num}</div>
+                    <div className="text-sm text-muted-foreground">{etapa.title}</div>
+                  </div>
+                  <span
+                    className={`text-xs px-2 py-1 rounded ${
+                      isCompleted
+                        ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400"
+                        : "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400"
+                    }`}
+                  >
+                    {isCompleted ? "Concluída ✓" : "Pendente"}
+                  </span>
                 </div>
-                <span className="text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-800">
-                  {etapa.status === "pending" ? "Pendente" : "Concluída"}
-                </span>
-              </div>
-            ))}
+              );
+            })}
+          </div>
+          <div className="pt-4 border-t">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Progresso Total:</span>
+              <span className="font-bold text-primary">
+                {Object.keys(etapaContent).filter(key => key.startsWith('etapa')).length} / 7 etapas
+              </span>
+            </div>
           </div>
         </div>
       ),

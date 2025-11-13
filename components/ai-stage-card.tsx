@@ -164,7 +164,12 @@ export function AIStageCard({
 
   const renderContent = (jsonString: string) => {
     try {
+      console.log("[AIStageCard] Tentando parsear JSON. Comprimento:", jsonString.length);
+      console.log("[AIStageCard] Primeiros 200 caracteres:", jsonString.substring(0, 200));
+
       const data = JSON.parse(jsonString);
+      console.log("[AIStageCard] ✓ JSON parseado com sucesso. Chaves:", Object.keys(data));
+
       return (
         <div className="space-y-6">
           {Object.entries(data).map(([key, value]) => (
@@ -177,10 +182,14 @@ export function AIStageCard({
           ))}
         </div>
       );
-    } catch {
+    } catch (error) {
+      console.error("[AIStageCard] ❌ Erro ao parsear JSON:", error);
+      console.log("[AIStageCard] Conteúdo que causou erro:", jsonString);
+
       // Se não for JSON válido, exibir como texto simples
       return (
         <div className="bg-muted/50 p-4 rounded-lg">
+          <p className="text-xs text-muted-foreground mb-2">Formato não-JSON detectado. Exibindo texto bruto:</p>
           <pre className="whitespace-pre-wrap text-sm font-sans">{jsonString}</pre>
         </div>
       );
