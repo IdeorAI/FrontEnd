@@ -53,7 +53,7 @@ export default function Page() {
   const todasEtapasCompletas = completedStages.filter(s => s > 0).length >= 7;
 
   // Handlers para as etapas de IA
-  const handleGenerateEtapa = async (etapaId: 'etapa2' | 'etapa3' | 'etapa4', idea: string): Promise<string> => {
+  const handleGenerateEtapa = async (etapaId: 'etapa1' | 'etapa2' | 'etapa3' | 'etapa4', idea: string): Promise<string> => {
     if (!projectId || !user) {
       throw new Error("Project ID ou usuário não encontrado");
     }
@@ -242,9 +242,9 @@ export default function Page() {
         // Buscar conteúdo existente das etapas
         const { data: tasksData, error: tasksError } = await supabase
           .from("tasks")
-          .select("phase, content")
+          .select("phase, content, status")
           .eq("project_id", projectId)
-          .in("phase", ["etapa2", "etapa3", "etapa4"]);
+          .in("phase", ["etapa1", "etapa2", "etapa3", "etapa4"]);
 
         if (tasksError) {
           console.error("Erro ao buscar tasks:", tasksError);
@@ -380,18 +380,15 @@ export default function Page() {
       description: "Identifique o problema e a oportunidade de mercado",
       dialogTitle: "Etapa 1: Problema e Oportunidade",
       dialogContent: (
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Nesta etapa, você irá definir claramente o problema que sua startup resolve e a
-            oportunidade de mercado.
-          </p>
-          <div className="p-4 border rounded-lg bg-muted/50">
-            <p className="text-sm">
-              Esta funcionalidade será implementada em breve. Você poderá acessar esta etapa
-              através do menu lateral em &ldquo;Tasks&rdquo;.
-            </p>
-          </div>
-        </div>
+        <AIStageCard
+          title="Problema e Oportunidade"
+          description="Identifique o problema que sua solução resolve, as personas afetadas e a oportunidade de mercado existente."
+          placeholder="Descreva o problema que você quer resolver. Ex: Pequenas empresas têm dificuldade em encontrar fornecedores confiáveis e comparar preços de forma eficiente..."
+          onGenerate={(idea) => handleGenerateEtapa('etapa1', idea)}
+          onSave={(content) => handleSaveEtapa('etapa1', content)}
+          existingContent={etapaContent['etapa1']}
+          initialIdea={project?.description || ""}
+        />
       ),
     },
     {
