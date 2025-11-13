@@ -5,13 +5,15 @@ import { useParams, useRouter } from "next/navigation";
 import { StageForm } from "@/components/stage-form";
 import { DocumentViewer } from "@/components/document-viewer";
 import {
-  generateDocument,
   regenerateDocument,
   refineDocument,
 } from "@/lib/api/documents";
 import { getProjectTasks } from "@/lib/api/tasks";
+import { getProject } from "@/lib/api/projects";
 import { RocketLoading } from "@/components/rocket-loading";
 import { STAGE_CONFIGS } from "@/lib/stage-configs";
+import { generateDocumentByStage } from "@/lib/gemini-documents";
+import { saveGeneratedDocument } from "@/lib/supabase-tasks";
 
 export default function EtapaPage() {
   const params = useParams();
@@ -22,6 +24,7 @@ export default function EtapaPage() {
   const stageConfig = STAGE_CONFIGS[etapa];
 
   const [userId, setUserId] = useState<string>("");
+  const [projectIdea, setProjectIdea] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isRefining, setIsRefining] = useState(false);
@@ -29,7 +32,7 @@ export default function EtapaPage() {
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch user ID and check if document already exists
+  // Fetch user ID, project idea and check if document already exists
   useEffect(() => {
     const fetchData = async () => {
       // Get user from Supabase
@@ -37,17 +40,24 @@ export default function EtapaPage() {
       const mockUserId = "user-id-mock";
       setUserId(mockUserId);
 
-      // Check if task already exists
       try {
+        // Buscar a ideia do projeto (description)
+        const project = await getProject(projectId, mockUserId);
+        setProjectIdea(project.description || "");
+        console.log("[EtapaPage] Ideia do projeto carregada:", project.description);
+
+        // Check if task already exists
         const tasks = await getProjectTasks(projectId, mockUserId);
         const existingTask = tasks.find((t) => t.phase === etapa);
 
         if (existingTask) {
           setTaskId(existingTask.id);
           setGeneratedContent(existingTask.content || null);
+          console.log("[EtapaPage] Documento existente encontrado:", existingTask.id);
         }
       } catch (error) {
-        console.error("Error fetching tasks:", error);
+        console.error("[EtapaPage] Error fetching data:", error);
+        alert("Erro ao carregar dados do projeto. Tente recarregar a página.");
       } finally {
         setIsLoading(false);
       }
@@ -59,22 +69,55 @@ export default function EtapaPage() {
   const handleGenerate = async (values: Record<string, string>) => {
     if (!userId) return;
 
+    if (!projectIdea) {
+      alert("Erro: Ideia do projeto não encontrada. Recarregue a página.");
+      return;
+    }
+
     setIsGenerating(true);
+    console.log("[EtapaPage] Iniciando geração direta via Gemini...", {
+      etapa,
+      projectId,
+      userId,
+      ideiaLength: projectIdea.length
+    });
+
     try {
-      const response = await generateDocument(
-        projectId,
-        {
-          phase: etapa,
-          inputs: values,
-        },
+      // 1. Gerar conteúdo diretamente via Gemini (frontend)
+      console.log("[EtapaPage] Chamando Gemini API...");
+      const geminiResponse = await generateDocumentByStage(
+        etapa,
+        projectIdea,
         userId
       );
 
-      setTaskId(response.taskId);
-      setGeneratedContent(response.generatedContent);
+      console.log("[EtapaPage] Gemini respondeu:", {
+        contentLength: geminiResponse.content.length,
+        tokensUsed: geminiResponse.tokensUsed,
+        elapsedMs: geminiResponse.elapsedMs
+      });
+
+      // 2. Salvar resultado no Supabase
+      console.log("[EtapaPage] Salvando no Supabase...");
+      const saveResponse = await saveGeneratedDocument({
+        projectId,
+        userId,
+        stage: etapa,
+        content: geminiResponse.content
+      });
+
+      console.log("[EtapaPage] Documento salvo com sucesso:", saveResponse.taskId);
+
+      // 3. Atualizar UI
+      setTaskId(saveResponse.taskId);
+      setGeneratedContent(geminiResponse.content);
+
+      alert(`✅ Documento gerado com sucesso!\n\nTokens usados: ${geminiResponse.tokensUsed}\nTempo: ${(geminiResponse.elapsedMs / 1000).toFixed(1)}s`);
     } catch (error) {
-      console.error("Error generating document:", error);
-      alert("Erro ao gerar documento. Tente novamente.");
+      console.error("[EtapaPage] Erro ao gerar documento:", error);
+
+      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+      alert(`Erro ao gerar documento:\n\n${errorMessage}`);
     } finally {
       setIsGenerating(false);
     }
