@@ -323,9 +323,6 @@ async function callGeminiAPI(prompt: string): Promise<string> {
   console.log("[gemini-documents] ✅ Sucesso! Tempo:", elapsedMs, "ms");
   console.log("[gemini-documents] Resposta length:", generatedText.length, "chars");
 
-  // Estimar tokens (aproximadamente 1 token = 4 caracteres)
-  const tokensUsed = Math.ceil((prompt.length + generatedText.length) / 4);
-
   return generatedText;
 }
 
