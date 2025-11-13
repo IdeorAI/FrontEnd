@@ -167,7 +167,28 @@ export function AIStageCard({
       console.log("[AIStageCard] Tentando parsear JSON. Comprimento:", jsonString.length);
       console.log("[AIStageCard] Primeiros 200 caracteres:", jsonString.substring(0, 200));
 
-      const data = JSON.parse(jsonString);
+      // ✨ NOVO: Remover markdown code blocks (```json ... ```)
+      let cleanedJson = jsonString.trim();
+
+      // Remover ```json do início
+      if (cleanedJson.startsWith('```json')) {
+        cleanedJson = cleanedJson.substring(7); // Remove "```json"
+        console.log("[AIStageCard] ⚠️ Removido marcador ```json do início");
+      } else if (cleanedJson.startsWith('```')) {
+        cleanedJson = cleanedJson.substring(3); // Remove "```"
+        console.log("[AIStageCard] ⚠️ Removido marcador ``` do início");
+      }
+
+      // Remover ``` do final
+      if (cleanedJson.endsWith('```')) {
+        cleanedJson = cleanedJson.substring(0, cleanedJson.length - 3);
+        console.log("[AIStageCard] ⚠️ Removido marcador ``` do final");
+      }
+
+      cleanedJson = cleanedJson.trim();
+      console.log("[AIStageCard] JSON limpo. Novos primeiros 100 caracteres:", cleanedJson.substring(0, 100));
+
+      const data = JSON.parse(cleanedJson);
       console.log("[AIStageCard] ✓ JSON parseado com sucesso. Chaves:", Object.keys(data));
 
       return (
