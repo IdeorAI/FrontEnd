@@ -5,6 +5,7 @@ import { Sparkles, Save, RefreshCw, Edit2, ChevronDown, ChevronUp } from "lucide
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { jsonToToon, toonToJson, isValidToon } from "@/lib/toon-converter";
 
 interface AIStageCardProps {
   title: string;
@@ -26,7 +27,8 @@ interface EditableSectionProps {
 function EditableSection({ sectionKey, value, onChange }: EditableSectionProps) {
   const [isEditingField, setIsEditingField] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
-  const [editValue, setEditValue] = useState(JSON.stringify(value, null, 2));
+  // 🆕 SPRINT 15: Usa TOON ao invés de JSON para edição mais amigável
+  const [editValue, setEditValue] = useState(jsonToToon(value));
 
   const renderValue = (val: unknown): React.ReactNode => {
     if (typeof val === 'string') {
@@ -93,17 +95,21 @@ function EditableSection({ sectionKey, value, onChange }: EditableSectionProps) 
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
                 className="min-h-[100px] font-mono text-xs"
-                placeholder="Edite o conteúdo desta seção (formato JSON)"
+                placeholder="Edite o conteúdo em formato TOON (mais legível que JSON)"
               />
+              <p className="text-xs text-muted-foreground">
+                💡 Formato TOON - mais fácil de editar que JSON!
+              </p>
               <Button
                 size="sm"
                 onClick={() => {
                   try {
-                    const parsed = JSON.parse(editValue);
+                    // 🆕 SPRINT 15: Converte TOON → JSON antes de salvar
+                    const parsed = toonToJson(editValue);
                     onChange(sectionKey, parsed);
                     setIsEditingField(false);
                   } catch {
-                    alert("JSON inválido. Por favor, verifique a sintaxe.");
+                    alert("Formato TOON inválido. Por favor, verifique a sintaxe.");
                   }
                 }}
                 className="w-full"
@@ -149,12 +155,23 @@ export function AIStageCard({
     setIsGenerating(true);
     try {
       const result = await onGenerate(idea);
-      setGeneratedContent(result);
+
+      // 🆕 SPRINT 15: Converte JSON → TOON antes de salvar
+      let contentToSave = result;
+      try {
+        const parsed = JSON.parse(result);
+        contentToSave = jsonToToon(parsed);
+        console.log("[AIStageCard] ✓ Conteúdo convertido para TOON");
+      } catch {
+        console.log("[AIStageCard] Conteúdo não é JSON, salvando como está");
+      }
+
+      setGeneratedContent(contentToSave);
 
       // ✨ NOVO: Salvar automaticamente após gerar
       console.log("[AIStageCard] Conteúdo gerado, salvando automaticamente...");
       try {
-        await onSave(result);
+        await onSave(contentToSave);
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 3000);
         console.log("[AIStageCard] ✓ Conteúdo salvo automaticamente com sucesso!");
@@ -185,14 +202,21 @@ export function AIStageCard({
 
   const handleStartEdit = () => {
     try {
-      // Tenta parsear como JSON para editor visual
-      const cleaned = generatedContent.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      const parsed = JSON.parse(cleaned);
-      setEditedJson(parsed);
+      // 🆕 SPRINT 15: Tenta converter TOON → JSON para editor visual
+      const parsed = toonToJson(generatedContent);
+      setEditedJson(parsed as Record<string, unknown>);
+      console.log("[AIStageCard] ✓ Conteúdo TOON convertido para edição");
     } catch {
-      // Se não for JSON válido, usa objeto vazio
-      console.log("[AIStageCard] Conteúdo não é JSON válido, usando editor de texto");
-      setEditedJson({ raw: generatedContent });
+      // Se não for TOON válido, tenta JSON
+      try {
+        const cleaned = generatedContent.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+        const parsed = JSON.parse(cleaned);
+        setEditedJson(parsed);
+        console.log("[AIStageCard] Conteúdo JSON parseado para edição");
+      } catch {
+        console.log("[AIStageCard] Conteúdo em formato desconhecido, usando fallback");
+        setEditedJson({ raw: generatedContent });
+      }
     }
     setIsEditing(true);
   };
@@ -210,14 +234,16 @@ export function AIStageCard({
   };
 
   const handleSaveVisualEdit = async () => {
-    const jsonString = JSON.stringify(editedJson, null, 2);
+    // 🆕 SPRINT 15: Converte JSON → TOON antes de salvar
+    const toonString = jsonToToon(editedJson);
     setIsSaving(true);
     try {
-      await onSave(jsonString);
-      setGeneratedContent(jsonString);
+      await onSave(toonString);
+      setGeneratedContent(toonString);
       setIsEditing(false);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
+      console.log("[AIStageCard] ✓ Edição salva em formato TOON");
     } catch (error) {
       console.error("Erro ao salvar edição:", error);
       alert("Erro ao salvar alterações. Tente novamente.");
@@ -279,33 +305,43 @@ export function AIStageCard({
     return <p className="text-sm">{String(value)}</p>;
   };
 
-  const renderContent = (jsonString: string) => {
+  const renderContent = (contentString: string) => {
     try {
-      console.log("[AIStageCard] Tentando parsear JSON. Comprimento:", jsonString.length);
-      console.log("[AIStageCard] Primeiros 200 caracteres:", jsonString.substring(0, 200));
+      console.log("[AIStageCard] Tentando renderizar conteúdo. Comprimento:", contentString.length);
+      console.log("[AIStageCard] Primeiros 200 caracteres:", contentString.substring(0, 200));
 
-      // ✨ NOVO: Remover markdown code blocks (```json ... ```)
-      let cleanedJson = jsonString.trim();
+      // 🆕 SPRINT 15: Tenta converter TOON → JSON primeiro
+      let data;
+      try {
+        data = toonToJson(contentString);
+        console.log("[AIStageCard] ✓ Conteúdo TOON parseado com sucesso");
+      } catch {
+        // Se não for TOON, tenta JSON
+        console.log("[AIStageCard] Não é TOON, tentando JSON...");
 
-      // Remover ```json do início
-      if (cleanedJson.startsWith('```json')) {
-        cleanedJson = cleanedJson.substring(7); // Remove "```json"
-        console.log("[AIStageCard] ⚠️ Removido marcador ```json do início");
-      } else if (cleanedJson.startsWith('```')) {
-        cleanedJson = cleanedJson.substring(3); // Remove "```"
-        console.log("[AIStageCard] ⚠️ Removido marcador ``` do início");
+        // Remover markdown code blocks (```json ... ```)
+        let cleanedJson = contentString.trim();
+
+        // Remover ```json do início
+        if (cleanedJson.startsWith('```json')) {
+          cleanedJson = cleanedJson.substring(7); // Remove "```json"
+          console.log("[AIStageCard] ⚠️ Removido marcador ```json do início");
+        } else if (cleanedJson.startsWith('```')) {
+          cleanedJson = cleanedJson.substring(3); // Remove "```"
+          console.log("[AIStageCard] ⚠️ Removido marcador ``` do início");
+        }
+
+        // Remover ``` do final
+        if (cleanedJson.endsWith('```')) {
+          cleanedJson = cleanedJson.substring(0, cleanedJson.length - 3);
+          console.log("[AIStageCard] ⚠️ Removido marcador ``` do final");
+        }
+
+        cleanedJson = cleanedJson.trim();
+        console.log("[AIStageCard] JSON limpo. Novos primeiros 100 caracteres:", cleanedJson.substring(0, 100));
+
+        data = JSON.parse(cleanedJson);
       }
-
-      // Remover ``` do final
-      if (cleanedJson.endsWith('```')) {
-        cleanedJson = cleanedJson.substring(0, cleanedJson.length - 3);
-        console.log("[AIStageCard] ⚠️ Removido marcador ``` do final");
-      }
-
-      cleanedJson = cleanedJson.trim();
-      console.log("[AIStageCard] JSON limpo. Novos primeiros 100 caracteres:", cleanedJson.substring(0, 100));
-
-      const data = JSON.parse(cleanedJson);
       console.log("[AIStageCard] ✓ JSON parseado com sucesso. Chaves:", Object.keys(data));
 
       return (
