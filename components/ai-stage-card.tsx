@@ -5,7 +5,7 @@ import { Sparkles, Save, RefreshCw, Edit2, ChevronDown, ChevronUp } from "lucide
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { jsonToToon, toonToJson, isValidToon } from "@/lib/toon-converter";
+import { jsonToToon, toonToJson } from "@/lib/toon-converter";
 
 interface AIStageCardProps {
   title: string;
@@ -358,13 +358,13 @@ export function AIStageCard({
       );
     } catch (error) {
       console.error("[AIStageCard] ❌ Erro ao parsear JSON:", error);
-      console.log("[AIStageCard] Conteúdo que causou erro:", jsonString);
+      console.log("[AIStageCard] Conteúdo que causou erro:", contentString);
 
       // Se não for JSON válido, exibir como texto simples
       return (
         <div className="bg-muted/50 p-4 rounded-lg">
           <p className="text-xs text-muted-foreground mb-2">Formato não-JSON detectado. Exibindo texto bruto:</p>
-          <pre className="whitespace-pre-wrap text-sm font-sans">{jsonString}</pre>
+          <pre className="whitespace-pre-wrap text-sm font-sans">{contentString}</pre>
         </div>
       );
     }
