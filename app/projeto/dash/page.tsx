@@ -315,11 +315,11 @@ export default function Page() {
   // Definição dos cards
   const cards = [
     {
-      id: "tasks",
+      id: "roadmap",
       icon: ListChecks,
-      title: "Tasks",
+      title: "Roadmap",
       description: "Acompanhe o progresso das 7 etapas do projeto",
-      dialogTitle: "Tasks - Etapas do Projeto",
+      dialogTitle: "Roadmap - Etapas do Projeto",
       dialogContent: (
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
@@ -341,24 +341,31 @@ export default function Page() {
                   key={etapa.num}
                   className={`flex items-center gap-3 p-3 border rounded-lg transition-all ${
                     isCompleted
-                      ? "bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800"
+                      ? "bg-green-100 dark:bg-green-900/20 border-green-500 dark:border-green-600"
                       : "bg-card"
                   }`}
                 >
-                  <input
-                    type="checkbox"
-                    className="h-5 w-5 accent-green-600"
-                    checked={isCompleted}
-                    disabled
-                  />
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      className="h-5 w-5"
+                      style={{ accentColor: '#16a34a' }}
+                      checked={isCompleted}
+                      disabled
+                    />
+                  </div>
                   <div className="flex-1">
-                    <div className="font-medium">Etapa {etapa.num}</div>
-                    <div className="text-sm text-muted-foreground">{etapa.title}</div>
+                    <div className={`font-bold ${isCompleted ? "text-green-900 dark:text-green-100" : "font-medium"}`}>
+                      Etapa {etapa.num}
+                    </div>
+                    <div className={`text-sm ${isCompleted ? "text-green-800 dark:text-green-200" : "text-muted-foreground"}`}>
+                      {etapa.title}
+                    </div>
                   </div>
                   <span
-                    className={`text-xs px-2 py-1 rounded ${
+                    className={`text-xs px-2 py-1 rounded font-medium ${
                       isCompleted
-                        ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400"
+                        ? "bg-green-600 text-white"
                         : "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400"
                     }`}
                   >
