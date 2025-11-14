@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Save, RefreshCw, Edit2 } from "lucide-react";
+import { Sparkles, Save, RefreshCw, Edit2, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,113 @@ interface AIStageCardProps {
   onSave: (content: string) => Promise<void>;
   existingContent?: string;
   initialIdea?: string;
+}
+
+// Componente auxiliar para edição visual de seções
+interface EditableSectionProps {
+  sectionKey: string;
+  value: unknown;
+  onChange: (key: string, newValue: unknown) => void;
+}
+
+function EditableSection({ sectionKey, value, onChange }: EditableSectionProps) {
+  const [isEditingField, setIsEditingField] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [editValue, setEditValue] = useState(JSON.stringify(value, null, 2));
+
+  const renderValue = (val: unknown): React.ReactNode => {
+    if (typeof val === 'string') {
+      return <p className="text-sm leading-relaxed">{val}</p>;
+    }
+    if (typeof val === 'number' || typeof val === 'boolean') {
+      return <p className="text-sm font-medium">{String(val)}</p>;
+    }
+    if (Array.isArray(val)) {
+      return (
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          {val.map((item, i) => (
+            <li key={i} className="text-sm">{typeof item === 'object' ? JSON.stringify(item) : String(item)}</li>
+          ))}
+        </ul>
+      );
+    }
+    if (typeof val === 'object' && val !== null) {
+      return (
+        <div className="space-y-2 ml-2">
+          {Object.entries(val).map(([k, v]) => (
+            <div key={k} className="border-l-2 border-muted pl-2">
+              <strong className="text-xs text-muted-foreground capitalize">{k.replace(/_/g, ' ')}:</strong>
+              <div className="mt-1">{renderValue(v)}</div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return <span className="text-sm">{String(val)}</span>;
+  };
+
+  return (
+    <div className="border border-muted rounded-lg p-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 flex-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="h-6 w-6 p-0"
+          >
+            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+          <h4 className="text-sm font-semibold text-primary capitalize">
+            {sectionKey.replace(/_/g, ' ')}
+          </h4>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsEditingField(!isEditingField)}
+          className="h-7 text-xs"
+        >
+          {isEditingField ? "Cancelar" : "Editar"}
+        </Button>
+      </div>
+
+      {isExpanded && (
+        <>
+          {isEditingField ? (
+            <div className="space-y-2">
+              <Textarea
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                className="min-h-[100px] font-mono text-xs"
+                placeholder="Edite o conteúdo desta seção (formato JSON)"
+              />
+              <Button
+                size="sm"
+                onClick={() => {
+                  try {
+                    const parsed = JSON.parse(editValue);
+                    onChange(sectionKey, parsed);
+                    setIsEditingField(false);
+                  } catch {
+                    alert("JSON inválido. Por favor, verifique a sintaxe.");
+                  }
+                }}
+                className="w-full"
+              >
+                <Save className="mr-2 h-3 w-3" />
+                Salvar Seção
+              </Button>
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground pl-8">
+              {renderValue(value)}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
 }
 
 export function AIStageCard({
@@ -30,7 +137,7 @@ export function AIStageCard({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState("");
+  const [editedJson, setEditedJson] = useState<Record<string, unknown>>({});
   const [showSuccess, setShowSuccess] = useState(false);
 
   const handleGenerate = async () => {
@@ -76,37 +183,47 @@ export function AIStageCard({
     }
   };
 
-  const handleSave = async () => {
-    const contentToSave = isEditing ? editedContent : generatedContent;
-
-    if (!contentToSave.trim()) {
-      alert("Não há conteúdo para salvar.");
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await onSave(contentToSave);
-      setGeneratedContent(contentToSave);
-      setIsEditing(false);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
-    } catch (error) {
-      console.error("Erro ao salvar:", error);
-      alert("Erro ao salvar conteúdo. Tente novamente.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const handleStartEdit = () => {
-    setEditedContent(generatedContent);
+    try {
+      // Tenta parsear como JSON para editor visual
+      const cleaned = generatedContent.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      const parsed = JSON.parse(cleaned);
+      setEditedJson(parsed);
+    } catch {
+      // Se não for JSON válido, usa objeto vazio
+      console.log("[AIStageCard] Conteúdo não é JSON válido, usando editor de texto");
+      setEditedJson({ raw: generatedContent });
+    }
     setIsEditing(true);
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
-    setEditedContent("");
+    setEditedJson({});
+  };
+
+  const handleUpdateSection = (key: string, newValue: unknown) => {
+    setEditedJson((prev) => ({
+      ...prev,
+      [key]: newValue,
+    }));
+  };
+
+  const handleSaveVisualEdit = async () => {
+    const jsonString = JSON.stringify(editedJson, null, 2);
+    setIsSaving(true);
+    try {
+      await onSave(jsonString);
+      setGeneratedContent(jsonString);
+      setIsEditing(false);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (error) {
+      console.error("Erro ao salvar edição:", error);
+      alert("Erro ao salvar alterações. Tente novamente.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Função auxiliar para renderizar valores recursivamente
@@ -284,33 +401,48 @@ export function AIStageCard({
           </div>
         )}
 
-        {/* Modo de edição */}
+        {/* Modo de edição visual */}
         {isEditing && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Ajustar Conteúdo</h3>
+              <span className="text-xs text-muted-foreground">
+                Clique em &quot;Editar&quot; em cada seção para ajustar
+              </span>
             </div>
-            <Textarea
-              value={editedContent}
-              onChange={(e) => setEditedContent(e.target.value)}
-              rows={12}
-              className="font-mono text-xs"
-            />
-            <div className="flex gap-2">
+
+            <div className="space-y-3 max-h-[500px] overflow-y-auto">
+              {Object.keys(editedJson).length > 0 ? (
+                Object.entries(editedJson).map(([key, value]) => (
+                  <EditableSection
+                    key={key}
+                    sectionKey={key}
+                    value={value}
+                    onChange={handleUpdateSection}
+                  />
+                ))
+              ) : (
+                <div className="text-sm text-muted-foreground text-center py-4">
+                  Nenhuma seção disponível para edição
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2 pt-4 border-t">
               <Button
-                onClick={handleSave}
+                onClick={handleSaveVisualEdit}
                 disabled={isSaving}
                 className="flex-1"
               >
                 {isSaving ? (
                   <>
                     <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                    Salvando...
+                    Salvando Alterações...
                   </>
                 ) : (
                   <>
                     <Save className="mr-2 h-4 w-4" />
-                    Salvar Ajustes
+                    Salvar Todas Alterações
                   </>
                 )}
               </Button>
