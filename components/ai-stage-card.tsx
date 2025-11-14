@@ -159,11 +159,29 @@ export function AIStageCard({
       // 🆕 SPRINT 15: Converte JSON → TOON antes de salvar
       let contentToSave = result;
       try {
-        const parsed = JSON.parse(result);
+        // Remove markdown code blocks antes de parsear
+        let cleanedJson = result.trim();
+
+        if (cleanedJson.startsWith('```json')) {
+          cleanedJson = cleanedJson.substring(7);
+          console.log("[AIStageCard] Removido marcador ```json do início");
+        } else if (cleanedJson.startsWith('```')) {
+          cleanedJson = cleanedJson.substring(3);
+          console.log("[AIStageCard] Removido marcador ``` do início");
+        }
+
+        if (cleanedJson.endsWith('```')) {
+          cleanedJson = cleanedJson.substring(0, cleanedJson.length - 3);
+          console.log("[AIStageCard] Removido marcador ``` do final");
+        }
+
+        cleanedJson = cleanedJson.trim();
+
+        const parsed = JSON.parse(cleanedJson);
         contentToSave = jsonToToon(parsed);
         console.log("[AIStageCard] ✓ Conteúdo convertido para TOON");
-      } catch {
-        console.log("[AIStageCard] Conteúdo não é JSON, salvando como está");
+      } catch (error) {
+        console.log("[AIStageCard] Conteúdo não é JSON válido, salvando como está:", error);
       }
 
       setGeneratedContent(contentToSave);
