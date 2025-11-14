@@ -150,6 +150,25 @@ export default function Page() {
         ...prev,
         [etapaId]: content,
       }));
+
+      // 🆕 SPRINT 15: Atualizar progresso automaticamente
+      const etapaNum = parseInt(etapaId.replace('etapa', '')); // "etapa1" → 1
+
+      // Adiciona etapa aos completedStages se ainda não estiver
+      setCompletedStages((prev) => {
+        if (!prev.includes(etapaNum)) {
+          const newCompleted = [...prev, etapaNum].sort((a, b) => a - b);
+
+          // Atualiza currentStage para próxima etapa
+          const maxCompleted = Math.max(...newCompleted.filter(n => n > 0));
+          setCurrentStage(maxCompleted < 7 ? maxCompleted + 1 : 8);
+
+          console.log("Progresso atualizado - Etapas completas:", newCompleted, "Etapa atual:", maxCompleted < 7 ? maxCompleted + 1 : 8);
+
+          return newCompleted;
+        }
+        return prev;
+      });
     } catch (error) {
       console.error("Erro ao salvar:", error);
       throw error;
