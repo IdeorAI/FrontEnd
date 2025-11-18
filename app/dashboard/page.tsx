@@ -4,9 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/components/logout-button";
 import { DashboardFilters } from "@/components/dashboard-filters";
 import categories from "@/lib/data/categories.json";
-import { ScoreBar } from "@/components/score-bar";
+import { RoadmapBar } from "@/components/roadmap-bar";
 import { ProjectCardLink } from "@/components/project-card-link";
 import { CreateProjectButton } from "@/components/create-project-button";
+import Image from "next/image";
+import { TrendingUp, Star, Award } from "lucide-react";
 
 type PageProps = {
   searchParams?: Promise<{
@@ -31,7 +33,7 @@ export default async function Page(props: PageProps) {
   let query = supabase
     .from("projects")
     .select(
-      "id, name, description, score, valuation, updated_at, created_at, category, current_phase"
+      "id, name, description, score, valuation, updated_at, created_at, category, current_phase, tasks(id, phase, status)"
     )
     .eq("owner_id", user.id);
 
@@ -119,13 +121,36 @@ export default async function Page(props: PageProps) {
   const meta = (user.user_metadata as UserMetadata) || {};
   const displayName = meta.full_name ?? user.email ?? "User";
 
+  // Função auxiliar para calcular medalha baseada no progresso
+  const getMedalha = (tasksCount: number) => {
+    if (tasksCount === 0) return { nome: "Iniciante", color: "text-gray-500" };
+    if (tasksCount >= 1 && tasksCount < 3) return { nome: "Visionário", color: "text-blue-500" };
+    if (tasksCount >= 3 && tasksCount < 5) return { nome: "Explorador", color: "text-purple-500" };
+    if (tasksCount >= 5 && tasksCount < 7) return { nome: "Construtor", color: "text-orange-500" };
+    if (tasksCount >= 7) return { nome: "Escalador", color: "text-green-500" };
+    return { nome: "Iniciante", color: "text-gray-500" };
+  };
+
   return (
     <div className="space-y-6">
       {/* Cabeçalho superior */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-sm opacity-80">Bem-vindo(a), {displayName}</p>
+        <div className="flex items-center gap-3">
+          {/* Logo IDEOR */}
+          <div className="relative w-[52px] h-[52px]">
+            <Image
+              src="/assets/logo_branco.png"
+              alt="IDEOR Logo"
+              width={52}
+              height={52}
+              className="object-contain"
+              priority
+            />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Dashboard</h1>
+            <p className="text-sm opacity-80">Bem-vindo(a), {displayName}</p>
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
@@ -138,7 +163,7 @@ export default async function Page(props: PageProps) {
       <div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-3">
           <h2 className="text-lg font-semibold text-[#8c7dff]">
-            Suas Startups
+            Minhas Startups
           </h2>
           <div className="w-full sm:flex-1 sm:max-w-2xl">
             <DashboardFilters />
@@ -148,62 +173,108 @@ export default async function Page(props: PageProps) {
 
       {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {(projects ?? []).map((p) => (
-          <ProjectCardLink projectId={p.id} key={p.id}>
-            <article className="bg-card border rounded-lg p-5 flex flex-col gap-3 relative hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer h-[280px]">
-              {/* Valuation destacado no canto superior direito */}
-              <div className="absolute top-4 right-4 text-right">
-                <div className="text-xs opacity-60 mb-0.5">Valuation</div>
-                <div className="text-lg font-bold text-[#8c7dff]">
-                  {new Intl.NumberFormat("pt-BR", {
-                    style: "currency",
-                    currency: "BRL",
-                    maximumFractionDigits: 0,
-                  }).format(Number(p.valuation))}
-                </div>
-              </div>
+        {(projects ?? []).map((p) => {
+          // Calcular etapas completas (tasks com status 'evaluated')
+          const completedTasks = Array.isArray(p.tasks)
+            ? p.tasks.filter((t: { status?: string }) => t.status === 'evaluated').length
+            : 0;
 
-              <header className="flex items-start justify-between gap-3 pr-24 flex-1">
-                <div className="overflow-hidden">
-                  <h3 className="font-semibold text-lg truncate">{p.name}</h3>
-                  {p.category && (
-                    <div className="text-xs text-muted-foreground">
-                      {
-                        (
-                          categories.find((c) => c.value === p.category) || {
-                            label: p.category,
+          // Gerar nome padrão se não houver nome
+          const projectName = p.name && p.name.trim() && !p.name.startsWith('NovoProjeto')
+            ? p.name
+            : `Startup${p.id.substring(0, 6)}`;
+
+          // Calcular medalha
+          const medalha = getMedalha(completedTasks);
+
+          return (
+            <ProjectCardLink projectId={p.id} key={p.id}>
+              <article className="bg-card border rounded-lg p-5 flex gap-3 relative hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer h-[280px]">
+                {/* Conteúdo principal (lado esquerdo) */}
+                <div className="flex-1 flex flex-col gap-3 min-w-0">
+                  <header className="flex-1">
+                    <div className="overflow-hidden">
+                      <h3 className="font-semibold text-lg truncate">{projectName}</h3>
+                      {p.category && (
+                        <div className="text-xs font-bold text-primary mt-1 mb-2">
+                          {
+                            (
+                              categories.find((c) => c.value === p.category) || {
+                                label: p.category,
+                              }
+                            ).label
                           }
-                        ).label
-                      }
+                        </div>
+                      )}
+                      {p.description ? (
+                        <p className="text-sm text-muted-foreground line-clamp-3 mt-2">
+                          {p.description}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic mt-2">
+                          Sem descrição
+                        </p>
+                      )}
                     </div>
-                  )}
-                  {p.description ? (
-                    <p className="text-sm text-muted-foreground line-clamp-3 mt-1">
-                      {p.description}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-muted-foreground italic mt-1">
-                      Sem descrição
-                    </p>
-                  )}
+                  </header>
+
+                  {/* Barra de roadmap */}
+                  <div className="mt-auto">
+                    <RoadmapBar completed={completedTasks} total={8} />
+                  </div>
+
+                  <footer className="text-xs text-muted-foreground">
+                    Atualizado: {new Date(p.updated_at).toLocaleDateString("pt-BR")}
+                  </footer>
                 </div>
-              </header>
 
-              {/* Barra de score */}
-              <div className="mt-auto">
-                <ScoreBar score={Number(p.score)} />
-              </div>
+                {/* Badges laterais (lado direito) */}
+                <div className="flex flex-col gap-3 items-end justify-between py-1 min-w-[100px]">
+                  {/* Valuation Badge */}
+                  <div className="text-right">
+                    <div className="flex items-center gap-1.5 justify-end mb-0.5">
+                      <TrendingUp className="h-3.5 w-3.5 text-primary" />
+                      <span className="text-xs opacity-60">Valuation</span>
+                    </div>
+                    <div className="text-sm font-bold text-primary">
+                      {new Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                        maximumFractionDigits: 0,
+                      }).format(Number(p.valuation))}
+                    </div>
+                  </div>
 
-              <footer className="text-xs text-muted-foreground">
-                Atualizado: {new Date(p.updated_at).toLocaleDateString("pt-BR")}
-              </footer>
-            </article>
-          </ProjectCardLink>
-        ))}
+                  {/* Score Badge */}
+                  <div className="text-right">
+                    <div className="flex items-center gap-1.5 justify-end mb-0.5">
+                      <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
+                      <span className="text-xs opacity-60">Score</span>
+                    </div>
+                    <div className="text-sm font-bold text-yellow-600">
+                      {Number(p.score).toFixed(1)}
+                    </div>
+                  </div>
+
+                  {/* Medalha Badge */}
+                  <div className="text-right">
+                    <div className="flex items-center gap-1.5 justify-end mb-0.5">
+                      <Award className={`h-3.5 w-3.5 ${medalha.color}`} />
+                      <span className="text-xs opacity-60">Medalha</span>
+                    </div>
+                    <div className={`text-xs font-bold ${medalha.color}`}>
+                      {medalha.nome}
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </ProjectCardLink>
+          );
+        })}
 
         {projects?.length === 0 && (
           <div className="bg-card border rounded-lg p-6">
-            <h3 className="font-semibold text-lg mb-2">Suas Startups</h3>
+            <h3 className="font-semibold text-lg mb-2">Minhas Startups</h3>
             <p className="text-sm text-muted-foreground mb-3">
               Nenhum projeto encontrado com os filtros atuais.
             </p>
