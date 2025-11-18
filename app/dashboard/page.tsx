@@ -175,49 +175,42 @@ export default async function Page(props: PageProps) {
 
           return (
             <ProjectCardLink projectId={p.id} key={p.id}>
-              <article className="bg-card border rounded-lg p-5 flex gap-3 relative hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer h-[280px]">
-                {/* Conteúdo principal (lado esquerdo) */}
-                <div className="flex-1 flex flex-col gap-3 min-w-0">
-                  <header className="flex-1">
-                    <div className="overflow-hidden">
-                      <h3 className="font-semibold text-lg truncate">{projectName}</h3>
-                      {p.category && (
-                        <div className="text-xs font-bold text-primary mt-1 mb-2">
-                          {
-                            (
-                              categories.find((c) => c.value === p.category) || {
-                                label: p.category,
-                              }
-                            ).label
-                          }
-                        </div>
-                      )}
-                      {p.description ? (
-                        <p className="text-sm text-muted-foreground line-clamp-3 mt-2">
-                          {p.description}
-                        </p>
-                      ) : (
-                        <p className="text-sm text-muted-foreground italic mt-2">
-                          Sem descrição
-                        </p>
-                      )}
-                    </div>
-                  </header>
-
-                  {/* Barra de roadmap */}
-                  <div className="mt-auto">
-                    <RoadmapBar completed={completedTasks} total={8} />
+              <article className="bg-card border rounded-lg p-5 flex flex-col gap-3 relative hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer h-[280px]">
+                {/* Linha superior com conteúdo e badges */}
+                <div className="flex gap-3 flex-1 min-h-0">
+                  {/* Conteúdo principal (lado esquerdo) */}
+                  <div className="flex-1 flex flex-col gap-3 min-w-0">
+                    <header className="flex-1">
+                      <div className="overflow-hidden">
+                        <h3 className="font-semibold text-lg truncate">{projectName}</h3>
+                        {p.category && (
+                          <div className="text-xs font-bold text-primary mt-1 mb-2">
+                            {
+                              (
+                                categories.find((c) => c.value === p.category) || {
+                                  label: p.category,
+                                }
+                              ).label
+                            }
+                          </div>
+                        )}
+                        {p.description ? (
+                          <p className="text-sm text-muted-foreground line-clamp-3 mt-2">
+                            {p.description}
+                          </p>
+                        ) : (
+                          <p className="text-sm text-muted-foreground italic mt-2">
+                            Sem descrição
+                          </p>
+                        )}
+                      </div>
+                    </header>
                   </div>
 
-                  <footer className="text-xs text-muted-foreground">
-                    Atualizado: {new Date(p.updated_at).toLocaleDateString("pt-BR")}
-                  </footer>
-                </div>
-
                 {/* Badges laterais (lado direito) */}
-                <div className="flex flex-col gap-1.5 items-end justify-start py-1 min-w-[90px]">
+                <div className="flex flex-col gap-1.5 items-end justify-start py-1 w-[100px]">
                   {/* Valuation Badge */}
-                  <div className="px-3 py-2 bg-primary/10 rounded-full hover:bg-primary/15 transition-colors cursor-pointer">
+                  <div className="w-full px-3 py-2 bg-primary/10 rounded-full hover:bg-primary/15 transition-colors cursor-pointer">
                     <div className="flex items-center gap-1.5 mb-0.5">
                       <TrendingUp className="h-3 w-3 text-primary" />
                       <span className="text-[10px] opacity-60">Valuation</span>
@@ -232,7 +225,7 @@ export default async function Page(props: PageProps) {
                   </div>
 
                   {/* Score Badge */}
-                  <div className="px-3 py-2 bg-yellow-500/10 rounded-full hover:bg-yellow-500/15 transition-colors cursor-pointer">
+                  <div className="w-full px-3 py-2 bg-yellow-500/10 rounded-full hover:bg-yellow-500/15 transition-colors cursor-pointer">
                     <div className="flex items-center gap-1.5 mb-0.5">
                       <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
                       <span className="text-[10px] opacity-60">Score</span>
@@ -243,7 +236,7 @@ export default async function Page(props: PageProps) {
                   </div>
 
                   {/* Medalha Badge */}
-                  <div className={`px-3 py-2 rounded-full transition-colors cursor-pointer ${
+                  <div className={`w-full px-3 py-2 rounded-full transition-colors cursor-pointer ${
                     medalha.color === 'text-gray-500'
                       ? 'bg-gray-500/10 hover:bg-gray-500/15'
                       : medalha.color === 'text-blue-500'
@@ -263,6 +256,15 @@ export default async function Page(props: PageProps) {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Barra de roadmap e footer (ocupam toda a largura) */}
+              <div className="space-y-2">
+                <RoadmapBar completed={completedTasks} total={8} />
+                <footer className="text-xs text-muted-foreground text-right">
+                  Atualizado: {new Date(p.updated_at).toLocaleDateString("pt-BR")}
+                </footer>
+              </div>
               </article>
             </ProjectCardLink>
           );
