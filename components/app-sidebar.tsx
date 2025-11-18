@@ -17,6 +17,7 @@ import {
 import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 interface AppSidebarProps {
   user?: { name: string; email: string };
@@ -65,16 +66,29 @@ export function AppSidebar({ user }: AppSidebarProps) {
         )}
       >
         <div className="p-4 border-b flex items-center justify-between">
-          <div>
-            <h2 className="font-semibold text-lg">ideorAI</h2>
-            {user && (
-              <p className="text-sm text-muted-foreground truncate">Olá, {user.name}</p>
-            )}
+          <div className="flex items-center gap-3">
+            {/* Logo IDEOR */}
+            <div className="relative w-[52px] h-[52px] flex-shrink-0">
+              <Image
+                src="/assets/logo_branco.png"
+                alt="IDEOR Logo"
+                width={52}
+                height={52}
+                className="object-contain"
+                priority
+              />
+            </div>
+            <div className="min-w-0">
+              <h2 className="font-semibold text-lg">ideorAI</h2>
+              {user && (
+                <p className="text-sm text-muted-foreground truncate">Olá, {user.name}</p>
+              )}
+            </div>
           </div>
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden"
+            className="lg:hidden flex-shrink-0"
             onClick={() => setIsMobileOpen(false)}
             aria-label="Fechar menu"
           >

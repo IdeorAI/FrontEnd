@@ -7,7 +7,6 @@ import categories from "@/lib/data/categories.json";
 import { RoadmapBar } from "@/components/roadmap-bar";
 import { ProjectCardLink } from "@/components/project-card-link";
 import { CreateProjectButton } from "@/components/create-project-button";
-import Image from "next/image";
 import { TrendingUp, Star, Award } from "lucide-react";
 
 type PageProps = {
@@ -135,22 +134,9 @@ export default async function Page(props: PageProps) {
     <div className="space-y-6">
       {/* Cabeçalho superior */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          {/* Logo IDEOR */}
-          <div className="relative w-[52px] h-[52px]">
-            <Image
-              src="/assets/logo_branco.png"
-              alt="IDEOR Logo"
-              width={52}
-              height={52}
-              className="object-contain"
-              priority
-            />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Dashboard</h1>
-            <p className="text-sm opacity-80">Bem-vindo(a), {displayName}</p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <p className="text-sm opacity-80">Bem-vindo(a), {displayName}</p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
@@ -229,14 +215,14 @@ export default async function Page(props: PageProps) {
                 </div>
 
                 {/* Badges laterais (lado direito) */}
-                <div className="flex flex-col gap-3 items-end justify-between py-1 min-w-[100px]">
+                <div className="flex flex-col gap-1.5 items-end justify-start py-1 min-w-[90px]">
                   {/* Valuation Badge */}
-                  <div className="text-right">
-                    <div className="flex items-center gap-1.5 justify-end mb-0.5">
-                      <TrendingUp className="h-3.5 w-3.5 text-primary" />
-                      <span className="text-xs opacity-60">Valuation</span>
+                  <div className="px-3 py-2 bg-primary/10 rounded-full hover:bg-primary/15 transition-colors cursor-pointer">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <TrendingUp className="h-3 w-3 text-primary" />
+                      <span className="text-[10px] opacity-60">Valuation</span>
                     </div>
-                    <div className="text-sm font-bold text-primary">
+                    <div className="text-xs font-bold text-primary text-right">
                       {new Intl.NumberFormat("pt-BR", {
                         style: "currency",
                         currency: "BRL",
@@ -246,23 +232,33 @@ export default async function Page(props: PageProps) {
                   </div>
 
                   {/* Score Badge */}
-                  <div className="text-right">
-                    <div className="flex items-center gap-1.5 justify-end mb-0.5">
-                      <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
-                      <span className="text-xs opacity-60">Score</span>
+                  <div className="px-3 py-2 bg-yellow-500/10 rounded-full hover:bg-yellow-500/15 transition-colors cursor-pointer">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                      <span className="text-[10px] opacity-60">Score</span>
                     </div>
-                    <div className="text-sm font-bold text-yellow-600">
+                    <div className="text-xs font-bold text-yellow-600 text-right">
                       {Number(p.score).toFixed(1)}
                     </div>
                   </div>
 
                   {/* Medalha Badge */}
-                  <div className="text-right">
-                    <div className="flex items-center gap-1.5 justify-end mb-0.5">
-                      <Award className={`h-3.5 w-3.5 ${medalha.color}`} />
-                      <span className="text-xs opacity-60">Medalha</span>
+                  <div className={`px-3 py-2 rounded-full transition-colors cursor-pointer ${
+                    medalha.color === 'text-gray-500'
+                      ? 'bg-gray-500/10 hover:bg-gray-500/15'
+                      : medalha.color === 'text-blue-500'
+                      ? 'bg-blue-500/10 hover:bg-blue-500/15'
+                      : medalha.color === 'text-purple-500'
+                      ? 'bg-purple-500/10 hover:bg-purple-500/15'
+                      : medalha.color === 'text-orange-500'
+                      ? 'bg-orange-500/10 hover:bg-orange-500/15'
+                      : 'bg-green-500/10 hover:bg-green-500/15'
+                  }`}>
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <Award className={`h-3 w-3 ${medalha.color}`} />
+                      <span className="text-[10px] opacity-60">Medalha</span>
                     </div>
-                    <div className={`text-xs font-bold ${medalha.color}`}>
+                    <div className={`text-xs font-bold ${medalha.color} text-right`}>
                       {medalha.nome}
                     </div>
                   </div>
