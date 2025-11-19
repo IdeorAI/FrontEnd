@@ -23,18 +23,8 @@ export default async function DashboardLayout({
     email: user.email ?? "",
   }
 
-  // 🔹 Busca o projeto do usuário (uma linha por owner_id)
-  const { data: project } = await supabase
-    .from("projects")
-    .select("name")
-    .eq("owner_id", user.id)
-    .maybeSingle()
-
-  // 🔹 Fallback para "Meu Projeto" se não houver nome
-  const projectName = project?.name?.trim() || "Meu Projeto"
-
   return (
-    <ProjetoLayoutWrapper user={userProps} projectName={projectName}>
+    <ProjetoLayoutWrapper user={userProps}>
       {children}
     </ProjetoLayoutWrapper>
   )

@@ -7,13 +7,11 @@ interface ProjetoLayoutWrapperProps {
     name: string;
     email: string;
   };
-  projectName: string;
   children: React.ReactNode;
 }
 
 export function ProjetoLayoutWrapper({
   user,
-  projectName,
   children,
 }: ProjetoLayoutWrapperProps) {
   const handleCardOpen = (cardId: string) => {
@@ -27,7 +25,6 @@ export function ProjetoLayoutWrapper({
     <div className="flex min-h-screen">
       <AppSidebar
         user={user}
-        projectName={projectName}
         onCardOpen={handleCardOpen}
       />
       <div className="flex-1 lg:ml-64">
