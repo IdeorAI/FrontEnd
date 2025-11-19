@@ -40,7 +40,7 @@ export const RoadmapBar = memo(function RoadmapBar({ completed, total = 8, class
           style={{
             left: `calc(${pct}% - 10px)`,
             top: '50%',
-            transform: 'translateY(-50%) rotate(90deg)',
+            transform: 'translateY(-50%) rotate(45deg)',
             zIndex: 10
           }}
           aria-label={`Progresso: ${completed} de ${total} etapas`}
