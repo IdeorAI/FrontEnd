@@ -22,9 +22,14 @@ import {
   Download,
   Bell,
   Star,
-  Award,
   FileCheck2,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -41,12 +46,46 @@ export default function Page() {
   // Calcular medalha baseada no progresso
   const getMedalha = () => {
     const completedCount = completedStages.filter(s => s > 0).length; // Excluir "Início"
-    if (completedCount === 0) return { nome: "Iniciante", icon: Award, color: "text-gray-500" };
-    if (completedCount >= 1 && completedCount < 3) return { nome: "Visionário", icon: Award, color: "text-blue-500" };
-    if (completedCount >= 3 && completedCount < 5) return { nome: "Explorador", icon: Award, color: "text-purple-500" };
-    if (completedCount >= 5 && completedCount < 7) return { nome: "Construtor", icon: Award, color: "text-orange-500" };
-    if (completedCount >= 7) return { nome: "Escalador", icon: Award, color: "text-green-500" };
-    return { nome: "Iniciante", icon: Award, color: "text-gray-500" };
+    if (completedCount === 0) {
+      return {
+        nome: "Iniciante",
+        badge: "/assets/badges/badge_visionário PENDENTE.png",
+        color: "text-gray-500"
+      };
+    }
+    if (completedCount >= 1 && completedCount < 3) {
+      return {
+        nome: "Visionário",
+        badge: "/assets/badges/badge_visionario.png",
+        color: "text-cyan-400"
+      };
+    }
+    if (completedCount >= 3 && completedCount < 5) {
+      return {
+        nome: "Explorador",
+        badge: "/assets/badges/badge_explorador.png",
+        color: "text-rose-600"
+      };
+    }
+    if (completedCount >= 5 && completedCount < 7) {
+      return {
+        nome: "Construtor",
+        badge: "/assets/badges/badge_construtor.png",
+        color: "text-green-500"
+      };
+    }
+    if (completedCount >= 7) {
+      return {
+        nome: "Escalador",
+        badge: "/assets/badges/badge_escalador.png",
+        color: "text-pink-500"
+      };
+    }
+    return {
+      nome: "Iniciante",
+      badge: "/assets/badges/badge_visionário PENDENTE.png",
+      color: "text-gray-500"
+    };
   };
 
   // Verificar se todas etapas estão completas (exceto Início)
@@ -611,92 +650,113 @@ export default function Page() {
   const medalhaAtual = getMedalha();
 
   return (
-    <div className="space-y-6">
-      {/* Novo Cabeçalho Superior */}
-      <div className="flex items-center justify-between gap-4 pb-4 border-b">
-        {/* Logo IDEOR (apenas imagem) - Tamanho 52px */}
-        <div className="flex items-center">
-          <div className="relative w-[65px] h-[65px]">
-            <Image
-              src="/assets/logo_branco.png"
-              alt="IDEOR Logo"
-              width={65}
-              height={65}
-              className="object-contain"
-              priority
-            />
+    <TooltipProvider>
+      <div className="space-y-6">
+        {/* Novo Cabeçalho Superior */}
+        <div className="flex items-center justify-between gap-4 pb-4 border-b">
+          {/* Título e Subtítulo do Projeto */}
+          <div className="flex-1 text-left">
+            {project && (
+              <>
+                <h1 className="text-lg sm:text-xl font-bold text-foreground">
+                  {project.name}
+                </h1>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Startup criada em {project.created_at ? new Date(project.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A'}
+                </p>
+              </>
+            )}
           </div>
-        </div>
 
-        {/* Título e Subtítulo do Projeto */}
-        <div className="flex-1 text-left ml-4">
-          {project && (
-            <>
-              <h1 className="text-lg sm:text-xl font-bold text-foreground">
-                {project.name}
-              </h1>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Startup criada em {project.created_at ? new Date(project.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A'}
-              </p>
-            </>
-          )}
-        </div>
+          {/* Badges e Notificações */}
+          <div className="flex items-center gap-3">
+            {/* Valuation Badge com Tooltip */}
+            {project && project.valuation && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="hidden sm:flex items-center gap-2.5 px-5 py-2.5 bg-primary/10 rounded-full hover:bg-primary/15 transition-colors cursor-pointer">
+                    <TrendingUp className="h-6 w-6 text-primary" />
+                    <span className="text-base font-semibold">
+                      {new Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                        maximumFractionDigits: 0,
+                      }).format(Number(project.valuation))}
+                    </span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Valuation</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
 
-        {/* Badges e Notificações */}
-        <div className="flex items-center gap-3">
-          {/* Valuation Badge (50% maior) */}
-          {project && project.valuation && (
-            <div className="hidden sm:flex items-center gap-2.5 px-5 py-2.5 bg-primary/10 rounded-full hover:bg-primary/15 transition-colors cursor-pointer">
-              <TrendingUp className="h-6 w-6 text-primary" />
-              <span className="text-base font-semibold">
-                {new Intl.NumberFormat("pt-BR", {
-                  style: "currency",
-                  currency: "BRL",
-                  maximumFractionDigits: 0,
-                }).format(Number(project.valuation))}
-              </span>
+            {/* Score Badge com Tooltip */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-yellow-500/10 rounded-full hover:bg-yellow-500/15 transition-colors cursor-pointer">
+                  <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
+                  <span className="text-base font-semibold">5.3</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Score</p>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Medalha Badge (PNG) com Tooltip */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className={`hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full transition-colors ${medalhaAtual.color === 'text-gray-500' ? 'bg-gray-500/10 hover:bg-gray-500/15' : 'bg-purple-500/10 hover:bg-purple-500/20'}`}>
+                  <Image
+                    src={medalhaAtual.badge}
+                    alt={medalhaAtual.nome}
+                    width={27}
+                    height={27}
+                    className="object-contain"
+                  />
+                  <span className={`text-base font-semibold ${medalhaAtual.color}`}>{medalhaAtual.nome}</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Badge: {medalhaAtual.nome}</p>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Certificado Badge com Tooltip - On/Off baseado em etapas */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className={`hidden lg:flex items-center gap-2 px-5 py-2.5 rounded-full transition-colors ${
+                    todasEtapasCompletas
+                      ? 'bg-green-500/10 hover:bg-green-500/20'
+                      : 'bg-muted hover:bg-muted/80 opacity-50 cursor-not-allowed'
+                  }`}
+                  disabled={!todasEtapasCompletas}
+                >
+                  <FileCheck2 className={`h-6 w-6 ${todasEtapasCompletas ? 'text-green-500' : 'text-muted-foreground'}`} />
+                  <span className={`text-base font-semibold ${todasEtapasCompletas ? 'text-green-500' : 'text-muted-foreground'}`}>
+                    Certificado Ideor
+                  </span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Certificado Ideor</p>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Notificações */}
+            <button className="relative p-3 hover:bg-muted rounded-full transition-colors">
+              <Bell className="h-6 w-6" />
+              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full" />
+            </button>
+
+            {/* Logout */}
+            <div className="ml-2">
+              <LogoutButton />
             </div>
-          )}
-
-          {/* Score Badge (50% maior) */}
-          <div className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-yellow-500/10 rounded-full hover:bg-yellow-500/15 transition-colors cursor-pointer">
-            <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
-            <span className="text-base font-semibold">5.3</span>
-          </div>
-
-          {/* Medalha Badge - Ícone reduzido 50% (h-6 w-6 -> h-4 w-4) */}
-          <button className={`hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full transition-colors ${medalhaAtual.color === 'text-gray-500' ? 'bg-gray-500/10 hover:bg-gray-500/15' : 'bg-purple-500/10 hover:bg-purple-500/20'}`}>
-            <medalhaAtual.icon className={`h-4 w-4 ${medalhaAtual.color}`} />
-            <span className={`text-base font-semibold ${medalhaAtual.color}`}>{medalhaAtual.nome}</span>
-          </button>
-
-          {/* Certificado Badge (50% maior) - On/Off baseado em etapas */}
-          <button
-            className={`hidden lg:flex items-center gap-2 px-5 py-2.5 rounded-full transition-colors ${
-              todasEtapasCompletas
-                ? 'bg-green-500/10 hover:bg-green-500/20'
-                : 'bg-muted hover:bg-muted/80 opacity-50 cursor-not-allowed'
-            }`}
-            disabled={!todasEtapasCompletas}
-          >
-            <FileCheck2 className={`h-6 w-6 ${todasEtapasCompletas ? 'text-green-500' : 'text-muted-foreground'}`} />
-            <span className={`text-base font-semibold ${todasEtapasCompletas ? 'text-green-500' : 'text-muted-foreground'}`}>
-              Certificado Ideor
-            </span>
-          </button>
-
-          {/* Notificações */}
-          <button className="relative p-3 hover:bg-muted rounded-full transition-colors">
-            <Bell className="h-6 w-6" />
-            <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full" />
-          </button>
-
-          {/* Logout */}
-          <div className="ml-2">
-            <LogoutButton />
           </div>
         </div>
-      </div>
 
       {/* Linha de Progressão */}
       <ProjectProgressLine currentStage={currentStage} completedStages={completedStages} />
@@ -732,6 +792,7 @@ export default function Page() {
           onClose={() => setActiveDialog(null)}
         />
       ))}
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }
