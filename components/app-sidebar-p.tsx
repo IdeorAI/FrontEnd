@@ -203,14 +203,14 @@ export function AppSidebar({ user, onCardOpen }: AppSidebarProps) {
           </div>
 
           <div className="flex flex-col items-center gap-3">
-            {/* Logo IDEOR - Centralizado */}
-            <div className="relative w-[80px] h-[80px]">
+            {/* Logo IDEOR - Centralizado - 120px */}
+            <div className="relative w-[120px] h-[120px] flex-shrink-0">
               <Image
                 src="/assets/logo_branco.png"
                 alt="IDEOR Logo"
-                width={80}
-                height={80}
-                className="object-contain w-full h-full"
+                width={120}
+                height={120}
+                className="object-contain max-w-none"
                 priority
               />
             </div>
