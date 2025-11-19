@@ -184,7 +184,7 @@ export default async function Page(props: PageProps) {
                       <div className="overflow-hidden">
                         <h3 className="font-semibold text-lg truncate">{projectName}</h3>
                         {p.category && (
-                          <div className="text-xs font-bold text-primary mt-1 mb-2">
+                          <div className="text-xs text-primary mt-1 mb-2">
                             {
                               (
                                 categories.find((c) => c.value === p.category) || {
@@ -215,7 +215,7 @@ export default async function Page(props: PageProps) {
                       <TrendingUp className="h-3 w-3 text-primary" />
                       <span className="text-[10px] opacity-60">Valuation</span>
                     </div>
-                    <div className="text-xs font-bold text-primary text-right">
+                    <div className="text-xs font-bold text-primary text-center">
                       {new Intl.NumberFormat("pt-BR", {
                         style: "currency",
                         currency: "BRL",
@@ -230,12 +230,12 @@ export default async function Page(props: PageProps) {
                       <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
                       <span className="text-[10px] opacity-60">Score</span>
                     </div>
-                    <div className="text-xs font-bold text-yellow-600 text-right">
+                    <div className="text-xs font-bold text-yellow-600 text-center">
                       {Number(p.score).toFixed(1)}
                     </div>
                   </div>
 
-                  {/* Medalha Badge */}
+                  {/* Badge Badge */}
                   <div className={`w-full px-3 py-2 rounded-full transition-colors cursor-pointer ${
                     medalha.color === 'text-gray-500'
                       ? 'bg-gray-500/10 hover:bg-gray-500/15'
@@ -249,9 +249,9 @@ export default async function Page(props: PageProps) {
                   }`}>
                     <div className="flex items-center gap-1.5 mb-0.5">
                       <Award className={`h-3 w-3 ${medalha.color}`} />
-                      <span className="text-[10px] opacity-60">Medalha</span>
+                      <span className="text-[10px] opacity-60">Badge</span>
                     </div>
-                    <div className={`text-xs font-bold ${medalha.color} text-right`}>
+                    <div className={`text-xs font-bold ${medalha.color} text-center`}>
                       {medalha.nome}
                     </div>
                   </div>

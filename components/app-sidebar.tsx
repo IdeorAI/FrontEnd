@@ -66,23 +66,17 @@ export function AppSidebar({ user }: AppSidebarProps) {
         )}
       >
         <div className="p-4 border-b flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {/* Logo IDEOR */}
-            <div className="relative w-[52px] h-[52px] flex-shrink-0">
+          <div className="flex items-center justify-center flex-1">
+            {/* Logo IDEOR - Aumentado e centralizado */}
+            <div className="relative w-[80px] h-[80px]">
               <Image
                 src="/assets/logo_branco.png"
                 alt="IDEOR Logo"
-                width={52}
-                height={52}
+                width={80}
+                height={80}
                 className="object-contain"
                 priority
               />
-            </div>
-            <div className="min-w-0">
-              <h2 className="font-semibold text-lg">ideorAI</h2>
-              {user && (
-                <p className="text-sm text-muted-foreground truncate">Olá, {user.name}</p>
-              )}
             </div>
           </div>
           <Button
