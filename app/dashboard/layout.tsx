@@ -15,9 +15,17 @@ export default async function DashboardLayout({
 
   if (!user) redirect("/login");
 
+  type UserMetadata = { full_name?: string } & Record<string, unknown>;
+  const meta = user.user_metadata as UserMetadata;
+
+  const userProps = {
+    name: meta.full_name ?? user.email ?? "User",
+    email: user.email ?? "",
+  };
+
   return (
     <div className="flex min-h-screen">
-      <AppSidebar />
+      <AppSidebar user={userProps} />
       <div className="flex-1 lg:ml-64">
         <div className="h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
         <main className="p-6">{children}</main>
