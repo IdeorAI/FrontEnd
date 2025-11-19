@@ -30,11 +30,10 @@ interface AppSidebarProps {
     name: string;
     email: string;
   };
-  projectName?: string;
   onCardOpen?: (cardId: string) => void;
 }
 
-export function AppSidebar({ user, projectName, onCardOpen }: AppSidebarProps) {
+export function AppSidebar({ user, onCardOpen }: AppSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
