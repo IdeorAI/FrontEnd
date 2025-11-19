@@ -8,6 +8,12 @@ import { RoadmapBar } from "@/components/roadmap-bar";
 import { ProjectCardLink } from "@/components/project-card-link";
 import { CreateProjectButton } from "@/components/create-project-button";
 import { TrendingUp, Star, Award } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type PageProps = {
   searchParams?: Promise<{
@@ -158,6 +164,7 @@ export default async function Page(props: PageProps) {
       </div>
 
       {/* Cards */}
+      <TooltipProvider>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {(projects ?? []).map((p) => {
           // Calcular etapas completas (tasks com status 'evaluated')
@@ -210,51 +217,63 @@ export default async function Page(props: PageProps) {
                 {/* Badges laterais (lado direito) */}
                 <div className="flex flex-col gap-1.5 items-end justify-start py-1 w-[100px]">
                   {/* Valuation Badge */}
-                  <div className="w-full px-3 py-2 bg-primary/10 rounded-full hover:bg-primary/15 transition-colors cursor-pointer">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <TrendingUp className="h-3 w-3 text-primary" />
-                      <span className="text-[10px] opacity-60">Valuation</span>
-                    </div>
-                    <div className="text-xs font-bold text-primary text-center">
-                      {new Intl.NumberFormat("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                        maximumFractionDigits: 0,
-                      }).format(Number(p.valuation))}
-                    </div>
-                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="w-full px-3 py-2 bg-primary/10 rounded-full hover:bg-primary/15 transition-colors cursor-pointer flex items-center gap-2 justify-center">
+                        <TrendingUp className="h-4 w-4 text-primary" />
+                        <span className="text-xs font-bold text-white">
+                          {new Intl.NumberFormat("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                            maximumFractionDigits: 0,
+                          }).format(Number(p.valuation))}
+                        </span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Valuation</p>
+                    </TooltipContent>
+                  </Tooltip>
 
                   {/* Score Badge */}
-                  <div className="w-full px-3 py-2 bg-yellow-500/10 rounded-full hover:bg-yellow-500/15 transition-colors cursor-pointer">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
-                      <span className="text-[10px] opacity-60">Score</span>
-                    </div>
-                    <div className="text-xs font-bold text-yellow-600 text-center">
-                      {Number(p.score).toFixed(1)}
-                    </div>
-                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="w-full px-3 py-2 bg-yellow-500/10 rounded-full hover:bg-yellow-500/15 transition-colors cursor-pointer flex items-center gap-2 justify-center">
+                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                        <span className="text-xs font-bold text-white">
+                          {Number(p.score).toFixed(1)}
+                        </span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Score</p>
+                    </TooltipContent>
+                  </Tooltip>
 
                   {/* Badge Badge */}
-                  <div className={`w-full px-3 py-2 rounded-full transition-colors cursor-pointer ${
-                    medalha.color === 'text-gray-500'
-                      ? 'bg-gray-500/10 hover:bg-gray-500/15'
-                      : medalha.color === 'text-blue-500'
-                      ? 'bg-blue-500/10 hover:bg-blue-500/15'
-                      : medalha.color === 'text-purple-500'
-                      ? 'bg-purple-500/10 hover:bg-purple-500/15'
-                      : medalha.color === 'text-orange-500'
-                      ? 'bg-orange-500/10 hover:bg-orange-500/15'
-                      : 'bg-green-500/10 hover:bg-green-500/15'
-                  }`}>
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <Award className={`h-3 w-3 ${medalha.color}`} />
-                      <span className="text-[10px] opacity-60">Badge</span>
-                    </div>
-                    <div className={`text-xs font-bold ${medalha.color} text-center`}>
-                      {medalha.nome}
-                    </div>
-                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className={`w-full px-3 py-2 rounded-full transition-colors cursor-pointer flex items-center gap-2 justify-center ${
+                        medalha.color === 'text-gray-500'
+                          ? 'bg-gray-500/10 hover:bg-gray-500/15'
+                          : medalha.color === 'text-blue-500'
+                          ? 'bg-blue-500/10 hover:bg-blue-500/15'
+                          : medalha.color === 'text-purple-500'
+                          ? 'bg-purple-500/10 hover:bg-purple-500/15'
+                          : medalha.color === 'text-orange-500'
+                          ? 'bg-orange-500/10 hover:bg-orange-500/15'
+                          : 'bg-green-500/10 hover:bg-green-500/15'
+                      }`}>
+                        <Award className={`h-4 w-4 ${medalha.color}`} />
+                        <span className={`text-xs font-bold ${medalha.color}`}>
+                          {medalha.nome}
+                        </span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Badge</p>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
 
@@ -280,6 +299,7 @@ export default async function Page(props: PageProps) {
           </div>
         )}
       </div>
+      </TooltipProvider>
     </div>
   );
 }
