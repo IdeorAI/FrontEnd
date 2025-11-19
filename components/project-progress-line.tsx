@@ -2,6 +2,7 @@
 
 import { Rocket } from "lucide-react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 interface ProjectProgressLineProps {
   currentStage: number; // 0 = Início, 1-7 = Etapas, 8 = Concluído
@@ -12,13 +13,53 @@ export function ProjectProgressLine({ currentStage, completedStages }: ProjectPr
   const stages = [
     { id: 0, label: "Início", shortLabel: "Início" },
     { id: 1, label: "Ideia e\nProblema", shortLabel: "Problema", medalha: null },
-    { id: 2, label: "Pesquisa de\nMercado", shortLabel: "Mercado", medalha: { nome: "Visionário", emoji: "🔭" } },
+    {
+      id: 2,
+      label: "Pesquisa de\nMercado",
+      shortLabel: "Mercado",
+      medalha: {
+        nome: "Visionário",
+        badge: "/assets/badges/badge_visionario.png",
+        badgePendente: "/assets/badges/badge_visionário PENDENTE.png",
+        color: "text-cyan-400"
+      }
+    },
     { id: 3, label: "Proposta de\nValor", shortLabel: "Valor", medalha: null },
-    { id: 4, label: "Modelo de\nNegócio", shortLabel: "Modelo", medalha: { nome: "Explorador", emoji: "🗺️" } },
+    {
+      id: 4,
+      label: "Modelo de\nNegócio",
+      shortLabel: "Modelo",
+      medalha: {
+        nome: "Explorador",
+        badge: "/assets/badges/badge_explorador.png",
+        badgePendente: "/assets/badges/badge_explorador PENDENTE.png",
+        color: "text-rose-600"
+      }
+    },
     { id: 5, label: "Definição do\nMVP", shortLabel: "MVP", medalha: null },
-    { id: 6, label: "Criação de\nEquipe", shortLabel: "Equipe", medalha: { nome: "Construtor", emoji: "🔨" } },
+    {
+      id: 6,
+      label: "Criação de\nEquipe",
+      shortLabel: "Equipe",
+      medalha: {
+        nome: "Construtor",
+        badge: "/assets/badges/badge_construtor.png",
+        badgePendente: "/assets/badges/badge_construtor PENDENTE.png",
+        color: "text-green-500"
+      }
+    },
     { id: 7, label: "Documentação", shortLabel: "Doc.", medalha: null },
-    { id: 8, label: "Captação", shortLabel: "Captação", medalha: { nome: "Escalador", emoji: "📈" } },
+    {
+      id: 8,
+      label: "Captação",
+      shortLabel: "Captação",
+      medalha: {
+        nome: "Escalador",
+        badge: "/assets/badges/badge_escalador.png",
+        badgePendente: "/assets/badges/badge_escalador PENDENTE.png",
+        color: "text-pink-500"
+      }
+    },
   ];
 
   const isCompleted = (stageId: number) => completedStages.includes(stageId);
@@ -57,17 +98,19 @@ export function ProjectProgressLine({ currentStage, completedStages }: ProjectPr
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 + 0.5, type: "spring" }}
                     >
-                      <div
-                        className={`text-lg mb-1 transition-all duration-300 ${
-                          completed ? 'opacity-100 grayscale-0' : 'opacity-30 grayscale'
-                        }`}
-                      >
-                        {stage.medalha.emoji}
+                      <div className="mb-1">
+                        <Image
+                          src={completed ? stage.medalha.badge : stage.medalha.badgePendente}
+                          alt={stage.medalha.nome}
+                          width={27}
+                          height={27}
+                          className="object-contain transition-all duration-300"
+                        />
                       </div>
                       <div
                         className={`text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap transition-all duration-300 ${
                           completed
-                            ? 'text-primary bg-primary/10'
+                            ? `${stage.medalha.color} bg-primary/10`
                             : 'text-muted-foreground bg-muted/30 opacity-50'
                         }`}
                       >
@@ -102,7 +145,7 @@ export function ProjectProgressLine({ currentStage, completedStages }: ProjectPr
                           transition={{ type: "spring", stiffness: 260, damping: 20 }}
                         >
                           {/* Foguete horizontal apontando para direita */}
-                          <Rocket className="h-5 w-5 text-primary rotate-45" />
+                          <Rocket className="h-5 w-5 text-primary rotate-90" />
                         </motion.div>
                       )}
                       {completed && !current && (
@@ -184,7 +227,7 @@ export function ProjectProgressLine({ currentStage, completedStages }: ProjectPr
           {/* Informação de progresso */}
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
-              <Rocket className="h-4 w-4 text-primary rotate-45" />
+              <Rocket className="h-4 w-4 text-primary rotate-90" />
               <span className="font-semibold text-foreground">
                 {stages[currentStage]?.shortLabel || "Captação"}
               </span>
@@ -230,16 +273,20 @@ export function ProjectProgressLine({ currentStage, completedStages }: ProjectPr
                         </svg>
                       )}
                       {current && !completed && (
-                        <Rocket className="h-3 w-3 text-primary rotate-45" />
+                        <Rocket className="h-3 w-3 text-primary rotate-90" />
                       )}
                     </div>
                     <span className={`text-sm ${completed || current ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
                       {stage.shortLabel}
                     </span>
                     {stage.medalha && (
-                      <span className={`ml-auto text-lg ${completed ? 'opacity-100' : 'opacity-30 grayscale'}`}>
-                        {stage.medalha.emoji}
-                      </span>
+                      <Image
+                        src={completed ? stage.medalha.badge : stage.medalha.badgePendente}
+                        alt={stage.medalha.nome}
+                        width={20}
+                        height={20}
+                        className="ml-auto object-contain"
+                      />
                     )}
                   </div>
                 );
