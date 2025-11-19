@@ -80,14 +80,14 @@ export function AppSidebar({ user }: AppSidebarProps) {
           </div>
 
           <div className="flex flex-col items-center gap-3">
-            {/* Logo IDEOR - Centralizado */}
-            <div className="relative w-[80px] h-[80px]">
+            {/* Logo IDEOR - Centralizado - 100px */}
+            <div className="relative w-[100px] h-[100px]">
               <Image
                 src="/assets/logo_branco.png"
                 alt="IDEOR Logo"
-                width={80}
-                height={80}
-                className="object-contain w-full h-full"
+                width={100}
+                height={100}
+                className="object-contain"
                 priority
               />
             </div>
