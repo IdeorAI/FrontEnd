@@ -23,7 +23,7 @@ interface AppSidebarProps {
   user?: { name: string; email: string };
 }
 
-export function AppSidebar({ user }: AppSidebarProps) {
+export function AppSidebar({}: AppSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
