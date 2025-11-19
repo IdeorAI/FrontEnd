@@ -19,7 +19,11 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  user?: { name: string; email: string };
+}
+
+export function AppSidebar({ user }: AppSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
@@ -61,9 +65,22 @@ export function AppSidebar() {
           isMobileOpen ? "transform-none" : "-translate-x-full"
         )}
       >
-        <div className="p-6 border-b flex items-center justify-between">
-          <div className="flex items-center justify-center flex-1">
-            {/* Logo IDEOR - Aumentado e centralizado */}
+        <div className="p-6 border-b">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex-1" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden flex-shrink-0"
+              onClick={() => setIsMobileOpen(false)}
+              aria-label="Fechar menu"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="flex flex-col items-center gap-3">
+            {/* Logo IDEOR - Centralizado */}
             <div className="relative w-[80px] h-[80px]">
               <Image
                 src="/assets/logo_branco.png"
@@ -74,16 +91,16 @@ export function AppSidebar() {
                 priority
               />
             </div>
+
+            {/* Saudação */}
+            {user && (
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">
+                  Olá, <span className="font-semibold">{user.name}</span>
+                </p>
+              </div>
+            )}
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden flex-shrink-0"
-            onClick={() => setIsMobileOpen(false)}
-            aria-label="Fechar menu"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </div>
 
         <nav className="flex-1 overflow-auto py-4 px-3 space-y-1">

@@ -33,14 +33,14 @@ export const RoadmapBar = memo(function RoadmapBar({ completed, total = 8, class
         {/* foguete - horizontal navegando da esquerda para direita */}
         <Rocket
           className="
-            absolute h-5 w-5 rotate-90
+            absolute h-5 w-5
             text-[#8c7dff]
             drop-shadow-md transition-[left] duration-500 ease-out
           "
           style={{
             left: `calc(${pct}% - 10px)`,
             top: '50%',
-            transform: 'translateY(-50%)',
+            transform: 'translateY(-50%) rotate(90deg)',
             zIndex: 10
           }}
           aria-label={`Progresso: ${completed} de ${total} etapas`}

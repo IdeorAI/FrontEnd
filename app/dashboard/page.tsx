@@ -122,10 +122,6 @@ export default async function Page(props: PageProps) {
   const { data: projects, error: loadErr } = await query;
   if (loadErr) console.error(loadErr);
 
-  type UserMetadata = { full_name?: string } & Record<string, unknown>;
-  const meta = (user.user_metadata as UserMetadata) || {};
-  const displayName = meta.full_name ?? user.email ?? "User";
-
   // Função auxiliar para calcular medalha baseada no progresso
   const getMedalha = (tasksCount: number) => {
     if (tasksCount === 0) return { nome: "Iniciante", color: "text-gray-500" };
@@ -142,7 +138,6 @@ export default async function Page(props: PageProps) {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-sm opacity-80">Bem-vindo(a), {displayName}</p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
@@ -215,7 +210,7 @@ export default async function Page(props: PageProps) {
                   </div>
 
                 {/* Badges laterais (lado direito) */}
-                <div className="flex flex-col gap-1.5 items-end justify-start py-1 w-[100px]">
+                <div className="flex flex-col gap-3 items-end justify-start py-1 w-[100px]">
                   {/* Valuation Badge */}
                   <Tooltip>
                     <TooltipTrigger asChild>

@@ -6,6 +6,7 @@ import { Home, Settings, User, Menu, X, Trash2, ListChecks, ChevronDown, Rocket,
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -188,23 +189,42 @@ export function AppSidebar({ user, projectName, onCardOpen }: AppSidebarProps) {
         isMobileOpen ? "transform-none" : "-translate-x-full"
       )}>
         {/* Header do Sidebar */}
-        <div className="p-4 border-b flex items-center justify-between">
-          <div>
-            <h2 className="font-semibold text-lg">{projectName || "Ideor"}</h2>
+        <div className="p-6 border-b">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex-1" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden flex-shrink-0"
+              onClick={() => setIsMobileOpen(false)}
+              aria-label="Fechar menu"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="flex flex-col items-center gap-3">
+            {/* Logo IDEOR - Centralizado */}
+            <div className="relative w-[80px] h-[80px]">
+              <Image
+                src="/assets/logo_branco.png"
+                alt="IDEOR Logo"
+                width={80}
+                height={80}
+                className="object-contain w-full h-full"
+                priority
+              />
+            </div>
+
+            {/* Saudação */}
             {user && (
-              <p className="text-sm text-muted-foreground truncate">
-                Olá, {user.name}
-              </p>
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">
+                  Olá, <span className="font-semibold">{user.name}</span>
+                </p>
+              </div>
             )}
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden"
-            onClick={() => setIsMobileOpen(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </div>
 
         {/* Menu Content */}
