@@ -30,10 +30,10 @@ export const RoadmapBar = memo(function RoadmapBar({ completed, total = 8, class
           style={{ width: `${pct}%` }}
           aria-hidden="true"
         />
-        {/* foguete - centralizado verticalmente e na frente */}
+        {/* foguete - horizontal navegando da esquerda para direita */}
         <Rocket
           className="
-            absolute h-5 w-5 rotate-45
+            absolute h-5 w-5 rotate-90
             text-[#8c7dff]
             drop-shadow-md transition-[left] duration-500 ease-out
           "

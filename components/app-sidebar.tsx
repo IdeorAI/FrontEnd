@@ -19,11 +19,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
-interface AppSidebarProps {
-  user?: { name: string; email: string };
-}
-
-export function AppSidebar({}: AppSidebarProps) {
+export function AppSidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
@@ -65,7 +61,7 @@ export function AppSidebar({}: AppSidebarProps) {
           isMobileOpen ? "transform-none" : "-translate-x-full"
         )}
       >
-        <div className="p-4 border-b flex items-center justify-between">
+        <div className="p-6 border-b flex items-center justify-between">
           <div className="flex items-center justify-center flex-1">
             {/* Logo IDEOR - Aumentado e centralizado */}
             <div className="relative w-[80px] h-[80px]">
@@ -74,7 +70,7 @@ export function AppSidebar({}: AppSidebarProps) {
                 alt="IDEOR Logo"
                 width={80}
                 height={80}
-                className="object-contain"
+                className="object-contain w-full h-full"
                 priority
               />
             </div>
