@@ -452,24 +452,25 @@ export function AIStageCard({
             <div className="border rounded-lg p-4 bg-card max-h-96 overflow-y-auto">
               {renderContent(generatedContent)}
             </div>
+
+            {/* Mensagem de sucesso (temporária) */}
             {showSuccess && (
-              <div className="space-y-3">
-                <div className="bg-green-100 dark:bg-green-900/20 border border-green-500 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg flex items-center gap-2">
-                  <span className="text-lg">✓</span>
-                  <span>Conteúdo gerado e salvo automaticamente com sucesso!</span>
-                </div>
-                {/* Botão para ir para próxima etapa */}
-                {nextStageId && nextStageTitle && onGoToNextStage && (
-                  <Button
-                    onClick={onGoToNextStage}
-                    className="w-full bg-gradient-hero text-[#1e2830] font-semibold hover:shadow-glow"
-                    size="lg"
-                  >
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Ir para próxima etapa: {nextStageTitle} →
-                  </Button>
-                )}
+              <div className="bg-green-100 dark:bg-green-900/20 border border-green-500 text-green-700 dark:text-green-400 px-4 py-3 rounded-lg flex items-center gap-2">
+                <span className="text-lg">✓</span>
+                <span>Conteúdo gerado e salvo automaticamente com sucesso!</span>
               </div>
+            )}
+
+            {/* Botão para ir para próxima etapa - SEMPRE VISÍVEL quando há conteúdo */}
+            {nextStageId && nextStageTitle && onGoToNextStage && (
+              <Button
+                onClick={onGoToNextStage}
+                className="w-full bg-gradient-hero text-[#1e2830] font-semibold hover:shadow-glow"
+                size="lg"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                Ir para próxima etapa: {nextStageTitle} →
+              </Button>
             )}
           </div>
         )}
