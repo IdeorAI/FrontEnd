@@ -1,4 +1,7 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
+import { LeadCaptureDialog } from "@/components/lead-capture-dialog";
 
 const FinalCTA = () => {
   return (
@@ -10,17 +13,19 @@ const FinalCTA = () => {
             ideia do papel?
           </span>
         </h2>
-        
+
         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
           Leva menos de 2 minutos para criar seu primeiro projeto.
         </p>
-        
-        <Button 
-          size="lg" 
-          className="text-lg px-8 py-4 bg-gradient-hero hover:shadow-glow transition-all duration-300 text-[#1e2830] transform hover:scale-105"
-        >
-          Começar agora grátis
-        </Button>
+
+        <LeadCaptureDialog>
+          <Button
+            size="lg"
+            className="text-lg px-8 py-4 bg-gradient-hero hover:shadow-glow transition-all duration-300 text-[#1e2830] transform hover:scale-105"
+          >
+            Começar agora grátis
+          </Button>
+        </LeadCaptureDialog>
       </div>
     </section>
   );

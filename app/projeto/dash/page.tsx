@@ -91,6 +91,36 @@ export default function Page() {
   // Verificar se todas etapas estão completas (exceto Início)
   const todasEtapasCompletas = completedStages.filter(s => s > 0).length >= 7;
 
+  // Função para verificar se uma etapa está bloqueada
+  const isEtapaBloqueada = (etapaId: string): boolean => {
+    // Etapa 1 sempre desbloqueada
+    if (etapaId === 'etapa1') return false;
+
+    // Para outras etapas, verificar se a anterior está completa
+    const etapaNumero = parseInt(etapaId.replace('etapa', ''));
+    if (isNaN(etapaNumero)) return false; // Cards não-etapa (roadmap, valuation, etc)
+
+    // Verificar se a etapa anterior está completa
+    const etapaAnterior = etapaNumero - 1;
+    return !completedStages.includes(etapaAnterior);
+  };
+
+  // Obter nome da etapa anterior que precisa ser concluída
+  const getEtapaAnteriorNome = (etapaId: string): string => {
+    const etapaNumero = parseInt(etapaId.replace('etapa', ''));
+    const nomesEtapas = [
+      "Início",
+      "Problema e Oportunidade", // etapa1
+      "Pesquisa de Mercado",      // etapa2
+      "Proposta de Valor",        // etapa3
+      "Modelo de Negócio",        // etapa4
+      "MVP",                      // etapa5
+      "Equipe",                   // etapa6
+      "Pitch Deck"                // etapa7
+    ];
+    return nomesEtapas[etapaNumero - 1] || "Etapa anterior";
+  };
+
   // Handlers para as etapas de IA
   const handleGenerateEtapa = async (etapaId: 'etapa1' | 'etapa2' | 'etapa3' | 'etapa4', idea: string): Promise<string> => {
     if (!projectId || !user) {
@@ -478,6 +508,12 @@ export default function Page() {
           onSave={(content) => handleSaveEtapa('etapa1', content)}
           existingContent={etapaContent['etapa1']}
           initialIdea={project?.description || ""}
+          nextStageId="etapa2"
+          nextStageTitle="Pesquisa de Mercado"
+          onGoToNextStage={() => {
+            setActiveDialog(null);
+            setTimeout(() => setActiveDialog('etapa2'), 300);
+          }}
         />
       ),
     },
@@ -496,6 +532,12 @@ export default function Page() {
           onSave={(content) => handleSaveEtapa('etapa2', content)}
           existingContent={etapaContent['etapa2']}
           initialIdea={project?.description || ""}
+          nextStageId="etapa3"
+          nextStageTitle="Proposta de Valor"
+          onGoToNextStage={() => {
+            setActiveDialog(null);
+            setTimeout(() => setActiveDialog('etapa3'), 300);
+          }}
         />
       ),
     },
@@ -514,6 +556,12 @@ export default function Page() {
           onSave={(content) => handleSaveEtapa('etapa3', content)}
           existingContent={etapaContent['etapa3']}
           initialIdea={project?.description || ""}
+          nextStageId="etapa4"
+          nextStageTitle="Modelo de Negócio"
+          onGoToNextStage={() => {
+            setActiveDialog(null);
+            setTimeout(() => setActiveDialog('etapa4'), 300);
+          }}
         />
       ),
     },
@@ -532,6 +580,12 @@ export default function Page() {
           onSave={(content) => handleSaveEtapa('etapa4', content)}
           existingContent={etapaContent['etapa4']}
           initialIdea={project?.description || ""}
+          nextStageId="etapa5"
+          nextStageTitle="MVP"
+          onGoToNextStage={() => {
+            setActiveDialog(null);
+            setTimeout(() => setActiveDialog('etapa5'), 300);
+          }}
         />
       ),
     },
@@ -765,19 +819,51 @@ export default function Page() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {cards.map((card) => {
           const Icon = card.icon;
+          const isBloqueado = isEtapaBloqueada(card.id);
+          const etapaAnterior = getEtapaAnteriorNome(card.id);
+
           return (
-            <div
-              key={card.id}
-              onClick={() => setActiveDialog(card.id)}
-              className="bg-card border rounded-lg p-6 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer"
-            >
-              <div className="flex items-center gap-3 mb-2">
-                <Icon className="h-6 w-6 text-primary" />
-                <h3 className="font-semibold text-lg">{card.title}</h3>
-              </div>
-              <p className="text-sm text-muted-foreground">{card.description}</p>
-              {card.preview && <div className="mt-2">{card.preview}</div>}
-            </div>
+            <Tooltip key={card.id}>
+              <TooltipTrigger asChild>
+                <div
+                  onClick={() => !isBloqueado && setActiveDialog(card.id)}
+                  className={`bg-card border rounded-lg p-6 transition-all duration-300 relative ${
+                    isBloqueado
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'hover:shadow-lg hover:scale-[1.02] cursor-pointer'
+                  }`}
+                >
+                  {/* Ícone de cadeado para etapas bloqueadas */}
+                  {isBloqueado && (
+                    <div className="absolute top-3 right-3">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5 text-muted-foreground"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                      </svg>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-3 mb-2">
+                    <Icon className={`h-6 w-6 ${isBloqueado ? 'text-muted-foreground' : 'text-primary'}`} />
+                    <h3 className="font-semibold text-lg">{card.title}</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{card.description}</p>
+                  {card.preview && <div className="mt-2">{card.preview}</div>}
+                </div>
+              </TooltipTrigger>
+              {isBloqueado && (
+                <TooltipContent>
+                  <p>Complete &quot;{etapaAnterior}&quot; para desbloquear</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
           );
         })}
       </div>

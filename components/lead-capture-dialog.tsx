@@ -1,0 +1,172 @@
+"use client";
+
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Sparkles, CheckCircle2 } from "lucide-react";
+
+interface LeadCaptureDialogProps {
+  children: React.ReactNode;
+  triggerClassName?: string;
+}
+
+export function LeadCaptureDialog({ children, triggerClassName }: LeadCaptureDialogProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    // Validação básica
+    if (!formData.name || !formData.email || !formData.phone) {
+      alert("Por favor, preencha todos os campos");
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Validação de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      alert("Por favor, insira um e-mail válido");
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      // TODO: Integração futura com CRM (HubSpot, Brevo, etc)
+      // Por enquanto, apenas simula envio e salva no localStorage
+      console.log("Lead capturado:", formData);
+
+      // Salvar no localStorage temporariamente
+      const existingLeads = JSON.parse(localStorage.getItem("ideor_leads") || "[]");
+      const newLead = {
+        ...formData,
+        timestamp: new Date().toISOString(),
+      };
+      localStorage.setItem("ideor_leads", JSON.stringify([...existingLeads, newLead]));
+
+      // Simular delay de envio
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      setIsSuccess(true);
+
+      // Resetar formulário e fechar modal após 2 segundos
+      setTimeout(() => {
+        setFormData({ name: "", email: "", phone: "" });
+        setIsSuccess(false);
+        setIsOpen(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Erro ao enviar lead:", error);
+      alert("Erro ao enviar. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleChange = (field: keyof typeof formData) => (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild className={triggerClassName}>
+        {children}
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        {!isSuccess ? (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-2xl flex items-center gap-2">
+                <Sparkles className="h-6 w-6 text-primary" />
+                Comece sua jornada!
+              </DialogTitle>
+              <DialogDescription className="text-base">
+                Preencha seus dados e receba dicas exclusivas para criar sua startup de sucesso.
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome completo *</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="João Silva"
+                  value={formData.name}
+                  onChange={handleChange("name")}
+                  required
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="joao@example.com"
+                  value={formData.email}
+                  onChange={handleChange("email")}
+                  required
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Telefone/WhatsApp *</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="(11) 99999-9999"
+                  value={formData.phone}
+                  onChange={handleChange("phone")}
+                  required
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-gradient-hero text-[#1e2830] font-semibold hover:shadow-glow"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Enviando..." : "Começar agora"}
+              </Button>
+
+              <p className="text-xs text-center text-muted-foreground">
+                Seus dados estão seguros conosco. Não compartilhamos com terceiros.
+              </p>
+            </form>
+          </>
+        ) : (
+          <div className="py-8 text-center space-y-4">
+            <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
+            <DialogTitle className="text-2xl">Sucesso!</DialogTitle>
+            <DialogDescription className="text-base">
+              Obrigado por se cadastrar! Em breve você receberá nossas dicas exclusivas.
+            </DialogDescription>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
