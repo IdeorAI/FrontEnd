@@ -1,6 +1,8 @@
-// components/hero.tsx (Server Component)
-import Link from "next/link";
+// components/hero.tsx
+"use client";
+
 import { Button } from "@/components/ui/button";
+import { LeadCaptureDialog } from "@/components/lead-capture-dialog";
 import type { StaticImageData } from "next/image";
 import heroBg from "@/app/assets/hero-bg1.jpg";
 
@@ -33,13 +35,14 @@ export default function Hero() {
         </p>
 
         <div className="space-y-4">
-          <Button
-            size="lg"
-            className="text-lg px-8 py-4 bg-gradient-hero hover:shadow-glow transition-all duration-300 transform hover:scale-105 text-[#1e2830] font-semibold shadow-2xl drop-shadow-lg"
-            asChild
-          >
-            <Link href="/auth/sign-up">Criar minha Startup GRÁTIS</Link>
-          </Button>
+          <LeadCaptureDialog>
+            <Button
+              size="lg"
+              className="text-lg px-8 py-4 bg-gradient-hero hover:shadow-glow transition-all duration-300 transform hover:scale-105 text-[#1e2830] font-semibold shadow-2xl drop-shadow-lg"
+            >
+              Criar minha Startup GRÁTIS
+            </Button>
+          </LeadCaptureDialog>
 
           <p className="text-sm text-muted-foreground drop-shadow-md">
             Conta GRATUITA. Sem cartão de crédito.
