@@ -51,33 +51,35 @@ export function LeadCaptureDialog({ children, triggerClassName }: LeadCaptureDia
     }
 
     try {
-      // TODO: Integração futura com CRM (HubSpot, Brevo, etc)
-      // Por enquanto, apenas simula envio e salva no localStorage
-      console.log("Lead capturado:", formData);
+      // Enviar lead para API do backend (integrado com HubSpot)
+      const response = await fetch("https://backend-4kbu.onrender.com/api/leads", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
-      // Salvar no localStorage temporariamente
-      const existingLeads = JSON.parse(localStorage.getItem("ideor_leads") || "[]");
-      const newLead = {
-        ...formData,
-        timestamp: new Date().toISOString(),
-      };
-      localStorage.setItem("ideor_leads", JSON.stringify([...existingLeads, newLead]));
+      const result = await response.json();
 
-      // Simular delay de envio
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (response.ok && result.success) {
+        console.log("Lead enviado para HubSpot com sucesso:", result);
+        setIsSuccess(true);
 
-      setIsSuccess(true);
-
-      // Resetar formulário e fechar modal após 2 segundos
-      setTimeout(() => {
-        setFormData({ name: "", email: "", phone: "" });
-        setIsSuccess(false);
-        setIsOpen(false);
-      }, 2000);
+        // Resetar formulário e fechar modal após 2 segundos
+        setTimeout(() => {
+          setFormData({ name: "", email: "", phone: "" });
+          setIsSuccess(false);
+          setIsOpen(false);
+        }, 2000);
+      } else {
+        console.error("Erro ao enviar lead:", result.message);
+        alert(result.message || "Erro ao enviar. Tente novamente.");
+        setIsSubmitting(false);
+      }
     } catch (error) {
       console.error("Erro ao enviar lead:", error);
-      alert("Erro ao enviar. Tente novamente.");
-    } finally {
+      alert("Erro ao conectar com o servidor. Tente novamente.");
       setIsSubmitting(false);
     }
   };
