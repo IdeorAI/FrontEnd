@@ -40,7 +40,7 @@ export default function Hero() {
               size="lg"
               className="text-lg px-8 py-4 bg-gradient-hero hover:shadow-glow transition-all duration-300 transform hover:scale-105 text-[#1e2830] font-semibold shadow-2xl drop-shadow-lg"
             >
-              Criar minha Startup GRÁTIS
+              Quero criar minha startup
             </Button>
           </LeadCaptureDialog>
 

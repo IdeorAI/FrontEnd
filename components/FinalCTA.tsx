@@ -23,7 +23,7 @@ const FinalCTA = () => {
             size="lg"
             className="text-lg px-8 py-4 bg-gradient-hero hover:shadow-glow transition-all duration-300 text-[#1e2830] transform hover:scale-105"
           >
-            Começar agora grátis
+            Quero meu acesso gratuito
           </Button>
         </LeadCaptureDialog>
       </div>
