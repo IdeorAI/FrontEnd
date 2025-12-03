@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sparkles, CheckCircle2 } from "lucide-react";
+import { PhoneInput } from "react-international-phone";
+import "react-international-phone/style.css";
 
 interface LeadCaptureDialogProps {
   children: React.ReactNode;
@@ -100,7 +102,7 @@ export function LeadCaptureDialog({ children, triggerClassName }: LeadCaptureDia
                 Comece sua jornada!
               </DialogTitle>
               <DialogDescription className="text-base">
-                Preencha seus dados e receba dicas exclusivas para criar sua startup de sucesso.
+                Preencha com seus dados e seja um dos primeiros a criar sua startup com ajuda da IdeorAI
               </DialogDescription>
             </DialogHeader>
 
@@ -133,14 +135,19 @@ export function LeadCaptureDialog({ children, triggerClassName }: LeadCaptureDia
 
               <div className="space-y-2">
                 <Label htmlFor="phone">Telefone/WhatsApp *</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="(11) 99999-9999"
+                <PhoneInput
+                  defaultCountry="br"
                   value={formData.phone}
-                  onChange={handleChange("phone")}
-                  required
+                  onChange={(phone) => setFormData((prev) => ({ ...prev, phone }))}
                   disabled={isSubmitting}
+                  inputClassName="w-full"
+                  countrySelectorStyleProps={{
+                    buttonClassName: "border-input",
+                  }}
+                  inputProps={{
+                    required: true,
+                    id: "phone",
+                  }}
                 />
               </div>
 
@@ -149,7 +156,7 @@ export function LeadCaptureDialog({ children, triggerClassName }: LeadCaptureDia
                 className="w-full bg-gradient-hero text-[#1e2830] font-semibold hover:shadow-glow"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Enviando..." : "Começar agora"}
+                {isSubmitting ? "Enviando..." : "Quero criar minha startup"}
               </Button>
 
               <p className="text-xs text-center text-muted-foreground">
