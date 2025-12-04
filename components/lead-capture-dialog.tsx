@@ -66,12 +66,12 @@ export function LeadCaptureDialog({ children, triggerClassName }: LeadCaptureDia
         console.log("Lead enviado para HubSpot com sucesso:", result);
         setIsSuccess(true);
 
-        // Resetar formulário e fechar modal após 2 segundos
+        // Resetar formulário e fechar modal após 10 segundos
         setTimeout(() => {
           setFormData({ name: "", email: "", phone: "" });
           setIsSuccess(false);
           setIsOpen(false);
-        }, 2000);
+        }, 10000);
       } else {
         console.error("Erro ao enviar lead:", result.message);
         alert(result.message || "Erro ao enviar. Tente novamente.");
