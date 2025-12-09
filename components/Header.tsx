@@ -1,8 +1,11 @@
 // components/Header.tsx
-import { AuthButton } from "@/components/auth-button";
+"use client";
+
 import Image from "next/image";
 import Logo from "../app/assets/logo_branco.png";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { LeadCaptureDialog } from "@/components/lead-capture-dialog";
 
 export default function Header() {
   return (
@@ -21,14 +24,14 @@ export default function Header() {
           </Link>
         </div>
         <nav className="flex items-center space-x-4">
-          <a
-            href="#contato"
-            className="hidden md:block text-foreground hover:text-primary transition-colors"
-          >
-            Contato
-          </a>
-
-          <AuthButton />
+          <LeadCaptureDialog>
+            <Button
+              size="sm"
+              className="bg-gradient-hero text-[#1e2830] font-semibold hover:shadow-glow transition-all"
+            >
+              Contato
+            </Button>
+          </LeadCaptureDialog>
         </nav>
       </div>
     </header>

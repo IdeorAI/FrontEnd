@@ -1,10 +1,11 @@
-// app/onboarding/page.tsx
+// app/page.tsx
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";        
-import { createClient } from "@/lib/supabase/server"; 
-import Header from "@/components/Header";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import Header from "@/components/header";
 import Hero from "@/components/hero";
 import ValueProposition from "@/components/ValueProposition";
+import VideoTeaser from "@/components/VideoTeaser";
 import HowItWorks from "@/components/HowItWorks";
 import FinalCTA from "@/components/FinalCTA";
 import Oportunidade from "@/components/Oportunidade";
@@ -42,6 +43,7 @@ export default async function Page() {
       <main className="min-h-screen bg-background text-foreground">
         <Hero />
         <ValueProposition />
+        <VideoTeaser />
         <HowItWorks />
         <FinalCTA />
         <Oportunidade />
