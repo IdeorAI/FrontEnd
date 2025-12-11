@@ -22,13 +22,18 @@ export default function VideoTeaser() {
 
         <div className="max-w-5xl mx-auto">
           <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl bg-muted/10 backdrop-blur-sm border border-border/50">
-            <iframe
-              className="w-full h-full"
-              src="https://www.youtube.com/embed/9V8hMHDh71Y?controls=1&modestbranding=1&rel=0&showinfo=0&fs=1&iv_load_policy=3&autoplay=0"
-              title="IdeorAI - Como funciona"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
+            <video
+              controls
+              preload="metadata"
+              className="w-full h-full object-cover"
+              poster="/assets/video-poster.jpg"
+            >
+              <source
+                src="/assets/teaser_subtitle_pt.mp4"
+                type="video/mp4"
+              />
+              Seu navegador não suporta o elemento de vídeo.
+            </video>
 
             {/* Decorative gradient overlay on edges */}
             <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-background/10 via-transparent to-background/10" />
