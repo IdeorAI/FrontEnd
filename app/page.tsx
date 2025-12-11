@@ -2,8 +2,8 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import Header from "@/components/header";
-import Hero from "@/components/hero";
+import Header from "@/components/Header";
+import Hero from "@/components/Hero";
 import ValueProposition from "@/components/ValueProposition";
 import VideoTeaser from "@/components/VideoTeaser";
 import HowItWorks from "@/components/HowItWorks";
