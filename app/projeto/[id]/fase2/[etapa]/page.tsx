@@ -14,12 +14,14 @@ import { RocketLoading } from "@/components/rocket-loading";
 import { STAGE_CONFIGS } from "@/lib/stage-configs";
 import { generateDocumentByStage } from "@/lib/gemini-documents";
 import { saveGeneratedDocument } from "@/lib/supabase-tasks";
+import { useUser } from "@/lib/supabase/use-user";
 
 export default function EtapaPage() {
   const params = useParams();
   const router = useRouter();
   const projectId = params?.id as string;
   const etapa = params?.etapa as string;
+  const { user } = useUser();
 
   const stageConfig = STAGE_CONFIGS[etapa];
 
@@ -35,25 +37,22 @@ export default function EtapaPage() {
   // Fetch user ID, project idea and check if document already exists
   useEffect(() => {
     const fetchData = async () => {
-      // Get user from Supabase
-      // TODO: Implementar auth corretamente
-      const mockUserId = "user-id-mock";
-      setUserId(mockUserId);
+      const realUserId = user?.id ?? "";
+      if (!realUserId) return;
+      setUserId(realUserId);
 
       try {
         // Buscar a ideia do projeto (description)
-        const project = await getProject(projectId, mockUserId);
+        const project = await getProject(projectId, realUserId);
         setProjectIdea(project.description || "");
-        console.log("[EtapaPage] Ideia do projeto carregada:", project.description);
 
         // Check if task already exists
-        const tasks = await getProjectTasks(projectId, mockUserId);
+        const tasks = await getProjectTasks(projectId, realUserId);
         const existingTask = tasks.find((t) => t.phase === etapa);
 
         if (existingTask) {
           setTaskId(existingTask.id);
           setGeneratedContent(existingTask.content || null);
-          console.log("[EtapaPage] Documento existente encontrado:", existingTask.id);
         }
       } catch (error) {
         console.error("[EtapaPage] Error fetching data:", error);
@@ -64,7 +63,7 @@ export default function EtapaPage() {
     };
 
     fetchData();
-  }, [projectId, etapa]);
+  }, [projectId, etapa, user]);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleGenerate = async (_values: Record<string, string>) => {
@@ -76,38 +75,22 @@ export default function EtapaPage() {
     }
 
     setIsGenerating(true);
-    console.log("[EtapaPage] Iniciando geração direta via Gemini...", {
-      etapa,
-      projectId,
-      userId,
-      ideiaLength: projectIdea.length
-    });
 
     try {
       // 1. Gerar conteúdo diretamente via Gemini (frontend)
-      console.log("[EtapaPage] Chamando Gemini API...");
       const geminiResponse = await generateDocumentByStage(
         etapa,
         projectIdea,
         userId
       );
 
-      console.log("[EtapaPage] Gemini respondeu:", {
-        contentLength: geminiResponse.content.length,
-        tokensUsed: geminiResponse.tokensUsed,
-        elapsedMs: geminiResponse.elapsedMs
-      });
-
       // 2. Salvar resultado no Supabase
-      console.log("[EtapaPage] Salvando no Supabase...");
       const saveResponse = await saveGeneratedDocument({
         projectId,
         userId,
         stage: etapa,
         content: geminiResponse.content
       });
-
-      console.log("[EtapaPage] Documento salvo com sucesso:", saveResponse.taskId);
 
       // 3. Atualizar UI
       setTaskId(saveResponse.taskId);

@@ -2,7 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  // NOTA: output:'export' não funciona com rotas dinâmicas do projeto
+  // Para deploy apenas da landing page, use Opção A, B ou C (ver documentação)
+  // output: 'export',
+
   images: {
+    unoptimized: true, // Necessário para export estático
     remotePatterns: [
       {
         protocol: "https",

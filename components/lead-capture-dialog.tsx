@@ -63,7 +63,6 @@ export function LeadCaptureDialog({ children, triggerClassName }: LeadCaptureDia
       const result = await response.json();
 
       if (response.ok && result.success) {
-        console.log("Lead enviado para HubSpot com sucesso:", result);
         setIsSuccess(true);
 
         // Resetar formulário e fechar modal após 10 segundos
