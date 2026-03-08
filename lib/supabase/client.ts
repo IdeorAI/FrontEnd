@@ -305,7 +305,7 @@ export function createClient() {
     // Criar cliente usando @supabase/ssr que gerencia cookies automaticamente
     supabaseInstance = createBrowserClient(cleanUrl, cleanAnon, {
       cookies: {
-        get(name) {
+        get(name: string) {
           // Ler cookie do document.cookie
           const value = `; ${document.cookie}`;
           const parts = value.split(`; ${name}=`);
