@@ -316,7 +316,7 @@ export function createClient() {
           }
           return undefined;
         },
-        set(name, value, options) {
+        set(name: string, value: string, options?: Record<string, unknown>) {
           // Salvar cookie no document.cookie
           console.log(`[Supabase Client] 🍪 Setting cookie "${name}":`, {
             valueLength: value.length,
@@ -344,7 +344,7 @@ export function createClient() {
           document.cookie = cookie;
           console.log(`[Supabase Client] 🍪 Cookie "${name}" set successfully`);
         },
-        remove(name, options) {
+        remove(name: string, options?: Record<string, unknown>) {
           // Remover cookie
           console.log(`[Supabase Client] 🍪 Removing cookie "${name}"`);
           this.set(name, '', { ...options, maxAge: 0 });
