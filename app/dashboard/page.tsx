@@ -8,6 +8,7 @@ import { RoadmapBar } from "@/components/roadmap-bar";
 import { ProjectCardLink } from "@/components/project-card-link";
 import { CreateProjectButton } from "@/components/create-project-button";
 import { TrendingUp, Star, Award } from "lucide-react";
+import { DeleteProjectButton } from "@/components/delete-project-button";
 import {
   Tooltip,
   TooltipContent,
@@ -177,7 +178,18 @@ export default async function Page(props: PageProps) {
 
           return (
             <ProjectCardLink projectId={p.id} key={p.id}>
-              <article className="bg-card border rounded-lg p-5 flex flex-col gap-3 relative hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer h-[280px]">
+              <article className="bg-card border rounded-lg p-5 flex flex-col gap-3 relative group hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer h-[280px]">
+                {/* Botão de excluir - aparece no hover */}
+                <div
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <DeleteProjectButton
+                    projectId={p.id}
+                    projectName={projectName}
+                    variant="icon"
+                  />
+                </div>
                 {/* Linha superior com conteúdo e badges */}
                 <div className="flex gap-3 flex-1 min-h-0">
                   {/* Conteúdo principal (lado esquerdo) */}
@@ -274,7 +286,7 @@ export default async function Page(props: PageProps) {
 
               {/* Barra de roadmap e footer (ocupam toda a largura) */}
               <div className="space-y-2">
-                <RoadmapBar completed={completedTasks} total={8} />
+                <RoadmapBar completed={completedTasks} total={7} />
                 <footer className="text-xs text-muted-foreground text-right">
                   Atualizado: {new Date(p.updated_at).toLocaleDateString("pt-BR")}
                 </footer>

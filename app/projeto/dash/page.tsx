@@ -23,6 +23,7 @@ import {
   Bell,
   Star,
   FileCheck2,
+  Megaphone,
 } from "lucide-react";
 import {
   Tooltip,
@@ -31,16 +32,19 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { DeleteProjectButton } from "@/components/delete-project-button";
 
 export default function Page() {
   const [user, setUser] = useState<{ email?: string; user_metadata?: Record<string, unknown> } | null>(null);
-  const [project, setProject] = useState<{ name?: string; valuation?: number; description?: string; created_at?: string } | null>(null);
+  const [project, setProject] = useState<{ name?: string; valuation?: number; description?: string; created_at?: string; score?: number } | null>(null);
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
   const [etapaContent, setEtapaContent] = useState<Record<string, string>>({});
   const [currentStage, setCurrentStage] = useState(1); // Etapa atual do projeto
   const [completedStages, setCompletedStages] = useState<number[]>([0]); // Etapas completas (0=Início sempre completo)
   const searchParams = useSearchParams();
+  const router = useRouter();
   const projectId = searchParams.get("project_id");
 
   // Calcular medalha baseada no progresso
@@ -122,7 +126,7 @@ export default function Page() {
   };
 
   // Handlers para as etapas de IA
-  const handleGenerateEtapa = async (etapaId: 'etapa1' | 'etapa2' | 'etapa3' | 'etapa4', idea: string): Promise<string> => {
+  const handleGenerateEtapa = async (etapaId: 'etapa1' | 'etapa2' | 'etapa3' | 'etapa4' | 'etapa5' | 'etapa6' | 'etapa7', idea: string): Promise<string> => {
     if (!projectId || !user) {
       throw new Error("Project ID ou usuário não encontrado");
     }
@@ -246,7 +250,7 @@ export default function Page() {
 
   const handleDownloadPDF = async (phase?: string) => {
     if (!projectId || !user) {
-      alert("Projeto ou usuário não encontrado");
+      toast.error("Projeto ou usuário não encontrado");
       return;
     }
 
@@ -255,7 +259,7 @@ export default function Page() {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
 
       if (!currentUser?.id) {
-        alert("Usuário não autenticado");
+        toast.error("Usuário não autenticado");
         return;
       }
 
@@ -294,10 +298,10 @@ export default function Page() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      alert("PDF baixado com sucesso!");
+      toast.success("PDF baixado com sucesso!");
     } catch (error) {
       console.error("Erro ao baixar PDF:", error);
-      alert(`Erro ao gerar PDF: ${error instanceof Error ? error.message : "Verifique se há documentos salvos."}`);
+      toast.error(`Erro ao gerar PDF: ${error instanceof Error ? error.message : "Verifique se há documentos salvos."}`);
     }
   };
 
@@ -332,7 +336,7 @@ export default function Page() {
           .from("tasks")
           .select("phase, content, status")
           .eq("project_id", projectId)
-          .in("phase", ["etapa1", "etapa2", "etapa3", "etapa4"]);
+          .in("phase", ["etapa1", "etapa2", "etapa3", "etapa4", "etapa5", "etapa6", "etapa7"]);
 
         if (tasksError) {
           console.error("Erro ao buscar tasks:", tasksError);
@@ -596,18 +600,63 @@ export default function Page() {
       description: "Planeje seu Produto Mínimo Viável",
       dialogTitle: "Etapa 5: MVP - Produto Mínimo Viável",
       dialogContent: (
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Defina as funcionalidades essenciais do seu MVP, stack tecnológico e métricas de
-            sucesso.
-          </p>
-          <div className="p-4 border rounded-lg bg-muted/50">
-            <p className="text-sm">
-              Esta funcionalidade será implementada em breve. Você poderá acessar esta etapa
-              através do menu lateral em &ldquo;Tasks&rdquo;.
-            </p>
-          </div>
-        </div>
+        <AIStageCard
+          title="MVP - Produto Mínimo Viável"
+          description="Defina as funcionalidades essenciais do seu MVP, o stack tecnológico e as métricas de sucesso iniciais."
+          placeholder="Descreva sua ideia de negócio. Ex: App de delivery para pet shops, com rastreamento em tempo real e agendamento de coleta..."
+          onGenerate={(idea) => handleGenerateEtapa('etapa5', idea)}
+          onSave={(content) => handleSaveEtapa('etapa5', content)}
+          existingContent={etapaContent['etapa5']}
+          initialIdea={project?.description || ""}
+          nextStageId="etapa6"
+          nextStageTitle="Equipe"
+          onGoToNextStage={() => {
+            setActiveDialog(null);
+            setTimeout(() => setActiveDialog('etapa6'), 300);
+          }}
+        />
+      ),
+    },
+    {
+      id: "etapa6",
+      icon: Users,
+      title: "Equipe",
+      description: "Estruture a equipe fundadora e papéis-chave",
+      dialogTitle: "Etapa 6: Equipe",
+      dialogContent: (
+        <AIStageCard
+          title="Equipe Fundadora"
+          description="Mapeie os membros-chave da equipe fundadora, suas competências, o que ainda falta e como atrair os talentos necessários."
+          placeholder="Descreva sua equipe atual. Ex: CEO com 10 anos em vendas B2B, CTO com experiência em fintech, buscamos um CMO..."
+          onGenerate={(idea) => handleGenerateEtapa('etapa6', idea)}
+          onSave={(content) => handleSaveEtapa('etapa6', content)}
+          existingContent={etapaContent['etapa6']}
+          initialIdea={project?.description || ""}
+          nextStageId="etapa7"
+          nextStageTitle="Pitch Deck"
+          onGoToNextStage={() => {
+            setActiveDialog(null);
+            setTimeout(() => setActiveDialog('etapa7'), 300);
+          }}
+        />
+      ),
+    },
+    {
+      id: "etapa7",
+      icon: Megaphone,
+      title: "Pitch Deck",
+      description: "Crie seu pitch e plano de negócio final",
+      dialogTitle: "Etapa 7: Pitch Deck",
+      dialogContent: (
+        <AIStageCard
+          title="Pitch Deck e Plano Final"
+          description="Consolide sua estratégia em um pitch deck convincente com resumo executivo, modelo de negócio e projeções financeiras."
+          placeholder="Descreva sua startup em uma frase e o que você busca (investimento, parceiros, clientes). Ex: Buscamos R$500k para escalar nossa solução de logística para o agronegócio..."
+          onGenerate={(idea) => handleGenerateEtapa('etapa7', idea)}
+          onSave={(content) => handleSaveEtapa('etapa7', content)}
+          existingContent={etapaContent['etapa7']}
+          initialIdea={project?.description || ""}
+        />
       ),
     },
     {
@@ -663,9 +712,13 @@ export default function Page() {
             <h3 className="font-semibold text-sm">Relatórios por Etapa</h3>
 
             {[
+              { id: 'etapa1', title: 'Problema e Oportunidade', hasContent: !!etapaContent['etapa1'] },
               { id: 'etapa2', title: 'Pesquisa de Mercado', hasContent: !!etapaContent['etapa2'] },
               { id: 'etapa3', title: 'Proposta de Valor', hasContent: !!etapaContent['etapa3'] },
               { id: 'etapa4', title: 'Modelo de Negócio', hasContent: !!etapaContent['etapa4'] },
+              { id: 'etapa5', title: 'MVP', hasContent: !!etapaContent['etapa5'] },
+              { id: 'etapa6', title: 'Equipe', hasContent: !!etapaContent['etapa6'] },
+              { id: 'etapa7', title: 'Pitch Deck', hasContent: !!etapaContent['etapa7'] },
             ].map((etapa) => (
               <div key={etapa.id} className="p-3 border rounded-lg flex items-center justify-between">
                 <div className="flex-1">
@@ -750,7 +803,7 @@ export default function Page() {
               <TooltipTrigger asChild>
                 <div className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-yellow-500/10 rounded-full hover:bg-yellow-500/15 transition-colors cursor-pointer">
                   <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
-                  <span className="text-base font-semibold">5.3</span>
+                  <span className="text-base font-semibold">{Number(project?.score ?? 0).toFixed(1)}</span>
                 </div>
               </TooltipTrigger>
               <TooltipContent>
@@ -804,6 +857,16 @@ export default function Page() {
               <Bell className="h-6 w-6" />
               <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full" />
             </button>
+
+            {/* Botão de excluir projeto */}
+            {projectId && project && (
+              <DeleteProjectButton
+                projectId={projectId}
+                projectName={project.name || 'Projeto'}
+                variant="full"
+                onDeleted={() => router.push('/dashboard')}
+              />
+            )}
 
             {/* Logout */}
             <div className="ml-2">
