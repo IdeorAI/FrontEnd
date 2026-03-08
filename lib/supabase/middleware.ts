@@ -39,7 +39,7 @@ export async function updateSession(request: NextRequest) {
   const supabase = createServerClient(url, anon, {
     cookies: {
       getAll: () => request.cookies.getAll(),
-      setAll: (cookiesToSet) => {
+      setAll: (cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) => {
         console.log('[middleware] 🍪 Setting cookies:', {
           count: cookiesToSet.length,
           names: cookiesToSet.map(c => c.name),
