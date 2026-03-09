@@ -145,14 +145,14 @@ export function AppSidebar({ user, onCardOpen }: AppSidebarProps) {
         {
           title: "Perfil",
           icon: User,
-          href: "/profile",
-          active: pathname === "/profile",
+          href: "/perfil",
+          active: pathname === "/perfil",
         },
         {
           title: "Configurações",
           icon: Settings,
-          href: "/settings",
-          active: pathname === "/settings",
+          href: "/configuracoes",
+          active: pathname === "/configuracoes",
         },
       ],
     },
