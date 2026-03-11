@@ -1,13 +1,8 @@
-// app/projeto/[id]/fase2/etapa1/page.tsx (Server Component wrapper)
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Etapa1Client } from "./etapa1-client";
 
-interface Etapa1PageProps {
-  params: Promise<{ id: string }>;
-}
-
-export default async function Etapa1Page({ params }: Etapa1PageProps) {
+export default async function Etapa1Page() {
   const supabase = await createClient();
   const {
     data: { user },

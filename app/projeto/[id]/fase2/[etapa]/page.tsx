@@ -2,11 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { EtapaClient } from "./etapa-client";
 
-interface EtapaPageProps {
-  params: Promise<{ id: string; etapa: string }>;
-}
-
-export default async function EtapaPage({ params: _params }: EtapaPageProps) {
+export default async function EtapaPage() {
   const supabase = await createClient();
   const {
     data: { user },
