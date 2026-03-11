@@ -15,11 +15,15 @@ export default async function OnboardingPage() {
   if (!user) redirect("/auth/login");
 
   // Se já completou o onboarding, vai direto para o dashboard
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("onboarding_completed")
     .eq("id", user.id)
     .single();
+
+  if (profileError) {
+    console.error("Profile fetch error:", profileError.message);
+  }
 
   if (profile?.onboarding_completed) redirect("/dashboard");
 

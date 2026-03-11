@@ -4,7 +4,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-interface OnboardingAnswers {
+export interface OnboardingAnswers {
   has_idea: "sim_especifica" | "algumas_ideias" | "descobrindo";
   objetivo: "saber_valor" | "primeiros_clientes" | "pitch";
   socios: "solo" | "com_socios";

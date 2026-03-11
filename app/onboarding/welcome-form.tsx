@@ -4,7 +4,15 @@ import { useTransition, useState } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { completeOnboarding } from "./actions";
+import { completeOnboarding, type OnboardingAnswers } from "./actions";
+
+function toOnboardingAnswers(r: Record<string, string>): OnboardingAnswers | null {
+  const has_idea = r["has_idea"] as OnboardingAnswers["has_idea"] | undefined;
+  const objetivo = r["objetivo"] as OnboardingAnswers["objetivo"] | undefined;
+  const socios = r["socios"] as OnboardingAnswers["socios"] | undefined;
+  if (!has_idea || !objetivo || !socios) return null;
+  return { has_idea, objetivo, socios };
+}
 
 const perguntas = [
   {
@@ -49,7 +57,16 @@ export function WelcomeForm() {
     }
     setErroGeral(null);
     startTransition(async () => {
-      await completeOnboarding(respostas as Parameters<typeof completeOnboarding>[0]);
+      const answers = toOnboardingAnswers(respostas);
+      if (!answers) {
+        setErroGeral("Por favor, responda todas as perguntas.");
+        return;
+      }
+      try {
+        await completeOnboarding(answers);
+      } catch {
+        setErroGeral("Ocorreu um erro ao salvar. Tente novamente.");
+      }
     });
   }
 
@@ -84,7 +101,9 @@ export function WelcomeForm() {
       ))}
 
       {erroGeral && (
-        <p className="text-sm text-red-500">{erroGeral}</p>
+        <p className="text-sm text-red-500" role="alert" aria-live="polite">
+          {erroGeral}
+        </p>
       )}
 
       <Button
