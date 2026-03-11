@@ -10,6 +10,7 @@ import { CreateProjectButton } from "@/components/create-project-button";
 import { TrendingUp, Star, Award } from "lucide-react";
 import { DeleteProjectButton } from "@/components/delete-project-button";
 import { DeleteButtonWrapper } from "@/components/delete-button-wrapper";
+import { ProgressChecklist } from "@/components/progress-checklist";
 import {
   Tooltip,
   TooltipContent,
@@ -124,6 +125,14 @@ export default async function Page(props: PageProps) {
   const { data: projects, error: loadErr } = await query;
   if (loadErr) console.error(loadErr);
 
+  // Etapas concluídas no primeiro projeto (para o checklist)
+  const primeiroProjetoTasks = projects?.[0]?.tasks ?? [];
+  const etapasConcluidas = Array.isArray(primeiroProjetoTasks)
+    ? primeiroProjetoTasks.filter(
+        (t: { status?: string }) => t.status === "evaluated"
+      ).length
+    : 0;
+
   // Função auxiliar para calcular medalha baseada no progresso
   const getMedalha = (tasksCount: number) => {
     if (tasksCount === 0) return { nome: "Iniciante", color: "text-gray-500" };
@@ -159,6 +168,11 @@ export default async function Page(props: PageProps) {
           </div>
         </div>
       </div>
+
+      {/* Progress Checklist — aparece quando há projetos */}
+      {(projects?.length ?? 0) > 0 && (
+        <ProgressChecklist etapasConcluidas={etapasConcluidas} />
+      )}
 
       {/* Cards */}
       <TooltipProvider>
