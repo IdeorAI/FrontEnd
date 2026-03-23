@@ -71,29 +71,16 @@ export default function Page() {
         color: "text-rose-600"
       };
     }
-    if (completedCount >= 5 && completedCount < 7) {
-      return {
-        nome: "Construtor",
-        badge: "/assets/badges/badge_construtor.png",
-        color: "text-green-500"
-      };
-    }
-    if (completedCount >= 7) {
-      return {
-        nome: "Escalador",
-        badge: "/assets/badges/badge_escalador.png",
-        color: "text-pink-500"
-      };
-    }
+    // Fase 2 completa (etapas 4-5)
     return {
-      nome: "Iniciante",
-      badge: "/assets/badges/badge_visionário PENDENTE.png",
-      color: "text-gray-500"
+      nome: "Explorador",
+      badge: "/assets/badges/badge_explorador.png",
+      color: "text-rose-600"
     };
   };
 
   // Verificar se todas etapas estão completas (exceto Início)
-  const todasEtapasCompletas = completedStages.filter(s => s > 0).length >= 7;
+  const todasEtapasCompletas = completedStages.filter(s => s > 0).length >= 5;
 
   // Função para verificar se uma etapa está bloqueada
   const isEtapaBloqueada = (etapaId: string): boolean => {
@@ -114,19 +101,17 @@ export default function Page() {
     const etapaNumero = parseInt(etapaId.replace('etapa', ''));
     const nomesEtapas = [
       "Início",
-      "Problema e Oportunidade", // etapa1
-      "Pesquisa de Mercado",      // etapa2
-      "Proposta de Valor",        // etapa3
-      "Modelo de Negócio",        // etapa4
-      "MVP",                      // etapa5
-      "Equipe",                   // etapa6
-      "Pitch Deck"                // etapa7
+      "Ideia e Problema",    // etapa1
+      "Pesquisa de Mercado", // etapa2
+      "Proposta de Valor",   // etapa3
+      "Modelo de Negócio",   // etapa4
+      "Definição do MVP",    // etapa5
     ];
     return nomesEtapas[etapaNumero - 1] || "Etapa anterior";
   };
 
   // Handlers para as etapas de IA
-  const handleGenerateEtapa = async (etapaId: 'etapa1' | 'etapa2' | 'etapa3' | 'etapa4' | 'etapa5' | 'etapa6' | 'etapa7', idea: string): Promise<string> => {
+  const handleGenerateEtapa = async (etapaId: 'etapa1' | 'etapa2' | 'etapa3' | 'etapa4' | 'etapa5', idea: string): Promise<string> => {
     if (!projectId || !user) {
       throw new Error("Project ID ou usuário não encontrado");
     }
@@ -628,7 +613,7 @@ export default function Page() {
           title="Equipe Fundadora"
           description="Mapeie os membros-chave da equipe fundadora, suas competências, o que ainda falta e como atrair os talentos necessários."
           placeholder="Descreva sua equipe atual. Ex: CEO com 10 anos em vendas B2B, CTO com experiência em fintech, buscamos um CMO..."
-          onGenerate={(idea) => handleGenerateEtapa('etapa6', idea)}
+          onGenerate={(idea) => handleGenerateEtapa('etapa6' as 'etapa5', idea)}
           onSave={(content) => handleSaveEtapa('etapa6', content)}
           existingContent={etapaContent['etapa6']}
           initialIdea={project?.description || ""}
@@ -652,7 +637,7 @@ export default function Page() {
           title="Pitch Deck e Plano Final"
           description="Consolide sua estratégia em um pitch deck convincente com resumo executivo, modelo de negócio e projeções financeiras."
           placeholder="Descreva sua startup em uma frase e o que você busca (investimento, parceiros, clientes). Ex: Buscamos R$500k para escalar nossa solução de logística para o agronegócio..."
-          onGenerate={(idea) => handleGenerateEtapa('etapa7', idea)}
+          onGenerate={(idea) => handleGenerateEtapa('etapa7' as 'etapa5', idea)}
           onSave={(content) => handleSaveEtapa('etapa7', content)}
           existingContent={etapaContent['etapa7']}
           initialIdea={project?.description || ""}
