@@ -1,6 +1,5 @@
 "use client";
 
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { LogoutButton } from "@/components/logout-button";
 import { TeamAvatars } from "@/components/team-avatars";
@@ -31,12 +30,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { DeleteProjectButton } from "@/components/delete-project-button";
 
-export default function Page() {
+function DashPageContent() {
   const [user, setUser] = useState<{ email?: string; user_metadata?: Record<string, unknown> } | null>(null);
   const [project, setProject] = useState<{ name?: string; valuation?: number; description?: string; created_at?: string; score?: number } | null>(null);
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
@@ -298,7 +297,7 @@ export default function Page() {
       } = await supabase.auth.getUser();
 
       if (!currentUser) {
-        redirect("/login");
+        router.replace("/login");
         return;
       }
 
@@ -928,5 +927,17 @@ export default function Page() {
       ))}
       </div>
     </TooltipProvider>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    }>
+      <DashPageContent />
+    </Suspense>
   );
 }
