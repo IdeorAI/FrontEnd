@@ -24,6 +24,7 @@ export interface SaveTaskRequest {
 export interface SaveTaskResponse {
   taskId: string;
   success: boolean;
+  stageSaved?: boolean;
 }
 
 /**
@@ -111,7 +112,8 @@ export async function saveGeneratedDocument(
 
     return {
       taskId,
-      success: true
+      success: true,
+      stageSaved: true
     };
   } catch (error) {
     console.error('[supabase-tasks] Erro geral:', error);
