@@ -13,6 +13,7 @@ export interface GenerateDocumentResponse {
   modelUsed: string;
   tokensUsed: number;
   status: string;
+  stageSaved?: boolean;
 }
 
 export async function generateDocument(

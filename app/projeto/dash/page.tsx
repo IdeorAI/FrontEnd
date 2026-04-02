@@ -6,7 +6,9 @@ import { TeamAvatars } from "@/components/team-avatars";
 import { CardDialog } from "@/components/card-dialog";
 import { AIStageCard } from "@/components/ai-stage-card";
 import { ProjectProgressLine } from "@/components/project-progress-line";
+import { StageBadge } from "@/components/StageBadge";
 import { generateDocumentByStage } from "@/lib/gemini-documents";
+import { calculateStageStatus, StageStatus } from "@/lib/api/stage-summaries";
 import Image from "next/image";
 import {
   ListChecks,
@@ -42,6 +44,7 @@ function DashPageContent() {
   const [etapaContent, setEtapaContent] = useState<Record<string, string>>({});
   const [currentStage, setCurrentStage] = useState(1); // Etapa atual do projeto
   const [completedStages, setCompletedStages] = useState<number[]>([0]); // Etapas completas (0=Início sempre completo)
+  const [stageStatuses, setStageStatuses] = useState<StageStatus[]>([]); // Status dos badges das etapas
   const searchParams = useSearchParams();
   const router = useRouter();
   const projectId = searchParams.get("project_id");
@@ -80,6 +83,15 @@ function DashPageContent() {
 
   // Verificar se todas etapas estão completas (exceto Início)
   const todasEtapasCompletas = completedStages.filter(s => s > 0).length >= 5;
+
+  // Calcular status das etapas para badges
+  useEffect(() => {
+    const completed = completedStages.filter(s => s > 0);
+    // Por enquanto, assumimos que todas as etapas completadas têm resumo
+    // Quando o backend estiver pronto, isso será substituído pela chamada real
+    const statuses = calculateStageStatus(completed, completed);
+    setStageStatuses(statuses);
+  }, [completedStages]);
 
   // Função para verificar se uma etapa está bloqueada
   const isEtapaBloqueada = (etapaId: string): boolean => {
@@ -389,8 +401,6 @@ function DashPageContent() {
               { num: 3, title: "Proposta de Valor", phase: "etapa3" },
               { num: 4, title: "Modelo de Negócio", phase: "etapa4" },
               { num: 5, title: "MVP", phase: "etapa5" },
-              { num: 6, title: "Equipe", phase: "etapa6" },
-              { num: 7, title: "Pitch Deck + Plano + Resumo", phase: "etapa7" },
             ].map((etapa) => {
               const isCompleted = !!etapaContent[etapa.phase];
               return (
@@ -436,7 +446,7 @@ function DashPageContent() {
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Progresso Total:</span>
               <span className="font-bold text-primary">
-                {Object.keys(etapaContent).filter(key => key.startsWith('etapa')).length} / 7 etapas
+                {Object.keys(etapaContent).filter(key => key.startsWith('etapa')).length} / 5 etapas
               </span>
             </div>
           </div>
@@ -592,54 +602,6 @@ function DashPageContent() {
           onSave={(content) => handleSaveEtapa('etapa5', content)}
           existingContent={etapaContent['etapa5']}
           initialIdea={project?.description || ""}
-          nextStageId="etapa6"
-          nextStageTitle="Equipe"
-          onGoToNextStage={() => {
-            setActiveDialog(null);
-            setTimeout(() => setActiveDialog('etapa6'), 300);
-          }}
-        />
-      ),
-    },
-    {
-      id: "etapa6",
-      icon: Users,
-      title: "Equipe",
-      description: "Estruture a equipe fundadora e papéis-chave",
-      dialogTitle: "Etapa 6: Equipe",
-      dialogContent: (
-        <AIStageCard
-          title="Equipe Fundadora"
-          description="Mapeie os membros-chave da equipe fundadora, suas competências, o que ainda falta e como atrair os talentos necessários."
-          placeholder="Descreva sua equipe atual. Ex: CEO com 10 anos em vendas B2B, CTO com experiência em fintech, buscamos um CMO..."
-          onGenerate={(idea) => handleGenerateEtapa('etapa6' as 'etapa5', idea)}
-          onSave={(content) => handleSaveEtapa('etapa6', content)}
-          existingContent={etapaContent['etapa6']}
-          initialIdea={project?.description || ""}
-          nextStageId="etapa7"
-          nextStageTitle="Pitch Deck"
-          onGoToNextStage={() => {
-            setActiveDialog(null);
-            setTimeout(() => setActiveDialog('etapa7'), 300);
-          }}
-        />
-      ),
-    },
-    {
-      id: "etapa7",
-      icon: Megaphone,
-      title: "Pitch Deck",
-      description: "Crie seu pitch e plano de negócio final",
-      dialogTitle: "Etapa 7: Pitch Deck",
-      dialogContent: (
-        <AIStageCard
-          title="Pitch Deck e Plano Final"
-          description="Consolide sua estratégia em um pitch deck convincente com resumo executivo, modelo de negócio e projeções financeiras."
-          placeholder="Descreva sua startup em uma frase e o que você busca (investimento, parceiros, clientes). Ex: Buscamos R$500k para escalar nossa solução de logística para o agronegócio..."
-          onGenerate={(idea) => handleGenerateEtapa('etapa7' as 'etapa5', idea)}
-          onSave={(content) => handleSaveEtapa('etapa7', content)}
-          existingContent={etapaContent['etapa7']}
-          initialIdea={project?.description || ""}
         />
       ),
     },
@@ -701,8 +663,6 @@ function DashPageContent() {
               { id: 'etapa3', title: 'Proposta de Valor', hasContent: !!etapaContent['etapa3'] },
               { id: 'etapa4', title: 'Modelo de Negócio', hasContent: !!etapaContent['etapa4'] },
               { id: 'etapa5', title: 'MVP', hasContent: !!etapaContent['etapa5'] },
-              { id: 'etapa6', title: 'Equipe', hasContent: !!etapaContent['etapa6'] },
-              { id: 'etapa7', title: 'Pitch Deck', hasContent: !!etapaContent['etapa7'] },
             ].map((etapa) => (
               <div key={etapa.id} className="p-3 border rounded-lg flex items-center justify-between">
                 <div className="flex-1">
@@ -868,6 +828,13 @@ function DashPageContent() {
           const Icon = card.icon;
           const isBloqueado = isEtapaBloqueada(card.id);
           const etapaAnterior = getEtapaAnteriorNome(card.id);
+          
+          // Verificar se é um card de etapa (etapa1, etapa2, etc)
+          const etapaMatch = card.id.match(/^etapa(\d+)$/);
+          const etapaNum = etapaMatch ? parseInt(etapaMatch[1]) : null;
+          const stageStatus = etapaNum 
+            ? stageStatuses.find(s => s.stageNumber === etapaNum)?.status 
+            : null;
 
           return (
             <Tooltip key={card.id}>
@@ -902,6 +869,14 @@ function DashPageContent() {
                     <h3 className="font-semibold text-lg">{card.title}</h3>
                   </div>
                   <p className="text-sm text-muted-foreground">{card.description}</p>
+                  
+                  {/* Badge de status da etapa */}
+                  {stageStatus && stageStatus !== 'valid' && !isBloqueado && (
+                    <div className="mt-3">
+                      <StageBadge status={stageStatus} />
+                    </div>
+                  )}
+                  
                   {card.preview && <div className="mt-2">{card.preview}</div>}
                 </div>
               </TooltipTrigger>

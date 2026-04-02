@@ -127,7 +127,7 @@ export const STAGE_CONFIGS: Record<string, StageConfig> = {
     phase: "etapa5",
     title: "Etapa 5: MVP (Minimum Viable Product)",
     description:
-      "Definir funcionalidades core, priorizar features (MoSCoW) e estimar stack tecnológico.",
+      "Definir funcionalidades core, fluxo mínimo do produto, hipóteses de teste e formatos de MVP.",
     fields: [
       {
         name: "proposta_valor",
@@ -142,54 +142,6 @@ export const STAGE_CONFIGS: Record<string, StageConfig> = {
         type: "text",
         placeholder: "Ex: limitados, médios, abundantes",
         defaultValue: "limitados",
-        required: true,
-      },
-    ],
-  },
-
-  etapa6: {
-    phase: "etapa6",
-    title: "Etapa 6: Equipe Mínima",
-    description:
-      "Definir papéis essenciais, perfis ideais e estrutura de equity/remuneração.",
-    fields: [
-      {
-        name: "mvp",
-        label: "Descrição do MVP",
-        type: "textarea",
-        placeholder: "Resumo do seu MVP...",
-        required: true,
-      },
-      {
-        name: "fase",
-        label: "Fase da Startup",
-        type: "select",
-        options: ["pré-seed", "seed", "série A"],
-        defaultValue: "pré-seed",
-        required: true,
-      },
-    ],
-  },
-
-  etapa7: {
-    phase: "etapa7",
-    title: "Etapa 7: Pitch Deck + Plano Executivo + Resumo",
-    description:
-      "Consolidar todas as etapas anteriores em um pitch deck de 12 slides, plano executivo e resumo.",
-    fields: [
-      {
-        name: "nome",
-        label: "Nome do Projeto",
-        type: "text",
-        placeholder: "Nome da sua startup",
-        required: true,
-      },
-      {
-        name: "etapas_anteriores",
-        label: "Resumo das Etapas Anteriores",
-        type: "textarea",
-        placeholder:
-          "Cole aqui um resumo dos principais pontos das etapas 1-6...",
         required: true,
       },
     ],

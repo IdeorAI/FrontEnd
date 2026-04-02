@@ -15,8 +15,6 @@ const STAGES: Stage[] = [
   { number: 3, name: "Proposta de Valor", phase: "etapa3" },
   { number: 4, name: "Modelo de Negócio", phase: "etapa4" },
   { number: 5, name: "MVP", phase: "etapa5" },
-  { number: 6, name: "Equipe Mínima", phase: "etapa6" },
-  { number: 7, name: "Pitch Deck & Plano", phase: "etapa7" },
 ];
 
 interface StageProgressProps {

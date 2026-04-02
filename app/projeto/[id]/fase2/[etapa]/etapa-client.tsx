@@ -4,18 +4,23 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { StageForm } from "@/components/stage-form";
 import { DocumentViewer } from "@/components/document-viewer";
+import { StageContextPanel } from "@/components/StageContextPanel";
 import {
   regenerateDocument,
   refineDocument,
+  GenerateDocumentResponse,
 } from "@/lib/api/documents";
-import { getProjectTasks } from "@/lib/api/tasks";
+import { getProjectTasks, ProjectTask } from "@/lib/api/tasks";
 import { getProject } from "@/lib/api/projects";
+import { getStageSummaries, StageSummary } from "@/lib/api/stage-summaries";
 import { RocketLoading } from "@/components/rocket-loading";
 import { STAGE_CONFIGS } from "@/lib/stage-configs";
 import { generateDocumentByStage } from "@/lib/gemini-documents";
 import { saveGeneratedDocument } from "@/lib/supabase-tasks";
 import { useUser } from "@/lib/supabase/use-user";
 import { FirstTimeTooltip } from "@/components/first-time-tooltip";
+import { toast } from "sonner";
+import { StageStatusBadge } from "@/components/stage-status-badge";
 
 interface EtapaClientProps {
   seenTooltips: Record<string, boolean>;
@@ -38,8 +43,10 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [stageSummaries, setStageSummaries] = useState<StageSummary[]>([]);
+  const [currentStageSaved, setCurrentStageSaved] = useState<boolean | null>(null);
 
-  // Fetch user ID, project idea and check if document already exists
+  // Fetch user ID, project idea, check if document exists, and fetch stage summaries
   useEffect(() => {
     const fetchData = async () => {
       const realUserId = user?.id ?? "";
@@ -58,6 +65,21 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         if (existingTask) {
           setTaskId(existingTask.id);
           setGeneratedContent(existingTask.content || null);
+        }
+
+        // Buscar resumos das etapas anteriores
+        try {
+          const summaries = await getStageSummaries(projectId, realUserId);
+          // Mapear para o formato do StageContextPanel
+          const mappedSummaries: StageSummary[] = summaries.map((s) => ({
+            stageNumber: parseInt(s.stage.replace("etapa", "")) || 0,
+            stageName: STAGE_CONFIGS[s.stage]?.title || `Etapa ${s.stage}`,
+            summary: s.summary,
+            generatedAt: s.generatedAt,
+          }));
+          setStageSummaries(mappedSummaries);
+        } catch (summaryError) {
+          console.log("[EtapaPage] Stage summaries not available yet:", summaryError);
         }
       } catch (error) {
         console.error("[EtapaPage] Error fetching data:", error);
@@ -100,6 +122,18 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
       // 3. Atualizar UI
       setTaskId(saveResponse.taskId);
       setGeneratedContent(geminiResponse.content);
+
+      // Verificar se o contexto foi salvo (F-01: Toast de erro)
+      if (saveResponse.stageSaved === false) {
+        toast.warning("Etapa gerada mas contexto não foi salvo", {
+          description: "O documento foi criado, mas houve um problema ao salvar o resumo. Tente regenerar a etapa.",
+          duration: 6000,
+        });
+        setCurrentStageSaved(false);
+      } else {
+        setCurrentStageSaved(true);
+        toast.success("Documento gerado com sucesso!");
+      }
 
       alert(`✅ Documento gerado com sucesso!\n\nTokens usados: ${geminiResponse.tokensUsed}\nTempo: ${(geminiResponse.elapsedMs / 1000).toFixed(1)}s`);
     } catch (error) {
@@ -144,7 +178,8 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
 
   const getNextEtapa = () => {
     const etapaNumber = parseInt(etapa.replace("etapa", ""));
-    if (etapaNumber < 7) {
+    // MVP: apenas 5 etapas (etapa1 a etapa5)
+    if (etapaNumber < 5) {
       return `etapa${etapaNumber + 1}`;
     }
     return null;
@@ -174,8 +209,26 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
     );
   }
 
+  const currentStageNumber = parseInt(etapa.replace("etapa", "")) || 0;
+
   return (
     <div className="space-y-6">
+      {/* Badge de status da etapa (F-02) */}
+      {currentStageSaved === false && (
+        <StageStatusBadge 
+          status="pending" 
+          message="Contexto não salvo - precisa ser regerado" 
+        />
+      )}
+
+      {/* Painel de Contexto Acumulado (F-04) */}
+      {!generatedContent && stageSummaries.length > 0 && (
+        <StageContextPanel
+          stages={stageSummaries}
+          currentStage={currentStageNumber}
+        />
+      )}
+
       {/* Formulário */}
       {!generatedContent && (
         <FirstTimeTooltip
