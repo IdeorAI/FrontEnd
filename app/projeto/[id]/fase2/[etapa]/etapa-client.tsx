@@ -69,14 +69,8 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         // Buscar resumos das etapas anteriores
         try {
           const summaries = await getStageSummaries(projectId, realUserId);
-          // Mapear para o formato do StageContextPanel
-          const mappedSummaries: StageSummary[] = summaries.map((s) => ({
-            stageNumber: parseInt(s.stage.replace("etapa", "")) || 0,
-            stageName: STAGE_CONFIGS[s.stage]?.title || `Etapa ${s.stage}`,
-            summary: s.summary,
-            generatedAt: s.generatedAt,
-          }));
-          setStageSummaries(mappedSummaries);
+          // API já retorna no formato StageSummary[], usar diretamente
+          setStageSummaries(summaries);
         } catch (summaryError) {
           console.log("[EtapaPage] Stage summaries not available yet:", summaryError);
         }
