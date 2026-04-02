@@ -8,9 +8,8 @@ import { StageContextPanel } from "@/components/StageContextPanel";
 import {
   regenerateDocument,
   refineDocument,
-  GenerateDocumentResponse,
 } from "@/lib/api/documents";
-import { getProjectTasks, ProjectTask } from "@/lib/api/tasks";
+import { getProjectTasks } from "@/lib/api/tasks";
 import { getProject } from "@/lib/api/projects";
 import { getStageSummaries, StageSummary } from "@/lib/api/stage-summaries";
 import { RocketLoading } from "@/components/rocket-loading";

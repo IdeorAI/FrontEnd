@@ -24,7 +24,6 @@ import {
   Bell,
   Star,
   FileCheck2,
-  Megaphone,
 } from "lucide-react";
 import {
   Tooltip,
@@ -363,7 +362,7 @@ function DashPageContent() {
     };
 
     loadData();
-  }, [projectId]);
+  }, [projectId, router]);
 
   useEffect(() => {
     // Listen for custom event from sidebar
