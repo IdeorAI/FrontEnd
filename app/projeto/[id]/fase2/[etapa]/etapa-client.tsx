@@ -5,17 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import { StageForm } from "@/components/stage-form";
 import { DocumentViewer } from "@/components/document-viewer";
 import { StageContextPanel } from "@/components/StageContextPanel";
-import {
-  regenerateDocument,
-  refineDocument,
-} from "@/lib/api/documents";
+import { regenerateDocument, refineDocument, generateDocument } from "@/lib/api/documents";
 import { getProjectTasks } from "@/lib/api/tasks";
 import { getProject } from "@/lib/api/projects";
 import { getStageSummaries, StageSummary } from "@/lib/api/stage-summaries";
 import { RocketLoading } from "@/components/rocket-loading";
 import { STAGE_CONFIGS } from "@/lib/stage-configs";
-import { generateDocumentByStage } from "@/lib/gemini-documents";
-import { saveGeneratedDocument } from "@/lib/supabase-tasks";
 import { useUser } from "@/lib/supabase/use-user";
 import { FirstTimeTooltip } from "@/components/first-time-tooltip";
 import { toast } from "sonner";
@@ -97,43 +92,43 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
     setIsGenerating(true);
 
     try {
-      // 1. Gerar conteúdo diretamente via Gemini (frontend)
-      const geminiResponse = await generateDocumentByStage(
-        etapa,
-        projectIdea,
-        userId
-      );
+      // Preparar inputs para o backend (inclui region e constraints se houver)
+      const inputs = {
+        ideia: projectIdea,
+      };
 
-      // 2. Salvar resultado no Supabase
-      const saveResponse = await saveGeneratedDocument({
-        projectId,
-        userId,
-        stage: etapa,
-        content: geminiResponse.content
-      });
+      // Chamar o backend para gerar com contexto acumulado e novos campos
+      const response = await generateDocument(projectId, {
+        phase: etapa,
+        inputs: inputs
+      }, userId);
 
-      // 3. Atualizar UI
-      setTaskId(saveResponse.taskId);
-      setGeneratedContent(geminiResponse.content);
+      // Atualizar UI
+      setTaskId(response.taskId);
+      setGeneratedContent(response.generatedContent);
 
-      // Verificar se o contexto foi salvo (F-01: Toast de erro)
-      if (saveResponse.stageSaved === false) {
-        toast.warning("Etapa gerada mas contexto não foi salvo", {
-          description: "O documento foi criado, mas houve um problema ao salvar o resumo. Tente regenerar a etapa.",
+      // F-01: Toast de erro/sucesso no salvamento
+      if (response.stageSaved === false) {
+        toast.warning("Atenção: Resumo não persistido", {
+          description: "O documento foi gerado, mas o resumo para contexto futuro não foi salvo. Recomendamos regenerar.",
           duration: 6000,
         });
         setCurrentStageSaved(false);
       } else {
         setCurrentStageSaved(true);
-        toast.success("Documento gerado com sucesso!");
+        toast.success("Documento gerado e contexto salvo com sucesso!");
       }
 
-      alert(`✅ Documento gerado com sucesso!\n\nTokens usados: ${geminiResponse.tokensUsed}\nTempo: ${(geminiResponse.elapsedMs / 1000).toFixed(1)}s`);
+      // Atualizar a lista de resumos para o painel de contexto
+      const summaries = await getStageSummaries(projectId, userId);
+      setStageSummaries(summaries);
+
     } catch (error) {
       console.error("[EtapaPage] Erro ao gerar documento:", error);
-
       const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
-      alert(`Erro ao gerar documento:\n\n${errorMessage}`);
+      toast.error("Falha ao gerar documento", {
+        description: errorMessage,
+      });
     } finally {
       setIsGenerating(false);
     }

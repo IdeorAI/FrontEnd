@@ -26,6 +26,8 @@ export default function QuestionsSelfPage() {
 
   const [productStructure, setProductStructure] = useState<string>("");
   const [targetAudience, setTargetAudience] = useState<string>("");
+  const [region, setRegion] = useState<string>("");
+  const [constraints, setConstraints] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -35,13 +37,15 @@ export default function QuestionsSelfPage() {
       if (!user || !projectId) return;
       const { data } = await supabase
         .from("projects")
-        .select("product_structure, target_audience")
+        .select("product_structure, target_audience, region, constraints")
         .eq("id", projectId)
         .maybeSingle();
 
       if (data) {
         setProductStructure(data.product_structure || "");
         setTargetAudience(data.target_audience || "");
+        setRegion(data.region || "");
+        setConstraints(data.constraints || "");
       }
     })().catch(console.error);
   }, [user, projectId, supabase]);
@@ -64,6 +68,8 @@ export default function QuestionsSelfPage() {
         .update({
           product_structure: productStructure,
           target_audience: targetAudience,
+          region: region,
+          constraints: constraints,
         })
         .eq("id", projectId);
 
@@ -178,6 +184,33 @@ export default function QuestionsSelfPage() {
                   </Label>
                 </div>
               </RadioGroup>
+            </div>
+
+            {/* Pergunta 3: Região */}
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">
+                3 - Em qual país ou região você pretende lançar este MVP?
+              </Label>
+              <input
+                type="text"
+                className="w-full p-2 rounded-md border border-input bg-background text-sm"
+                placeholder="Ex: Brasil, Estados Unidos, Europa..."
+                value={region}
+                onChange={(e) => setRegion(e.target.value)}
+              />
+            </div>
+
+            {/* Pergunta 4: Restrições */}
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">
+                4 - Existe alguma restrição específica?
+              </Label>
+              <textarea
+                className="w-full p-2 rounded-md border border-input bg-background text-sm min-h-[80px]"
+                placeholder="Ex: Orçamento inicial de R$ 5.000, prazo de 3 meses, regulamentações específicas..."
+                value={constraints}
+                onChange={(e) => setConstraints(e.target.value)}
+              />
             </div>
           </div>
 
