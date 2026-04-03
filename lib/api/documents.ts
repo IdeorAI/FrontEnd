@@ -1,5 +1,12 @@
 // API client para geração de documentos
+import { log } from '@/lib/logger';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+// F-05: Validar API_BASE em produção
+if (!process.env.NEXT_PUBLIC_API_URL && process.env.NODE_ENV === 'production') {
+  throw new Error('NEXT_PUBLIC_API_URL é obrigatória em produção');
+}
 
 export interface GenerateDocumentDto {
   phase: string;
@@ -21,7 +28,7 @@ export async function generateDocument(
   data: GenerateDocumentDto,
   userId: string
 ): Promise<GenerateDocumentResponse> {
-  console.log('[generateDocument] Configuração:', {
+  log.debug('[generateDocument] Configuração:', {
     API_BASE,
     origin: typeof window !== 'undefined' ? window.location.origin : 'N/A',
     envVars: {
@@ -30,7 +37,7 @@ export async function generateDocument(
     }
   });
 
-  console.log('[generateDocument] Chamando API:', {
+  log.debug('[generateDocument] Chamando API:', {
     url: `${API_BASE}/api/projects/${projectId}/documents/generate`,
     projectId,
     phase: data.phase,
@@ -50,7 +57,7 @@ export async function generateDocument(
 
     if (!res.ok) {
       const errorText = await res.text();
-      console.error('[generateDocument] Erro HTTP:', {
+      log.error('[generateDocument] Erro HTTP:', {
         status: res.status,
         statusText: res.statusText,
         errorBody: errorText,
@@ -77,10 +84,10 @@ export async function generateDocument(
     }
 
     const result = await res.json();
-    console.log('[generateDocument] Sucesso:', result);
+    log.debug('[generateDocument] Sucesso:', result);
     return result;
   } catch (error) {
-    console.error('[generateDocument] Erro de rede/fetch:', {
+    log.error('[generateDocument] Erro de rede/fetch:', {
       error,
       errorName: error instanceof Error ? error.name : 'Unknown',
       errorMessage: error instanceof Error ? error.message : String(error),

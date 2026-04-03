@@ -7,8 +7,9 @@ import { CardDialog } from "@/components/card-dialog";
 import { AIStageCard } from "@/components/ai-stage-card";
 import { ProjectProgressLine } from "@/components/project-progress-line";
 import { StageBadge } from "@/components/StageBadge";
-import { generateDocumentByStage } from "@/lib/gemini-documents";
-import { calculateStageStatus, StageStatus } from "@/lib/api/stage-summaries";
+import { generateDocument } from "@/lib/api/documents";
+import { calculateStageStatus, StageStatus, getStageSummaries } from "@/lib/api/stage-summaries";
+import { log } from "@/lib/logger";
 import Image from "next/image";
 import {
   ListChecks,
@@ -85,14 +86,32 @@ function DashPageContent() {
 
   // Calcular status das etapas para badges
   useEffect(() => {
-    const completed = completedStages.filter(s => s > 0);
-    // Por enquanto, assumimos que todas as etapas completadas têm resumo
-    // Quando o backend estiver pronto, isso será substituído pela chamada real
-    const statuses = calculateStageStatus(completed, completed);
-    setStageStatuses(statuses);
-  }, [completedStages]);
+    const loadStageStatuses = async () => {
+      if (!projectId || !user) return;
+      
+      try {
+        // F-03: Buscar status real do backend ao invés de calcular client-side
+        const supabase = createClient();
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        
+        if (currentUser?.id) {
+          const summaries = await getStageSummaries(projectId, currentUser.id);
+          const completed = summaries.map(s => s.stageNumber);
+          setCompletedStages([0, ...completed]); // 0 = Início
+          
+          // Calcular statuses baseado nos resumos reais
+          const statuses = calculateStageStatus(completed, completed);
+          setStageStatuses(statuses);
+        }
+      } catch (error) {
+        console.error("[DashPage] Erro ao carregar status das etapas:", error);
+      }
+    };
+    
+    loadStageStatuses();
+  }, [projectId, user]);
 
-  // Função para verificar se uma etapa está bloqueada
+  // Função para verificar se uma etapa está bloqueada (F-02)
   const isEtapaBloqueada = (etapaId: string): boolean => {
     // Etapa 1 sempre desbloqueada
     if (etapaId === 'etapa1') return false;
@@ -101,9 +120,9 @@ function DashPageContent() {
     const etapaNumero = parseInt(etapaId.replace('etapa', ''));
     if (isNaN(etapaNumero)) return false; // Cards não-etapa (roadmap, valuation, etc)
 
-    // Verificar se a etapa anterior está completa
-    const etapaAnterior = etapaNumero - 1;
-    return !completedStages.includes(etapaAnterior);
+    // F-02: Usar status real das etapas ao invés de lógica hardcoded
+    const previousStageStatus = stageStatuses.find(s => s.stageNumber === etapaNumero - 1);
+    return !previousStageStatus || previousStageStatus.status === 'pending';
   };
 
   // Obter nome da etapa anterior que precisa ser concluída
@@ -134,24 +153,27 @@ function DashPageContent() {
         throw new Error("Usuário não autenticado");
       }
 
-      console.log("[DashPage] Gerando documento via Gemini direto...", { etapaId, ideaLength: idea.length });
+      log.info("[DashPage] Gerando documento via backend...", { etapaId, ideaLength: idea.length });
 
-      // Gerar conteúdo diretamente via Gemini (frontend)
-      const geminiResponse = await generateDocumentByStage(
-        etapaId,
-        idea,
+      // F-01: Chamar backend ao invés de Gemini client-side
+      const response = await generateDocument(
+        projectId,
+        {
+          phase: etapaId,
+          inputs: { ideia: idea }
+        },
         currentUser.id
       );
 
-      console.log("[DashPage] Gemini respondeu:", {
-        contentLength: geminiResponse.content.length,
-        tokensUsed: geminiResponse.tokensUsed,
-        elapsedMs: geminiResponse.elapsedMs
+      log.info("[DashPage] Backend respondeu:", {
+        contentLength: response.generatedContent.length,
+        tokensUsed: response.tokensUsed,
+        stageSaved: response.stageSaved
       });
 
-      return geminiResponse.content;
+      return response.generatedContent;
     } catch (error) {
-      console.error("[DashPage] Erro ao gerar documento:", error);
+      log.error("[DashPage] Erro ao gerar documento:", error);
       throw error;
     }
   };
@@ -173,14 +195,14 @@ function DashPageContent() {
         .maybeSingle();
 
       if (searchError) {
-        console.error("Erro ao buscar task existente:", searchError);
+        log.error("Erro ao buscar task existente:", searchError);
         throw new Error(`Erro ao buscar task: ${searchError.message}`);
       }
 
       let result;
       if (existingTask) {
         // Atualizar task existente
-        console.log("Atualizando task existente:", existingTask.id);
+        log.info("Atualizando task existente:", existingTask.id);
         result = await supabase
           .from("tasks")
           .update({
@@ -192,7 +214,7 @@ function DashPageContent() {
           .select();
       } else {
         // Criar nova task
-        console.log("Criando nova task para fase:", etapaId);
+        log.info("Criando nova task para fase:", etapaId);
         result = await supabase
           .from("tasks")
           .insert({
@@ -211,7 +233,7 @@ function DashPageContent() {
         throw new Error(`Erro ao salvar: ${result.error.message}`);
       }
 
-      console.log("Conteúdo salvo com sucesso:", result.data);
+      log.info("Conteúdo salvo com sucesso:", result.data);
 
       // Atualizar estado local
       setEtapaContent((prev) => ({
@@ -231,7 +253,7 @@ function DashPageContent() {
           const maxCompleted = Math.max(...newCompleted.filter(n => n > 0));
           setCurrentStage(maxCompleted < 7 ? maxCompleted + 1 : 8);
 
-          console.log("Progresso atualizado - Etapas completas:", newCompleted, "Etapa atual:", maxCompleted < 7 ? maxCompleted + 1 : 8);
+          log.info("Progresso atualizado - Etapas completas:", newCompleted, "Etapa atual:", maxCompleted < 7 ? maxCompleted + 1 : 8);
 
           return newCompleted;
         }
@@ -263,7 +285,7 @@ function DashPageContent() {
         ? `${API_BASE}/api/projects/${projectId}/documents/export/pdf/${phase}`
         : `${API_BASE}/api/projects/${projectId}/documents/export/pdf`;
 
-      console.log(`Baixando PDF${phase ? ` da fase ${phase}` : ' completo'}...`);
+      log.info(`Baixando PDF${phase ? ` da fase ${phase}` : ' completo'}...`);
 
       const response = await fetch(endpoint, {
         method: 'GET',
@@ -278,7 +300,7 @@ function DashPageContent() {
         throw new Error(`Falha ao gerar PDF: ${response.status} - ${errorText}`);
       }
 
-      console.log("PDF gerado com sucesso, baixando arquivo...");
+      log.info("PDF gerado com sucesso, baixando arquivo...");
 
       // Baixar o arquivo
       const blob = await response.blob();

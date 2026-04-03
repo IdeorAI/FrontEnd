@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser } from "@/lib/supabase/use-user";
 import { createDraftProject } from "./actions";
 import { RocketLoading } from "@/components/rocket-loading";
+import { log } from "@/lib/logger";
 
 export default function IdeaCreatePage() {
   const router = useRouter();
@@ -36,22 +37,22 @@ export default function IdeaCreatePage() {
       setError(null);
       (async () => {
         try {
-          console.log("Client: Chamando Server Action para criar projeto");
+          log.debug("Client: Chamando Server Action para criar projeto");
           const result = await createDraftProject();
 
           if (result.error) {
-            console.error("Client: Erro retornado:", result.error);
+            log.error("Client: Erro retornado:", result.error);
             setError(result.error);
             return;
           }
 
           if (result.projectId) {
-            console.log("Client: Projeto criado:", result.projectId);
+            log.debug("Client: Projeto criado:", result.projectId);
             setPid(result.projectId);
             router.replace(`/idea/create?project_id=${result.projectId}`);
           }
         } catch (error) {
-          console.error("Client: Erro ao criar projeto:", error);
+          log.error("Client: Erro ao criar projeto:", error);
           setError("Erro inesperado ao criar projeto");
         } finally {
           setIsCreatingProject(false);
@@ -66,16 +67,6 @@ export default function IdeaCreatePage() {
   const goToIdeor = () => pid && router.push(`/idea/questions-assisted?project_id=${pid}`);
 
   const isDisabled = loading || isCreatingProject || !pid;
-
-  // Debug
-  console.log({
-    loading,
-    isCreatingProject,
-    pid,
-    isDisabled,
-    hasUser: !!user,
-    error,
-  });
 
   // Mostrar RocketLoading quando estiver criando projeto
   if (isCreatingProject) {
