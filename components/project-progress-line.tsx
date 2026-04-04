@@ -5,14 +5,14 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 
 interface ProjectProgressLineProps {
-  currentStage: number; // 0 = Início, 1-7 = Etapas, 8 = Concluído
+  currentStage: number; // 0 = Início, 1-5 = Etapas
   completedStages: number[]; // Array de etapas completas
 }
 
 export function ProjectProgressLine({ currentStage, completedStages }: ProjectProgressLineProps) {
   const stages = [
     { id: 0, label: "Início", shortLabel: "Início" },
-    { id: 1, label: "Ideia e\nProblema", shortLabel: "Problema", medalha: null },
+    { id: 1, label: "Problema e\nOportunidade", shortLabel: "Problema", medalha: null },
     {
       id: 2,
       label: "Pesquisa de\nMercado",
@@ -37,29 +37,6 @@ export function ProjectProgressLine({ currentStage, completedStages }: ProjectPr
       }
     },
     { id: 5, label: "Definição do\nMVP", shortLabel: "MVP", medalha: null },
-    {
-      id: 6,
-      label: "Criação de\nEquipe",
-      shortLabel: "Equipe",
-      medalha: {
-        nome: "Construtor",
-        badge: "/assets/badges/badge_construtor.png",
-        badgePendente: "/assets/badges/badge_construtor PENDENTE.png",
-        color: "text-green-500"
-      }
-    },
-    { id: 7, label: "Documentação", shortLabel: "Doc.", medalha: null },
-    {
-      id: 8,
-      label: "Captação",
-      shortLabel: "Captação",
-      medalha: {
-        nome: "Escalador",
-        badge: "/assets/badges/badge_escalador.png",
-        badgePendente: "/assets/badges/badge_escalador PENDENTE.png",
-        color: "text-pink-500"
-      }
-    },
   ];
 
   const isCompleted = (stageId: number) => completedStages.includes(stageId);

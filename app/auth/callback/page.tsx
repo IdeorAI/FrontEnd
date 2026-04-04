@@ -34,22 +34,8 @@ function AuthCallbackInner() {
         return;
       }
 
-      // Checar se novo usuário precisa do onboarding
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-
-      if (currentUser) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("onboarding_completed")
-          .eq("id", currentUser.id)
-          .single();
-
-        if (!profile?.onboarding_completed) {
-          router.replace("/onboarding");
-          return;
-        }
-      }
-
+      // Onboarding desativado — redirect direto para dashboard
+      // TODO: Revisitar onboarding no futuro
       router.replace("/dashboard");
     };
 
