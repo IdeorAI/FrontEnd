@@ -29,18 +29,16 @@ export default async function Fase2Layout({
       .filter((t) => t.status === "evaluated")
       .map((t) => t.phase);
 
-    // Determinar etapa atual (primeira não completa)
+    // Determinar etapa atual (primeira não completa, máx 5 etapas)
     const allStages = [
       "etapa1",
       "etapa2",
       "etapa3",
       "etapa4",
       "etapa5",
-      "etapa6",
-      "etapa7",
     ];
     currentStage =
-      allStages.find((stage) => !completedStages.includes(stage)) || "etapa7";
+      allStages.find((stage) => !completedStages.includes(stage)) || "etapa5";
   } catch (error) {
     console.error("Error fetching tasks:", error);
   }

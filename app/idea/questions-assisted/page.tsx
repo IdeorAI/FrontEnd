@@ -17,6 +17,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { X, ChevronLeft, Lightbulb } from "lucide-react";
 
+// Limites de caracteres para inputs abertos
+const REGION_MAX_LENGTH = 100;
+const CONSTRAINTS_MAX_LENGTH = 500;
+
 export default function QuestionsAssistedPage() {
   const router = useRouter();
   const sp = useSearchParams();
@@ -26,6 +30,8 @@ export default function QuestionsAssistedPage() {
 
   const [productStructure, setProductStructure] = useState<string>("");
   const [targetAudience, setTargetAudience] = useState<string>("");
+  const [region, setRegion] = useState<string>("");
+  const [constraints, setConstraints] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -35,13 +41,15 @@ export default function QuestionsAssistedPage() {
       if (!user || !projectId) return;
       const { data } = await supabase
         .from("projects")
-        .select("product_structure, target_audience")
+        .select("product_structure, target_audience, region, constraints")
         .eq("id", projectId)
         .maybeSingle();
 
       if (data) {
         setProductStructure(data.product_structure || "");
         setTargetAudience(data.target_audience || "");
+        setRegion(data.region || "");
+        setConstraints(data.constraints || "");
       }
     })().catch(console.error);
   }, [user, projectId, supabase]);
@@ -64,6 +72,8 @@ export default function QuestionsAssistedPage() {
         .update({
           product_structure: productStructure,
           target_audience: targetAudience,
+          region: region,
+          constraints: constraints,
         })
         .eq("id", projectId);
 
@@ -178,6 +188,53 @@ export default function QuestionsAssistedPage() {
                   </Label>
                 </div>
               </RadioGroup>
+            </div>
+
+            {/* Pergunta 3: Região (com limite de caracteres) */}
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">
+                3 - Em qual país ou região você pretende lançar este MVP?
+              </Label>
+              <div className="space-y-1">
+                <input
+                  type="text"
+                  className="w-full p-2 rounded-md border border-input bg-background text-sm"
+                  placeholder="Ex: Brasil, Estados Unidos, Europa..."
+                  value={region}
+                  onChange={(e) => {
+                    if (e.target.value.length <= REGION_MAX_LENGTH) {
+                      setRegion(e.target.value);
+                    }
+                  }}
+                  maxLength={REGION_MAX_LENGTH}
+                />
+                <p className="text-xs text-muted-foreground text-right">
+                  {region.length}/{REGION_MAX_LENGTH} caracteres
+                </p>
+              </div>
+            </div>
+
+            {/* Pergunta 4: Restrições (com limite de caracteres) */}
+            <div className="space-y-3">
+              <Label className="text-base font-semibold">
+                4 - Existe alguma restrição específica?
+              </Label>
+              <div className="space-y-1">
+                <textarea
+                  className="w-full p-2 rounded-md border border-input bg-background text-sm min-h-[80px]"
+                  placeholder="Ex: Orçamento inicial de R$ 5.000, prazo de 3 meses, regulamentações específicas..."
+                  value={constraints}
+                  onChange={(e) => {
+                    if (e.target.value.length <= CONSTRAINTS_MAX_LENGTH) {
+                      setConstraints(e.target.value);
+                    }
+                  }}
+                  maxLength={CONSTRAINTS_MAX_LENGTH}
+                />
+                <p className="text-xs text-muted-foreground text-right">
+                  {constraints.length}/{CONSTRAINTS_MAX_LENGTH} caracteres
+                </p>
+              </div>
             </div>
           </div>
 

@@ -17,6 +17,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { X, ChevronLeft, Lightbulb } from "lucide-react";
 
+// Limites de caracteres para inputs abertos
+const REGION_MAX_LENGTH = 100;
+const CONSTRAINTS_MAX_LENGTH = 500;
+
 export default function QuestionsSelfPage() {
   const router = useRouter();
   const sp = useSearchParams();
@@ -186,31 +190,51 @@ export default function QuestionsSelfPage() {
               </RadioGroup>
             </div>
 
-            {/* Pergunta 3: Região */}
+            {/* Pergunta 3: Região (com limite de caracteres) */}
             <div className="space-y-3">
               <Label className="text-base font-semibold">
                 3 - Em qual país ou região você pretende lançar este MVP?
               </Label>
-              <input
-                type="text"
-                className="w-full p-2 rounded-md border border-input bg-background text-sm"
-                placeholder="Ex: Brasil, Estados Unidos, Europa..."
-                value={region}
-                onChange={(e) => setRegion(e.target.value)}
-              />
+              <div className="space-y-1">
+                <input
+                  type="text"
+                  className="w-full p-2 rounded-md border border-input bg-background text-sm"
+                  placeholder="Ex: Brasil, Estados Unidos, Europa..."
+                  value={region}
+                  onChange={(e) => {
+                    if (e.target.value.length <= REGION_MAX_LENGTH) {
+                      setRegion(e.target.value);
+                    }
+                  }}
+                  maxLength={REGION_MAX_LENGTH}
+                />
+                <p className="text-xs text-muted-foreground text-right">
+                  {region.length}/{REGION_MAX_LENGTH} caracteres
+                </p>
+              </div>
             </div>
 
-            {/* Pergunta 4: Restrições */}
+            {/* Pergunta 4: Restrições (com limite de caracteres) */}
             <div className="space-y-3">
               <Label className="text-base font-semibold">
                 4 - Existe alguma restrição específica?
               </Label>
-              <textarea
-                className="w-full p-2 rounded-md border border-input bg-background text-sm min-h-[80px]"
-                placeholder="Ex: Orçamento inicial de R$ 5.000, prazo de 3 meses, regulamentações específicas..."
-                value={constraints}
-                onChange={(e) => setConstraints(e.target.value)}
-              />
+              <div className="space-y-1">
+                <textarea
+                  className="w-full p-2 rounded-md border border-input bg-background text-sm min-h-[80px]"
+                  placeholder="Ex: Orçamento inicial de R$ 5.000, prazo de 3 meses, regulamentações específicas..."
+                  value={constraints}
+                  onChange={(e) => {
+                    if (e.target.value.length <= CONSTRAINTS_MAX_LENGTH) {
+                      setConstraints(e.target.value);
+                    }
+                  }}
+                  maxLength={CONSTRAINTS_MAX_LENGTH}
+                />
+                <p className="text-xs text-muted-foreground text-right">
+                  {constraints.length}/{CONSTRAINTS_MAX_LENGTH} caracteres
+                </p>
+              </div>
             </div>
           </div>
 

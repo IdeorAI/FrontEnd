@@ -249,11 +249,11 @@ function DashPageContent() {
         if (!prev.includes(etapaNum)) {
           const newCompleted = [...prev, etapaNum].sort((a, b) => a - b);
 
-          // Atualiza currentStage para próxima etapa
+          // Atualiza currentStage para próxima etapa (máx 5 etapas)
           const maxCompleted = Math.max(...newCompleted.filter(n => n > 0));
-          setCurrentStage(maxCompleted < 7 ? maxCompleted + 1 : 8);
+          setCurrentStage(maxCompleted < 5 ? maxCompleted + 1 : 5);
 
-          log.info("Progresso atualizado - Etapas completas:", newCompleted, "Etapa atual:", maxCompleted < 7 ? maxCompleted + 1 : 8);
+          log.info("Progresso atualizado - Etapas completas:", newCompleted, "Etapa atual:", maxCompleted < 5 ? maxCompleted + 1 : 5);
 
           return newCompleted;
         }
@@ -353,7 +353,7 @@ function DashPageContent() {
           .from("tasks")
           .select("phase, content, status")
           .eq("project_id", projectId)
-          .in("phase", ["etapa1", "etapa2", "etapa3", "etapa4", "etapa5", "etapa6", "etapa7"]);
+          .in("phase", ["etapa1", "etapa2", "etapa3", "etapa4", "etapa5"]);
 
         if (tasksError) {
           console.error("Erro ao buscar tasks:", tasksError);
@@ -376,9 +376,9 @@ function DashPageContent() {
           setEtapaContent(contentMap);
           setCompletedStages(completed);
 
-          // Definir etapa atual como a próxima após a última completa
+          // Definir etapa atual como a próxima após a última completa (máx 5 etapas)
           const maxCompleted = Math.max(...completed);
-          setCurrentStage(maxCompleted < 7 ? maxCompleted + 1 : 8);
+          setCurrentStage(maxCompleted < 5 ? maxCompleted + 1 : 5);
         }
       }
     };
@@ -408,7 +408,7 @@ function DashPageContent() {
       id: "roadmap",
       icon: ListChecks,
       title: "Roadmap",
-      description: "Acompanhe o progresso das 7 etapas do projeto",
+      description: "Acompanhe o progresso das 5 etapas do projeto",
       dialogTitle: "Roadmap - Etapas do Projeto",
       dialogContent: (
         <div className="space-y-4">
