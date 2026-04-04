@@ -10,7 +10,6 @@ import { CreateProjectButton } from "@/components/create-project-button";
 import { TrendingUp, Star, Award } from "lucide-react";
 import { DeleteProjectButton } from "@/components/delete-project-button";
 import { DeleteButtonWrapper } from "@/components/delete-button-wrapper";
-import { ProgressChecklist } from "@/components/progress-checklist";
 import {
   Tooltip,
   TooltipContent,
@@ -169,10 +168,10 @@ export default async function Page(props: PageProps) {
         </div>
       </div>
 
-      {/* Progress Checklist — aparece quando há projetos */}
-      {(projects?.length ?? 0) > 0 && (
+      {/* Progress Checklist — desativado temporariamente (onboarding revisado) */}
+      {/* {(projects?.length ?? 0) > 0 && (
         <ProgressChecklist etapasConcluidas={etapasConcluidas} />
-      )}
+      )} */}
 
       {/* Cards */}
       <TooltipProvider>
