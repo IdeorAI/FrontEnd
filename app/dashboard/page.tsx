@@ -124,14 +124,6 @@ export default async function Page(props: PageProps) {
   const { data: projects, error: loadErr } = await query;
   if (loadErr) console.error(loadErr);
 
-  // Etapas concluídas no primeiro projeto (para o checklist)
-  const primeiroProjetoTasks = projects?.[0]?.tasks ?? [];
-  const etapasConcluidas = Array.isArray(primeiroProjetoTasks)
-    ? primeiroProjetoTasks.filter(
-        (t: { status?: string }) => t.status === "evaluated"
-      ).length
-    : 0;
-
   // Função auxiliar para calcular medalha baseada no progresso
   const getMedalha = (tasksCount: number) => {
     if (tasksCount === 0) return { nome: "Iniciante", color: "text-gray-500" };
