@@ -2,6 +2,10 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/components/logout-button";
+
+// Marcar como dinâmico para Next.js 15+
+export const dynamic = 'force-dynamic';
+
 import { DashboardFilters } from "@/components/dashboard-filters";
 import categories from "@/lib/data/categories.json";
 import { RoadmapBar } from "@/components/roadmap-bar";
