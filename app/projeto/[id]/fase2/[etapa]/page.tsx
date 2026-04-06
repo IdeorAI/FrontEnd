@@ -1,15 +1,12 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { EtapaClient } from "./etapa-client";
 
 export default function EtapaPage() {
-  const params = useParams();
   const router = useRouter();
-  const projectId = params?.id as string;
-  const etapa = params?.etapa as string;
   
   const [seenTooltips, setSeenTooltips] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
