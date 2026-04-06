@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { EtapaClient } from "./etapa-client";
 
+// Marcar como página dinâmica (Next.js 15+)
+export const dynamic = 'force-dynamic';
+
 export default async function EtapaPage() {
   try {
     const supabase = await createClient();
