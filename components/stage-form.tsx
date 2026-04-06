@@ -57,7 +57,6 @@ export function StageForm({
 
   const handleUseSuggestion = (name: string, suggestion: string) => {
     setValues((prev) => ({ ...prev, [name]: suggestion }));
-    setShowSuggestion((prev) => ({ ...prev, [name]: false }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
