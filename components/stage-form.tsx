@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,8 +45,6 @@ export function StageForm({
     });
     return initial;
   });
-
-  const [showSuggestion, setShowSuggestion] = useState<Record<string, boolean>>({});
 
   const handleChange = (name: string, value: string) => {
     // Aplicar limite de caracteres se definido
@@ -108,24 +106,14 @@ export function StageForm({
                   <span>Sugestão baseada na etapa anterior:</span>
                 </div>
                 <p className="text-sm line-clamp-3">{field.suggestion}</p>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleUseSuggestion(field.name, field.suggestion || "")}
-                  >
-                    Usar sugestão
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowSuggestion((prev) => ({ ...prev, [field.name]: false }))}
-                  >
-                    Ignorar
-                  </Button>
-                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleUseSuggestion(field.name, field.suggestion || "")}
+                >
+                  Usar sugestão
+                </Button>
               </div>
             )}
 
