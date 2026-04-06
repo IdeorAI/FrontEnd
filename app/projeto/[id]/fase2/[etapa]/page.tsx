@@ -1,33 +1,54 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { EtapaClient } from "./etapa-client";
 
-// Marcar como página dinâmica (Next.js 15+)
-export const dynamic = 'force-dynamic';
+export default function EtapaPage() {
+  const params = useParams();
+  const router = useRouter();
+  const projectId = params?.id as string;
+  const etapa = params?.etapa as string;
+  
+  const [seenTooltips, setSeenTooltips] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(true);
 
-export default async function EtapaPage() {
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    
-    if (!user) {
-      redirect("/auth/login");
-    }
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          router.push("/auth/login");
+          return;
+        }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("seen_tooltips")
-      .eq("id", user.id)
-      .single();
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("seen_tooltips")
+          .eq("id", user.id)
+          .single();
 
-    const seenTooltips: Record<string, boolean> = profile?.seen_tooltips ?? {};
+        setSeenTooltips(profile?.seen_tooltips ?? {});
+      } catch (error) {
+        console.error("[EtapaPage] Error loading data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    return <EtapaClient seenTooltips={seenTooltips} />;
-  } catch (error) {
-    console.error("[EtapaPage] Error:", error);
-    // Fallback: renderizar sem tooltips
-    return <EtapaClient seenTooltips={{}} />;
+    loadData();
+  }, [router]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8c7dff]"></div>
+      </div>
+    );
   }
+
+  return <EtapaClient seenTooltips={seenTooltips} />;
 }
