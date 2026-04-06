@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { StageForm } from "@/components/stage-form";
+import { StageForm, FormField } from "@/components/stage-form";
 import { DocumentViewer } from "@/components/document-viewer";
 import { StageContextPanel } from "@/components/StageContextPanel";
 import { regenerateDocument, refineDocument, generateDocument } from "@/lib/api/documents";
@@ -39,6 +39,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [stageSummaries, setStageSummaries] = useState<StageSummary[]>([]);
   const [currentStageSaved, setCurrentStageSaved] = useState<boolean | null>(null);
+  const [previousStageSummary, setPreviousStageSummary] = useState<string | null>(null);
 
   // Fetch user ID, project idea, check if document exists, and fetch stage summaries
   useEffect(() => {
@@ -64,8 +65,18 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         // Buscar resumos das etapas anteriores
         try {
           const summaries = await getStageSummaries(projectId, realUserId);
-          // API já retorna no formato StageSummary[], usar diretamente
           setStageSummaries(summaries);
+
+          // Buscar resumo da etapa anterior para usar como sugestão
+          const currentStageNumber = parseInt(etapa.replace("etapa", "")) || 0;
+          if (currentStageNumber > 1) {
+            const previousSummary = summaries.find(
+              (s) => s.stageNumber === currentStageNumber - 1
+            );
+            if (previousSummary) {
+              setPreviousStageSummary(previousSummary.summary);
+            }
+          }
         } catch (summaryError) {
           console.log("[EtapaPage] Stage summaries not available yet:", summaryError);
         }
@@ -80,24 +91,40 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
     fetchData();
   }, [projectId, etapa, user]);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleGenerate = async (_values: Record<string, string>) => {
-    if (!userId) return;
-
-    if (!projectIdea) {
-      alert("Erro: Ideia do projeto não encontrada. Recarregue a página.");
-      return;
+  // Preparar campos do formulário com sugestão da etapa anterior
+  const formFieldsWithSuggestions: FormField[] = stageConfig?.fields.map((field: FormField) => {
+    // Adicionar sugestão apenas para o campo "ideia" se houver resumo anterior
+    if (field.name === "ideia" && previousStageSummary) {
+      return {
+        ...field,
+        suggestion: previousStageSummary,
+        maxLength: 800, // Limite de caracteres para o input do usuário
+      };
     }
+    // Adicionar limite de caracteres para textareas
+    if (field.type === "textarea") {
+      return {
+        ...field,
+        maxLength: field.maxLength || 800,
+      };
+    }
+    return field;
+  }) || [];
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleGenerate = async (values: Record<string, string>) => {
+    if (!userId) return;
 
     setIsGenerating(true);
 
     try {
-      // Preparar inputs para o backend (inclui region e constraints se houver)
+      // Preparar inputs para o backend
       const inputs = {
-        ideia: projectIdea,
+        ideia: values.ideia || projectIdea || "",
+        ...values,
       };
 
-      // Chamar o backend para gerar com contexto acumulado e novos campos
+      // Chamar o backend para gerar com contexto acumulado
       const response = await generateDocument(projectId, {
         phase: etapa,
         inputs: inputs
@@ -228,7 +255,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
             <StageForm
               title={stageConfig.title}
               description={stageConfig.description}
-              fields={stageConfig.fields}
+              fields={formFieldsWithSuggestions}
               onSubmit={handleGenerate}
               isSubmitting={isGenerating}
             />

@@ -857,11 +857,24 @@ function DashPageContent() {
             ? stageStatuses.find(s => s.stageNumber === etapaNum)?.status 
             : null;
 
+          // Verificar se é um card de etapa (etapa1-5) para navegar para página dedicada
+          const handleCardClick = () => {
+            if (isBloqueado) return;
+            
+            if (etapaNum) {
+              // Navegar para página dedicada da etapa
+              router.push(`/projeto/${projectId}/fase2/etapa${etapaNum}`);
+            } else {
+              // Cards não-etapa (roadmap, valuation, etc) - abrir modal
+              setActiveDialog(card.id);
+            }
+          };
+
           return (
             <Tooltip key={card.id}>
               <TooltipTrigger asChild>
                 <div
-                  onClick={() => !isBloqueado && setActiveDialog(card.id)}
+                  onClick={handleCardClick}
                   className={`bg-card border rounded-lg p-6 transition-all duration-300 relative ${
                     isBloqueado
                       ? 'opacity-50 cursor-not-allowed'
