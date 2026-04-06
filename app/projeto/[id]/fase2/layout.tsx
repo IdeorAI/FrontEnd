@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 import { StageProgress } from "@/components/stage-progress";
 import { getProjectTasks } from "@/lib/api/tasks";
 
+// Marcar como dinâmico para Next.js 15+
+export const dynamic = 'force-dynamic';
+
 export default async function Fase2Layout({
   children,
   params,

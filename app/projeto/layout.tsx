@@ -3,6 +3,9 @@ import { ProjetoLayoutWrapper } from "@/components/projeto-layout-wrapper"
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 
+// Marcar como dinâmico para Next.js 15+
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardLayout({
   children,
 }: {
