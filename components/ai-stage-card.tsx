@@ -1,11 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sparkles, Save, RefreshCw, Edit2, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { jsonToToon, toonToJson } from "@/lib/toon-converter";
+import { toast } from "sonner";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const debugLog = (...args: any[]) => {
+  if (process.env.NODE_ENV === "development") console.log(...args);
+};
 
 interface AIStageCardProps {
   title: string;
@@ -15,6 +21,7 @@ interface AIStageCardProps {
   onSave: (content: string) => Promise<void>;
   existingContent?: string;
   initialIdea?: string;
+  storageKey?: string; // Chave para persistir o input no localStorage (ex: "{projectId}_etapa1")
   nextStageId?: string; // ID da próxima etapa (ex: "etapa2")
   nextStageTitle?: string; // Título da próxima etapa (ex: "Pesquisa de Mercado")
   onGoToNextStage?: () => void; // Callback para navegar para próxima etapa
@@ -112,7 +119,7 @@ function EditableSection({ sectionKey, value, onChange }: EditableSectionProps) 
                     onChange(sectionKey, parsed);
                     setIsEditingField(false);
                   } catch {
-                    alert("Formato TOON inválido. Por favor, verifique a sintaxe.");
+                    toast.error("Formato TOON inválido. Por favor, verifique a sintaxe.");
                   }
                 }}
                 className="w-full"
@@ -140,11 +147,17 @@ export function AIStageCard({
   onSave,
   existingContent,
   initialIdea = "",
+  storageKey,
   nextStageId,
   nextStageTitle,
   onGoToNextStage,
 }: AIStageCardProps) {
-  const [idea, setIdea] = useState(initialIdea);
+  const [idea, setIdea] = useState(() => {
+    if (storageKey && typeof window !== "undefined") {
+      return localStorage.getItem(storageKey) ?? initialIdea;
+    }
+    return initialIdea;
+  });
   const [generatedContent, setGeneratedContent] = useState(existingContent || "");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -152,9 +165,19 @@ export function AIStageCard({
   const [editedJson, setEditedJson] = useState<Record<string, unknown>>({});
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // Persiste o input do usuário no localStorage para não perder ao navegar entre etapas
+  useEffect(() => {
+    if (!storageKey) return;
+    if (idea) {
+      localStorage.setItem(storageKey, idea);
+    } else {
+      localStorage.removeItem(storageKey);
+    }
+  }, [idea, storageKey]);
+
   const handleGenerate = async () => {
     if (!idea.trim()) {
-      alert("Por favor, insira uma ideia antes de gerar.");
+      toast.error("Por favor, insira uma ideia antes de gerar.");
       return;
     }
 
@@ -170,38 +193,39 @@ export function AIStageCard({
 
         if (cleanedJson.startsWith('```json')) {
           cleanedJson = cleanedJson.substring(7);
-          console.log("[AIStageCard] Removido marcador ```json do início");
+          debugLog("[AIStageCard] Removido marcador ```json do início");
         } else if (cleanedJson.startsWith('```')) {
           cleanedJson = cleanedJson.substring(3);
-          console.log("[AIStageCard] Removido marcador ``` do início");
+          debugLog("[AIStageCard] Removido marcador ``` do início");
         }
 
         if (cleanedJson.endsWith('```')) {
           cleanedJson = cleanedJson.substring(0, cleanedJson.length - 3);
-          console.log("[AIStageCard] Removido marcador ``` do final");
+          debugLog("[AIStageCard] Removido marcador ``` do final");
         }
 
         cleanedJson = cleanedJson.trim();
 
         const parsed = JSON.parse(cleanedJson);
         contentToSave = jsonToToon(parsed);
-        console.log("[AIStageCard] ✓ Conteúdo convertido para TOON");
+        debugLog("[AIStageCard] ✓ Conteúdo convertido para TOON");
       } catch (error) {
-        console.log("[AIStageCard] Conteúdo não é JSON válido, salvando como está:", error);
+        debugLog("[AIStageCard] Conteúdo não é JSON válido, salvando como está:", error);
       }
 
       setGeneratedContent(contentToSave);
 
       // ✨ NOVO: Salvar automaticamente após gerar
-      console.log("[AIStageCard] Conteúdo gerado, salvando automaticamente...");
+      debugLog("[AIStageCard] Conteúdo gerado, salvando automaticamente...");
       try {
         await onSave(contentToSave);
+        if (storageKey) localStorage.removeItem(storageKey);
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 3000);
-        console.log("[AIStageCard] ✓ Conteúdo salvo automaticamente com sucesso!");
+        debugLog("[AIStageCard] ✓ Conteúdo salvo automaticamente com sucesso!");
       } catch (saveError) {
         console.error("[AIStageCard] Erro ao salvar automaticamente:", saveError);
-        alert("Conteúdo gerado com sucesso, mas não foi salvo automaticamente. Use o botão Editar para salvar manualmente.");
+        toast.warning("Conteúdo gerado, mas não foi salvo automaticamente. Use o botão Ajustar para salvar manualmente.");
       }
     } catch (error) {
       console.error("Erro detalhado ao gerar:", error);
@@ -210,15 +234,12 @@ export function AIStageCard({
       let errorMessage = "Erro ao gerar conteúdo com IA.";
 
       if (error instanceof TypeError && error.message.includes("fetch")) {
-        errorMessage += "\n\nProblema de conexão com o servidor. Verifique:\n" +
-                       "- Se o backend está rodando\n" +
-                       "- Se a variável NEXT_PUBLIC_API_URL está configurada\n" +
-                       "- Se há problemas de rede ou CORS";
+        errorMessage = "Problema de conexão com o servidor. Verifique se o backend está rodando e se a variável NEXT_PUBLIC_API_URL está configurada.";
       } else if (error instanceof Error) {
-        errorMessage += `\n\nDetalhes: ${error.message}`;
+        errorMessage = error.message;
       }
 
-      alert(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsGenerating(false);
     }
@@ -229,16 +250,16 @@ export function AIStageCard({
       // 🆕 SPRINT 15: Tenta converter TOON → JSON para editor visual
       const parsed = toonToJson(generatedContent);
       setEditedJson(parsed as Record<string, unknown>);
-      console.log("[AIStageCard] ✓ Conteúdo TOON convertido para edição");
+      debugLog("[AIStageCard] ✓ Conteúdo TOON convertido para edição");
     } catch {
       // Se não for TOON válido, tenta JSON
       try {
         const cleaned = generatedContent.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
         const parsed = JSON.parse(cleaned);
         setEditedJson(parsed);
-        console.log("[AIStageCard] Conteúdo JSON parseado para edição");
+        debugLog("[AIStageCard] Conteúdo JSON parseado para edição");
       } catch {
-        console.log("[AIStageCard] Conteúdo em formato desconhecido, usando fallback");
+        debugLog("[AIStageCard] Conteúdo em formato desconhecido, usando fallback");
         setEditedJson({ raw: generatedContent });
       }
     }
@@ -263,14 +284,15 @@ export function AIStageCard({
     setIsSaving(true);
     try {
       await onSave(toonString);
+      if (storageKey) localStorage.removeItem(storageKey);
       setGeneratedContent(toonString);
       setIsEditing(false);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-      console.log("[AIStageCard] ✓ Edição salva em formato TOON");
+      debugLog("[AIStageCard] ✓ Edição salva em formato TOON");
     } catch (error) {
       console.error("Erro ao salvar edição:", error);
-      alert("Erro ao salvar alterações. Tente novamente.");
+      toast.error("Erro ao salvar alterações. Tente novamente.");
     } finally {
       setIsSaving(false);
     }
@@ -331,17 +353,17 @@ export function AIStageCard({
 
   const renderContent = (contentString: string) => {
     try {
-      console.log("[AIStageCard] Tentando renderizar conteúdo. Comprimento:", contentString.length);
-      console.log("[AIStageCard] Primeiros 200 caracteres:", contentString.substring(0, 200));
+      debugLog("[AIStageCard] Tentando renderizar conteúdo. Comprimento:", contentString.length);
+      debugLog("[AIStageCard] Primeiros 200 caracteres:", contentString.substring(0, 200));
 
       // 🆕 SPRINT 15: Tenta converter TOON → JSON primeiro
       let data;
       try {
         data = toonToJson(contentString);
-        console.log("[AIStageCard] ✓ Conteúdo TOON parseado com sucesso");
+        debugLog("[AIStageCard] ✓ Conteúdo TOON parseado com sucesso");
       } catch {
         // Se não for TOON, tenta JSON
-        console.log("[AIStageCard] Não é TOON, tentando JSON...");
+        debugLog("[AIStageCard] Não é TOON, tentando JSON...");
 
         // Remover markdown code blocks (```json ... ```)
         let cleanedJson = contentString.trim();
@@ -349,24 +371,24 @@ export function AIStageCard({
         // Remover ```json do início
         if (cleanedJson.startsWith('```json')) {
           cleanedJson = cleanedJson.substring(7); // Remove "```json"
-          console.log("[AIStageCard] ⚠️ Removido marcador ```json do início");
+          debugLog("[AIStageCard] ⚠️ Removido marcador ```json do início");
         } else if (cleanedJson.startsWith('```')) {
           cleanedJson = cleanedJson.substring(3); // Remove "```"
-          console.log("[AIStageCard] ⚠️ Removido marcador ``` do início");
+          debugLog("[AIStageCard] ⚠️ Removido marcador ``` do início");
         }
 
         // Remover ``` do final
         if (cleanedJson.endsWith('```')) {
           cleanedJson = cleanedJson.substring(0, cleanedJson.length - 3);
-          console.log("[AIStageCard] ⚠️ Removido marcador ``` do final");
+          debugLog("[AIStageCard] ⚠️ Removido marcador ``` do final");
         }
 
         cleanedJson = cleanedJson.trim();
-        console.log("[AIStageCard] JSON limpo. Novos primeiros 100 caracteres:", cleanedJson.substring(0, 100));
+        debugLog("[AIStageCard] JSON limpo. Novos primeiros 100 caracteres:", cleanedJson.substring(0, 100));
 
         data = JSON.parse(cleanedJson);
       }
-      console.log("[AIStageCard] ✓ JSON parseado com sucesso. Chaves:", Object.keys(data));
+      debugLog("[AIStageCard] ✓ JSON parseado com sucesso. Chaves:", Object.keys(data));
 
       return (
         <div className="space-y-6">
@@ -382,7 +404,7 @@ export function AIStageCard({
       );
     } catch (error) {
       console.error("[AIStageCard] ❌ Erro ao parsear JSON:", error);
-      console.log("[AIStageCard] Conteúdo que causou erro:", contentString);
+      debugLog("[AIStageCard] Conteúdo que causou erro:", contentString);
 
       // Se não for JSON válido, exibir como texto simples
       return (

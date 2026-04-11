@@ -107,3 +107,17 @@ export async function changePhase(
   if (!res.ok) throw new Error('Failed to change phase');
   return res.json();
 }
+
+export async function deleteProject(projectId: string, userId: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/projects/${projectId}`, {
+    method: 'DELETE',
+    headers: {
+      'x-user-id': userId,
+    },
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error || 'Failed to delete project');
+  }
+}

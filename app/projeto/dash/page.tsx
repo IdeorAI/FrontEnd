@@ -7,7 +7,6 @@ import { CardDialog } from "@/components/card-dialog";
 import { AIStageCard } from "@/components/ai-stage-card";
 import { ProjectProgressLine } from "@/components/project-progress-line";
 import { StageBadge } from "@/components/StageBadge";
-import { generateDocument } from "@/lib/api/documents";
 import { calculateStageStatus, StageStatus, getStageSummaries } from "@/lib/api/stage-summaries";
 import { log } from "@/lib/logger";
 import Image from "next/image";
@@ -36,18 +35,27 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { DeleteProjectButton } from "@/components/delete-project-button";
+import { useStageOperations } from "@/hooks/use-stage-operations";
 
 function DashPageContent() {
   const [user, setUser] = useState<{ email?: string; user_metadata?: Record<string, unknown> } | null>(null);
   const [project, setProject] = useState<{ name?: string; valuation?: number; description?: string; created_at?: string; score?: number } | null>(null);
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
-  const [etapaContent, setEtapaContent] = useState<Record<string, string>>({});
-  const [currentStage, setCurrentStage] = useState(1); // Etapa atual do projeto
-  const [completedStages, setCompletedStages] = useState<number[]>([0]); // Etapas completas (0=Início sempre completo)
   const [stageStatuses, setStageStatuses] = useState<StageStatus[]>([]); // Status dos badges das etapas
   const searchParams = useSearchParams();
   const router = useRouter();
   const projectId = searchParams.get("project_id");
+
+  const {
+    etapaContent,
+    completedStages,
+    currentStage,
+    setEtapaContent,
+    setCompletedStages,
+    setCurrentStage,
+    generateStage,
+    saveStage,
+  } = useStageOperations({ projectId });
 
   // Calcular medalha baseada no progresso
   const getMedalha = () => {
@@ -139,131 +147,6 @@ function DashPageContent() {
     return nomesEtapas[etapaNumero - 1] || "Etapa anterior";
   };
 
-  // Handlers para as etapas de IA
-  const handleGenerateEtapa = async (etapaId: 'etapa1' | 'etapa2' | 'etapa3' | 'etapa4' | 'etapa5', idea: string): Promise<string> => {
-    if (!projectId || !user) {
-      throw new Error("Project ID ou usuário não encontrado");
-    }
-
-    try {
-      const supabase = createClient();
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-
-      if (!currentUser?.id) {
-        throw new Error("Usuário não autenticado");
-      }
-
-      log.info("[DashPage] Gerando documento via backend...", { etapaId, ideaLength: idea.length });
-
-      // F-01: Chamar backend ao invés de Gemini client-side
-      const response = await generateDocument(
-        projectId,
-        {
-          phase: etapaId,
-          inputs: { ideia: idea }
-        },
-        currentUser.id
-      );
-
-      log.info("[DashPage] Backend respondeu:", {
-        contentLength: response.generatedContent.length,
-        tokensUsed: response.tokensUsed,
-        stageSaved: response.stageSaved
-      });
-
-      return response.generatedContent;
-    } catch (error) {
-      log.error("[DashPage] Erro ao gerar documento:", error);
-      throw error;
-    }
-  };
-
-  const handleSaveEtapa = async (etapaId: string, content: string): Promise<void> => {
-    if (!projectId || !user) {
-      throw new Error("Project ID ou usuário não encontrado");
-    }
-
-    const supabase = createClient();
-
-    try {
-      // Verificar se já existe uma task para este projeto e fase
-      const { data: existingTask, error: searchError } = await supabase
-        .from("tasks")
-        .select("id")
-        .eq("project_id", projectId)
-        .eq("phase", etapaId)
-        .maybeSingle();
-
-      if (searchError) {
-        log.error("Erro ao buscar task existente:", searchError);
-        throw new Error(`Erro ao buscar task: ${searchError.message}`);
-      }
-
-      let result;
-      if (existingTask) {
-        // Atualizar task existente
-        log.info("Atualizando task existente:", existingTask.id);
-        result = await supabase
-          .from("tasks")
-          .update({
-            content: content,
-            status: "evaluated",
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", existingTask.id)
-          .select();
-      } else {
-        // Criar nova task
-        log.info("Criando nova task para fase:", etapaId);
-        result = await supabase
-          .from("tasks")
-          .insert({
-            project_id: projectId,
-            phase: etapaId,
-            content: content,
-            title: `Etapa ${etapaId}`,
-            description: `Documento gerado para ${etapaId}`,
-            status: "evaluated",
-          })
-          .select();
-      }
-
-      if (result.error) {
-        console.error("Erro detalhado ao salvar no Supabase:", result.error);
-        throw new Error(`Erro ao salvar: ${result.error.message}`);
-      }
-
-      log.info("Conteúdo salvo com sucesso:", result.data);
-
-      // Atualizar estado local
-      setEtapaContent((prev) => ({
-        ...prev,
-        [etapaId]: content,
-      }));
-
-      // 🆕 SPRINT 15: Atualizar progresso automaticamente
-      const etapaNum = parseInt(etapaId.replace('etapa', '')); // "etapa1" → 1
-
-      // Adiciona etapa aos completedStages se ainda não estiver
-      setCompletedStages((prev) => {
-        if (!prev.includes(etapaNum)) {
-          const newCompleted = [...prev, etapaNum].sort((a, b) => a - b);
-
-          // Atualiza currentStage para próxima etapa (máx 5 etapas)
-          const maxCompleted = Math.max(...newCompleted.filter(n => n > 0));
-          setCurrentStage(maxCompleted < 5 ? maxCompleted + 1 : 5);
-
-          log.info("Progresso atualizado - Etapas completas:", newCompleted, "Etapa atual:", maxCompleted < 5 ? maxCompleted + 1 : 5);
-
-          return newCompleted;
-        }
-        return prev;
-      });
-    } catch (error) {
-      console.error("Erro ao salvar:", error);
-      throw error;
-    }
-  };
 
   const handleDownloadPDF = async (phase?: string) => {
     if (!projectId || !user) {
@@ -523,10 +406,11 @@ function DashPageContent() {
           title="Problema e Oportunidade"
           description="Identifique o problema que sua solução resolve, as personas afetadas e a oportunidade de mercado existente."
           placeholder="Descreva o problema que você quer resolver. Ex: Pequenas empresas têm dificuldade em encontrar fornecedores confiáveis e comparar preços de forma eficiente..."
-          onGenerate={(idea) => handleGenerateEtapa('etapa1', idea)}
-          onSave={(content) => handleSaveEtapa('etapa1', content)}
+          onGenerate={(idea) => generateStage('etapa1', idea)}
+          onSave={(content) => saveStage('etapa1', content)}
           existingContent={etapaContent['etapa1']}
           initialIdea={project?.description || ""}
+          storageKey={projectId ? `${projectId}_etapa1` : undefined}
           nextStageId="etapa2"
           nextStageTitle="Pesquisa de Mercado"
           onGoToNextStage={() => {
@@ -547,10 +431,11 @@ function DashPageContent() {
           title="Pesquisa de Mercado"
           description="Realize uma análise do mercado-alvo, incluindo TAM/SAM/SOM, principais players e oportunidades."
           placeholder="Descreva sua ideia de negócio. Ex: Plataforma SaaS para gestão de clínicas médicas..."
-          onGenerate={(idea) => handleGenerateEtapa('etapa2', idea)}
-          onSave={(content) => handleSaveEtapa('etapa2', content)}
+          onGenerate={(idea) => generateStage('etapa2', idea)}
+          onSave={(content) => saveStage('etapa2', content)}
           existingContent={etapaContent['etapa2']}
           initialIdea={project?.description || ""}
+          storageKey={projectId ? `${projectId}_etapa2` : undefined}
           nextStageId="etapa3"
           nextStageTitle="Proposta de Valor"
           onGoToNextStage={() => {
@@ -571,10 +456,11 @@ function DashPageContent() {
           title="Proposta de Valor"
           description="Articule o valor único que sua solução oferece, os jobs-to-be-done e diferenciais vs alternativas."
           placeholder="Descreva sua ideia de negócio. Ex: App mobile para conectar freelancers a empresas..."
-          onGenerate={(idea) => handleGenerateEtapa('etapa3', idea)}
-          onSave={(content) => handleSaveEtapa('etapa3', content)}
+          onGenerate={(idea) => generateStage('etapa3', idea)}
+          onSave={(content) => saveStage('etapa3', content)}
           existingContent={etapaContent['etapa3']}
           initialIdea={project?.description || ""}
+          storageKey={projectId ? `${projectId}_etapa3` : undefined}
           nextStageId="etapa4"
           nextStageTitle="Modelo de Negócio"
           onGoToNextStage={() => {
@@ -595,10 +481,11 @@ function DashPageContent() {
           title="Modelo de Negócio"
           description="Desenvolva seu Business Model Canvas com proposta de valor, segmentos, receitas e canais."
           placeholder="Descreva sua ideia de negócio. Ex: Marketplace B2B para fornecedores industriais..."
-          onGenerate={(idea) => handleGenerateEtapa('etapa4', idea)}
-          onSave={(content) => handleSaveEtapa('etapa4', content)}
+          onGenerate={(idea) => generateStage('etapa4', idea)}
+          onSave={(content) => saveStage('etapa4', content)}
           existingContent={etapaContent['etapa4']}
           initialIdea={project?.description || ""}
+          storageKey={projectId ? `${projectId}_etapa4` : undefined}
           nextStageId="etapa5"
           nextStageTitle="MVP"
           onGoToNextStage={() => {
@@ -619,10 +506,11 @@ function DashPageContent() {
           title="MVP - Produto Mínimo Viável"
           description="Defina as funcionalidades essenciais do seu MVP, o stack tecnológico e as métricas de sucesso iniciais."
           placeholder="Descreva sua ideia de negócio. Ex: App de delivery para pet shops, com rastreamento em tempo real e agendamento de coleta..."
-          onGenerate={(idea) => handleGenerateEtapa('etapa5', idea)}
-          onSave={(content) => handleSaveEtapa('etapa5', content)}
+          onGenerate={(idea) => generateStage('etapa5', idea)}
+          onSave={(content) => saveStage('etapa5', content)}
           existingContent={etapaContent['etapa5']}
           initialIdea={project?.description || ""}
+          storageKey={projectId ? `${projectId}_etapa5` : undefined}
         />
       ),
     },

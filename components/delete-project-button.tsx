@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { createClient } from "@/lib/supabase/client"
+import { deleteProject } from "@/lib/api/projects"
 import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
@@ -38,27 +39,20 @@ export function DeleteProjectButton({
   async function handleDelete() {
     setIsDeleting(true)
     try {
-      // Delete tasks first to satisfy FK constraint
-      const { error: tasksError } = await supabase
-        .from("tasks")
-        .delete()
-        .eq("project_id", projectId)
-      if (tasksError) throw tasksError
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        toast.error("Usuário não autenticado")
+        return
+      }
 
-      // Then delete the project itself
-      const { error } = await supabase
-        .from("projects")
-        .delete()
-        .eq("id", projectId)
-
-      if (error) throw error
+      await deleteProject(projectId, user.id)
 
       toast.success("Projeto excluído com sucesso")
       router.refresh()
       onDeleted?.()
     } catch (err) {
-      toast.error("Erro ao excluir projeto")
-      console.error(err)
+      const message = err instanceof Error ? err.message : "Erro ao excluir projeto"
+      toast.error(message)
     } finally {
       setIsDeleting(false)
     }
