@@ -15,6 +15,8 @@ import { useUser } from "@/lib/supabase/use-user";
 import { FirstTimeTooltip } from "@/components/first-time-tooltip";
 import { toast } from "sonner";
 import { StageStatusBadge } from "@/components/stage-status-badge";
+import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface EtapaClientProps {
   seenTooltips: Record<string, boolean>;
@@ -25,7 +27,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
   const router = useRouter();
   const projectId = params?.id as string;
   const etapa = params?.etapa as string;
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
 
   const stageConfig = STAGE_CONFIGS[etapa];
 
@@ -37,16 +39,27 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
   const [stageSummaries, setStageSummaries] = useState<StageSummary[]>([]);
   const [currentStageSaved, setCurrentStageSaved] = useState<boolean | null>(null);
   const [previousStageSummary, setPreviousStageSummary] = useState<string | null>(null);
 
   // Fetch user ID, project idea, check if document exists, and fetch stage summaries
   useEffect(() => {
+    // Aguardar auth resolver antes de tentar carregar dados
+    if (userLoading) return;
+
+    const realUserId = user?.id ?? "";
+
+    if (!realUserId) {
+      router.push("/auth/login");
+      return;
+    }
+
     const fetchData = async () => {
-      const realUserId = user?.id ?? "";
-      if (!realUserId) return;
       setUserId(realUserId);
+      setHasError(false);
 
       try {
         // Buscar a ideia do projeto (description)
@@ -78,18 +91,23 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
             }
           }
         } catch (summaryError) {
-          console.log("[EtapaPage] Stage summaries not available yet:", summaryError);
+          console.warn("[EtapaPage] Stage summaries not available yet:", summaryError);
         }
       } catch (error) {
         console.error("[EtapaPage] Error fetching data:", error);
-        alert("Erro ao carregar dados do projeto. Tente recarregar a página.");
+        const msg = error instanceof Error ? error.message : "Erro desconhecido";
+        setErrorMessage(msg);
+        setHasError(true);
+        toast.error("Erro ao carregar dados do projeto.", {
+          description: "Verifique sua conexão e tente novamente.",
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [projectId, etapa, user]);
+  }, [projectId, etapa, user, userLoading, router]);
 
   // Preparar campos do formulário com sugestão da etapa anterior
   const formFieldsWithSuggestions: FormField[] = stageConfig?.fields.map((field: FormField) => {
@@ -169,7 +187,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
       setGeneratedContent(response.generatedContent);
     } catch (error) {
       console.error("Error regenerating document:", error);
-      alert("Erro ao regenerar documento.");
+      toast.error("Erro ao regenerar documento. Tente novamente.");
     } finally {
       setIsRegenerating(false);
     }
@@ -184,7 +202,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
       setGeneratedContent(response.generatedContent);
     } catch (error) {
       console.error("Error refining document:", error);
-      alert("Erro ao refinar documento.");
+      toast.error("Erro ao refinar documento. Tente novamente.");
     } finally {
       setIsRefining(false);
     }
@@ -211,6 +229,26 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
     return (
       <div className="flex items-center justify-center h-64">
         <RocketLoading />
+      </div>
+    );
+  }
+
+  if (hasError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4 text-center">
+        <AlertCircle className="h-10 w-10 text-destructive" />
+        <div>
+          <p className="font-semibold text-lg">Não foi possível carregar os dados do projeto.</p>
+          <p className="text-sm text-muted-foreground mt-1">{errorMessage || "Verifique sua conexão e tente novamente."}</p>
+        </div>
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={() => window.location.reload()}>
+            Tentar novamente
+          </Button>
+          <Button onClick={() => router.push("/dashboard")}>
+            Voltar ao Dashboard
+          </Button>
+        </div>
       </div>
     );
   }
