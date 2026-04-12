@@ -13,22 +13,52 @@ export interface MarketplaceListing {
   is_active: boolean;
 }
 
-export interface MarketplaceInterest {
-  listing_id: string;
-  message: string;
+export interface ListingWithOwner extends MarketplaceListing {
+  owner_name: string | null;
+  project_score: number | null;
 }
 
-export async function getListings(): Promise<MarketplaceListing[]> {
+export async function getListings(): Promise<ListingWithOwner[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("marketplace_listings")
-    .select("*")
+    .select("*, profiles:owner_id(name), projects:project_id(score)")
     .eq("is_active", true)
     .order("published_at", { ascending: false })
     .limit(50);
 
   if (error) throw error;
-  return (data as MarketplaceListing[]) ?? [];
+
+  return ((data ?? []) as unknown[]).map((row: unknown) => {
+    const r = row as Record<string, unknown>;
+    const profiles = r.profiles as { name?: string } | null;
+    const projects = r.projects as { score?: number } | null;
+    return {
+      ...(r as unknown as MarketplaceListing),
+      owner_name: profiles?.name ?? null,
+      project_score: projects?.score ?? null,
+    };
+  });
+}
+
+export async function getListingById(id: string): Promise<ListingWithOwner | null> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("marketplace_listings")
+    .select("*, profiles:owner_id(name), projects:project_id(score)")
+    .eq("id", id)
+    .single();
+
+  if (error) return null;
+
+  const r = data as Record<string, unknown>;
+  const profiles = r.profiles as { name?: string } | null;
+  const projects = r.projects as { score?: number } | null;
+  return {
+    ...(r as unknown as MarketplaceListing),
+    owner_name: profiles?.name ?? null,
+    project_score: projects?.score ?? null,
+  };
 }
 
 export async function createListing(
@@ -59,11 +89,16 @@ export async function expressInterest(
   message: string
 ): Promise<void> {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) throw new Error("Usuário não autenticado");
 
   const { error } = await supabase
     .from("marketplace_interests")
-    .insert({ listing_id: listingId, from_user_id: user.id, message });
+    .upsert(
+      { listing_id: listingId, from_user_id: user.id, message },
+      { onConflict: "listing_id,from_user_id" }
+    );
   if (error) throw error;
 }
