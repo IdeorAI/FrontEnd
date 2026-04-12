@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { StageProgress } from "@/components/stage-progress";
+import { StageProgressNav } from "@/components/stage-progress-nav";
 import { getProjectTasks } from "@/lib/api/tasks";
 
 // Marcar como dinâmico para Next.js 15+
@@ -51,13 +51,10 @@ export default async function Fase2Layout({
       {/* Progress Indicator */}
       <div className="bg-card border rounded-lg p-6">
         <h2 className="text-xl font-bold mb-4">Progresso da Fase Projeto</h2>
-        <StageProgress
+        <StageProgressNav
+          projectId={projectId}
           currentStage={currentStage}
           completedStages={completedStages}
-          onStageClick={(phase) => {
-            // Navegação via client-side
-            window.location.href = `/projeto/${projectId}/fase2/${phase}`;
-          }}
         />
       </div>
 

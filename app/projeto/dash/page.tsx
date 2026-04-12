@@ -660,7 +660,7 @@ function DashPageContent() {
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Score</p>
+                <p>Score calculado com base nas etapas concluídas</p>
               </TooltipContent>
             </Tooltip>
 
