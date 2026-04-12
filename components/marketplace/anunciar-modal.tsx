@@ -12,6 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Rocket, Briefcase } from "lucide-react";
+import { createListing } from "@/lib/api/marketplace";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 interface AnunciarModalProps {
   open: boolean;
@@ -20,13 +23,58 @@ interface AnunciarModalProps {
 
 type AnunciarType = "projeto" | "servico" | null;
 
+const CATEGORIES = ["Fintech", "Healthtech", "Edtech", "Agritech", "SaaS", "E-commerce", "Outro"];
+
 export function AnunciarModal({ open, onClose }: AnunciarModalProps) {
   const [type, setType] = useState<AnunciarType>(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleClose() {
     setType(null);
+    setTitle("");
+    setDescription("");
+    setCategory("");
+    setContactEmail("");
     onClose();
   }
+
+  const handlePublish = async () => {
+    if (!title.trim()) {
+      toast.error("Informe um título para o anúncio.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Faça login para publicar.");
+        return;
+      }
+
+      await createListing({
+        owner_id: user.id,
+        project_id: null,
+        title: title.trim(),
+        description: description.trim() || null,
+        category: category || null,
+        listing_type: type === "projeto" ? "project" : "service",
+        contact_email: contactEmail.trim() || user.email || null,
+      });
+
+      toast.success("Anúncio publicado com sucesso!");
+      handleClose();
+    } catch {
+      toast.error("Erro ao publicar anúncio. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -77,22 +125,60 @@ export function AnunciarModal({ open, onClose }: AnunciarModalProps) {
               <span className="text-sm font-medium">
                 {type === "projeto" ? "Anunciar Projeto / Startup" : "Anunciar Serviço"}
               </span>
-              <span className="ml-auto text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
-                Em breve
-              </span>
             </div>
 
-            <Input placeholder="Nome do projeto / serviço" disabled />
-            <Textarea placeholder="Descrição..." rows={3} disabled />
-            <Input placeholder={type === "projeto" ? "Preço ou 'Negociável'" : "Valor/hora ou 'Sob consulta'"} disabled />
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Título *</label>
+              <Input
+                placeholder={type === "projeto" ? "Nome do projeto ou startup" : "Nome do seu serviço"}
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                maxLength={100}
+              />
+            </div>
 
-            <p className="text-xs text-muted-foreground text-center">
-              Esta funcionalidade estará disponível em breve. Cadastre seu interesse e avisamos você!
-            </p>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Descrição</label>
+              <Textarea
+                placeholder="Descreva seu projeto ou serviço..."
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                rows={3}
+                maxLength={500}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Categoria</label>
+              <select
+                value={category}
+                onChange={e => setCategory(e.target.value)}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">Selecione uma categoria</option>
+                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">E-mail de contato</label>
+              <Input
+                placeholder="seu@email.com"
+                type="email"
+                value={contactEmail}
+                onChange={e => setContactEmail(e.target.value)}
+              />
+            </div>
 
             <div className="flex gap-2">
               <Button variant="outline" className="flex-1" onClick={handleClose}>Cancelar</Button>
-              <Button className="flex-1" disabled>Publicar anúncio</Button>
+              <Button
+                className="flex-1"
+                onClick={handlePublish}
+                disabled={isSubmitting || !title.trim()}
+              >
+                {isSubmitting ? "Publicando..." : "Publicar anúncio"}
+              </Button>
             </div>
           </div>
         )}
