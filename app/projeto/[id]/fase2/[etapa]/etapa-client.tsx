@@ -3,11 +3,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { StageForm, FormField } from "@/components/stage-form";
-import { DocumentViewer } from "@/components/document-viewer";
 import { StageContextPanel } from "@/components/StageContextPanel";
 import { regenerateDocument, refineDocument, generateDocument } from "@/lib/api/documents";
-import { getProjectTasks } from "@/lib/api/tasks";
-import { getProject } from "@/lib/api/projects";
 import { getStageSummaries, StageSummary } from "@/lib/api/stage-summaries";
 import { RocketLoading } from "@/components/rocket-loading";
 import { STAGE_CONFIGS } from "@/lib/stage-configs";
@@ -15,11 +12,48 @@ import { useUser } from "@/lib/supabase/use-user";
 import { FirstTimeTooltip } from "@/components/first-time-tooltip";
 import { toast } from "sonner";
 import { StageStatusBadge } from "@/components/stage-status-badge";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, RefreshCw, Sparkles, Edit2, Save, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/client";
 
 interface EtapaClientProps {
   seenTooltips: Record<string, boolean>;
+}
+
+/** Converte JSON (ou texto puro) para texto legível formatado */
+function contentToDisplayText(content: string): string {
+  try {
+    const json = JSON.parse(content);
+    return jsonToText(json);
+  } catch {
+    return content;
+  }
+}
+
+function jsonToText(obj: unknown, depth = 0): string {
+  if (obj === null || obj === undefined) return "";
+  if (typeof obj === "string") return obj;
+  if (typeof obj === "number" || typeof obj === "boolean") return String(obj);
+  if (Array.isArray(obj)) {
+    return (obj as unknown[])
+      .map((item) => `• ${jsonToText(item, depth + 1)}`)
+      .join("\n");
+  }
+  if (typeof obj === "object") {
+    return Object.entries(obj as Record<string, unknown>)
+      .filter(([, v]) => v !== null && v !== undefined && v !== "")
+      .map(([key, value]) => {
+        const label = key
+          .replace(/_/g, " ")
+          .replace(/\b\w/g, (l) => l.toUpperCase());
+        const valueText = jsonToText(value, depth + 1);
+        return `${label}:\n${valueText}`;
+      })
+      .join("\n\n");
+  }
+  return String(obj);
 }
 
 export function EtapaClient({ seenTooltips }: EtapaClientProps) {
@@ -30,6 +64,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
   const { user, loading: userLoading } = useUser();
 
   const stageConfig = STAGE_CONFIGS[etapa];
+  const currentStageNumber = parseInt(etapa.replace("etapa", "")) || 0;
 
   const [userId, setUserId] = useState<string>("");
   const [projectIdea, setProjectIdea] = useState<string>("");
@@ -45,13 +80,16 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
   const [currentStageSaved, setCurrentStageSaved] = useState<boolean | null>(null);
   const [previousStageSummary, setPreviousStageSummary] = useState<string | null>(null);
 
-  // Fetch user ID, project idea, check if document exists, and fetch stage summaries
+  // Estado para edição inline do conteúdo gerado
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState<string>("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  // Carrega dados diretamente do Supabase (confiável, independente do backend)
   useEffect(() => {
-    // Aguardar auth resolver antes de tentar carregar dados
     if (userLoading) return;
 
     const realUserId = user?.id ?? "";
-
     if (!realUserId) {
       router.push("/auth/login");
       return;
@@ -62,26 +100,40 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
       setHasError(false);
 
       try {
-        // Buscar a ideia do projeto (description)
-        const project = await getProject(projectId, realUserId);
+        const supabase = createClient();
+
+        // 1. Buscar descrição do projeto (fase 1) diretamente do Supabase
+        const { data: project, error: projectError } = await supabase
+          .from("projects")
+          .select("description")
+          .eq("id", projectId)
+          .eq("owner_id", realUserId)
+          .single();
+
+        if (projectError || !project) {
+          throw new Error("Projeto não encontrado ou acesso negado.");
+        }
         setProjectIdea(project.description || "");
 
-        // Check if task already exists
-        const tasks = await getProjectTasks(projectId, realUserId);
-        const existingTask = tasks.find((t) => t.phase === etapa);
+        // 2. Verificar se já existe task gerada para esta etapa
+        const { data: existingTask } = await supabase
+          .from("tasks")
+          .select("id, content")
+          .eq("project_id", projectId)
+          .eq("phase", etapa)
+          .maybeSingle();
 
-        if (existingTask) {
+        if (existingTask?.content) {
           setTaskId(existingTask.id);
-          setGeneratedContent(existingTask.content || null);
+          setGeneratedContent(existingTask.content);
         }
 
-        // Buscar resumos das etapas anteriores
+        // 3. Buscar resumos das etapas (contexto acumulado) — não-bloqueante
         try {
           const summaries = await getStageSummaries(projectId, realUserId);
           setStageSummaries(summaries);
 
-          // Buscar resumo da etapa anterior para usar como sugestão
-          const currentStageNumber = parseInt(etapa.replace("etapa", "")) || 0;
+          // Resumo da etapa ANTERIOR como sugestão de preenchimento
           if (currentStageNumber > 1) {
             const previousSummary = summaries.find(
               (s) => s.stageNumber === currentStageNumber - 1
@@ -90,8 +142,8 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
               setPreviousStageSummary(previousSummary.summary);
             }
           }
-        } catch (summaryError) {
-          console.warn("[EtapaPage] Stage summaries not available yet:", summaryError);
+        } catch {
+          // Resumos são contexto opcional, não bloqueiam a página
         }
       } catch (error) {
         console.error("[EtapaPage] Error fetching data:", error);
@@ -107,54 +159,48 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
     };
 
     fetchData();
-  }, [projectId, etapa, user, userLoading, router]);
+  }, [projectId, etapa, currentStageNumber, user, userLoading, router]);
 
-  // Preparar campos do formulário com sugestão da etapa anterior
-  const formFieldsWithSuggestions: FormField[] = stageConfig?.fields.map((field: FormField) => {
-    // Adicionar sugestão apenas para o campo "ideia" se houver resumo anterior
-    if (field.name === "ideia" && previousStageSummary) {
-      return {
-        ...field,
-        suggestion: previousStageSummary,
-        maxLength: 800, // Limite de caracteres para o input do usuário
-      };
-    }
-    // Adicionar limite de caracteres para textareas
-    if (field.type === "textarea") {
-      return {
-        ...field,
-        maxLength: field.maxLength || 800,
-      };
-    }
-    return field;
-  }) || [];
+  // Sugestão para o campo "ideia":
+  // etapa1 → usa a descrição do projeto (fase 1)
+  // etapa2+ → usa o resumo da etapa anterior
+  const ideaSuggestion =
+    currentStageNumber === 1 ? projectIdea : previousStageSummary;
+
+  const formFieldsWithSuggestions: FormField[] =
+    stageConfig?.fields.map((field: FormField) => {
+      if (field.name === "ideia" && ideaSuggestion) {
+        return { ...field, suggestion: ideaSuggestion, maxLength: 800 };
+      }
+      if (field.type === "textarea") {
+        return { ...field, maxLength: field.maxLength || 800 };
+      }
+      return field;
+    }) || [];
 
   const handleGenerate = async (values: Record<string, string>) => {
     if (!userId) return;
-
     setIsGenerating(true);
 
     try {
-      // Preparar inputs para o backend
       const inputs = {
         ideia: values.ideia || projectIdea || "",
         ...values,
       };
 
-      // Chamar o backend para gerar com contexto acumulado
-      const response = await generateDocument(projectId, {
-        phase: etapa,
-        inputs: inputs
-      }, userId);
+      const response = await generateDocument(
+        projectId,
+        { phase: etapa, inputs },
+        userId
+      );
 
-      // Atualizar UI
       setTaskId(response.taskId);
       setGeneratedContent(response.generatedContent);
 
-      // F-01: Toast de erro/sucesso no salvamento
       if (response.stageSaved === false) {
         toast.warning("Atenção: Resumo não persistido", {
-          description: "O documento foi gerado, mas o resumo para contexto futuro não foi salvo. Recomendamos regenerar.",
+          description:
+            "O documento foi gerado, mas o resumo para contexto futuro não foi salvo. Recomendamos regenerar.",
           duration: 6000,
         });
         setCurrentStageSaved(false);
@@ -163,15 +209,18 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         toast.success("Documento gerado e contexto salvo com sucesso!");
       }
 
-      // Atualizar a lista de resumos para o painel de contexto
-      const summaries = await getStageSummaries(projectId, userId);
-      setStageSummaries(summaries);
-
+      // Atualizar resumos após geração
+      try {
+        const summaries = await getStageSummaries(projectId, userId);
+        setStageSummaries(summaries);
+      } catch {
+        // não-bloqueante
+      }
     } catch (error) {
       console.error("[EtapaPage] Erro ao gerar documento:", error);
-      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
       toast.error("Falha ao gerar documento", {
-        description: errorMessage,
+        description:
+          error instanceof Error ? error.message : "Erro desconhecido",
       });
     } finally {
       setIsGenerating(false);
@@ -180,11 +229,11 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
 
   const handleRegenerate = async () => {
     if (!taskId || !userId) return;
-
     setIsRegenerating(true);
     try {
       const response = await regenerateDocument(taskId, {}, userId);
       setGeneratedContent(response.generatedContent);
+      toast.success("Documento regenerado com sucesso!");
     } catch (error) {
       console.error("Error regenerating document:", error);
       toast.error("Erro ao regenerar documento. Tente novamente.");
@@ -195,11 +244,11 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
 
   const handleRefine = async (feedback: string) => {
     if (!taskId || !userId) return;
-
     setIsRefining(true);
     try {
       const response = await refineDocument(taskId, feedback, userId);
       setGeneratedContent(response.generatedContent);
+      toast.success("Documento refinado com sucesso!");
     } catch (error) {
       console.error("Error refining document:", error);
       toast.error("Erro ao refinar documento. Tente novamente.");
@@ -208,20 +257,52 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
     }
   };
 
-  const getNextEtapa = () => {
-    const etapaNumber = parseInt(etapa.replace("etapa", ""));
-    // MVP: apenas 5 etapas (etapa1 a etapa5)
-    if (etapaNumber < 5) {
-      return `etapa${etapaNumber + 1}`;
+  const handleStartEdit = () => {
+    if (!generatedContent) return;
+    setEditText(contentToDisplayText(generatedContent));
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!taskId || !editText.trim()) return;
+    setIsSavingEdit(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("tasks")
+        .update({
+          content: editText,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", taskId);
+
+      if (error) throw error;
+
+      setGeneratedContent(editText);
+      setIsEditing(false);
+      toast.success("Conteúdo salvo com sucesso!");
+    } catch (error) {
+      console.error("Error saving edit:", error);
+      toast.error("Erro ao salvar edições.");
+    } finally {
+      setIsSavingEdit(false);
     }
+  };
+
+  const [refineText, setRefineText] = useState("");
+  const handleRefineSubmit = async () => {
+    if (!refineText.trim()) return;
+    await handleRefine(refineText);
+    setRefineText("");
+  };
+
+  const getNextEtapa = () => {
+    if (currentStageNumber < 5) return `etapa${currentStageNumber + 1}`;
     return null;
   };
 
   const getPreviousEtapa = () => {
-    const etapaNumber = parseInt(etapa.replace("etapa", ""));
-    if (etapaNumber > 1) {
-      return `etapa${etapaNumber - 1}`;
-    }
+    if (currentStageNumber > 1) return `etapa${currentStageNumber - 1}`;
     return null;
   };
 
@@ -238,8 +319,12 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
       <div className="flex flex-col items-center justify-center h-64 space-y-4 text-center">
         <AlertCircle className="h-10 w-10 text-destructive" />
         <div>
-          <p className="font-semibold text-lg">Não foi possível carregar os dados do projeto.</p>
-          <p className="text-sm text-muted-foreground mt-1">{errorMessage || "Verifique sua conexão e tente novamente."}</p>
+          <p className="font-semibold text-lg">
+            Não foi possível carregar os dados do projeto.
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {errorMessage || "Verifique sua conexão e tente novamente."}
+          </p>
         </div>
         <div className="flex gap-3">
           <Button variant="outline" onClick={() => window.location.reload()}>
@@ -261,19 +346,17 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
     );
   }
 
-  const currentStageNumber = parseInt(etapa.replace("etapa", "")) || 0;
-
   return (
     <div className="space-y-6">
-      {/* Badge de status da etapa (F-02) */}
+      {/* Badge de status */}
       {currentStageSaved === false && (
-        <StageStatusBadge 
-          status="pending" 
-          message="Contexto não salvo - precisa ser regerado" 
+        <StageStatusBadge
+          status="pending"
+          message="Contexto não salvo - precisa ser regerado"
         />
       )}
 
-      {/* Painel de Contexto Acumulado (F-04) */}
+      {/* Painel de Contexto Acumulado */}
       {!generatedContent && stageSummaries.length > 0 && (
         <StageContextPanel
           stages={stageSummaries}
@@ -281,7 +364,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         />
       )}
 
-      {/* Formulário */}
+      {/* Formulário (quando não há conteúdo gerado) */}
       {!generatedContent && (
         <FirstTimeTooltip
           tooltipKey="gerar_button"
@@ -300,18 +383,118 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         </FirstTimeTooltip>
       )}
 
-      {/* Documento Gerado */}
+      {/* Conteúdo Gerado — visualização e edição */}
       {generatedContent && (
-        <DocumentViewer
-          content={generatedContent}
-          onRegenerate={handleRegenerate}
-          onRefine={handleRefine}
-          isRegenerating={isRegenerating}
-          isRefining={isRefining}
-        />
+        <div className="space-y-4">
+          {/* Ações principais */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              onClick={handleRegenerate}
+              disabled={isRegenerating || isEditing}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <RefreshCw
+                className={`w-4 h-4 ${isRegenerating ? "animate-spin" : ""}`}
+              />
+              {isRegenerating ? "Gerando..." : "Regenerar"}
+            </Button>
+
+            {!isEditing ? (
+              <Button
+                onClick={handleStartEdit}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+              >
+                <Edit2 className="w-4 h-4" />
+                Editar
+              </Button>
+            ) : (
+              <>
+                <Button
+                  onClick={handleSaveEdit}
+                  disabled={isSavingEdit}
+                  size="sm"
+                  className="gap-2 bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Save className="w-4 h-4" />
+                  {isSavingEdit ? "Salvando..." : "Salvar edições"}
+                </Button>
+                <Button
+                  onClick={() => setIsEditing(false)}
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  Cancelar
+                </Button>
+              </>
+            )}
+          </div>
+
+          {/* Área de conteúdo */}
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-[#8c7dff] mb-4">
+              {stageConfig.title}
+            </h3>
+
+            {isEditing ? (
+              <Textarea
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                rows={20}
+                className="font-mono text-sm resize-y"
+                placeholder="Edite o conteúdo aqui..."
+              />
+            ) : (
+              <div className="prose prose-sm max-w-none dark:prose-invert">
+                <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans text-foreground bg-transparent border-0 p-0 m-0">
+                  {contentToDisplayText(generatedContent)}
+                </pre>
+              </div>
+            )}
+          </Card>
+
+          {/* Refinamento com IA */}
+          {!isEditing && (
+            <Card className="p-6 space-y-4">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-[#8c7dff]" />
+                <h3 className="text-lg font-semibold text-[#8c7dff]">
+                  Refinar com IA
+                </h3>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Forneça feedback específico sobre o que deseja melhorar ou
+                ajustar no documento.
+              </p>
+              <Textarea
+                placeholder="Ex: Detalhe mais a seção de mercado com dados quantitativos..."
+                value={refineText}
+                onChange={(e) => setRefineText(e.target.value)}
+                rows={3}
+                className="resize-none"
+              />
+              <Button
+                onClick={handleRefineSubmit}
+                disabled={!refineText.trim() || isRefining}
+                size="sm"
+                className="gap-2 bg-[#8c7dff] hover:bg-[#7a6de6]"
+              >
+                <Sparkles
+                  className={`w-4 h-4 ${isRefining ? "animate-pulse" : ""}`}
+                />
+                {isRefining ? "Refinando..." : "Refinar com IA"}
+              </Button>
+            </Card>
+          )}
+        </div>
       )}
 
-      {/* Navegação */}
+      {/* Navegação entre etapas */}
       {generatedContent && (
         <div className="flex justify-between">
           {getPreviousEtapa() && (

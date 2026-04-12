@@ -262,6 +262,23 @@ function DashPageContent() {
           // Definir etapa atual como a próxima após a última completa (máx 5 etapas)
           const maxCompleted = Math.max(...completed);
           setCurrentStage(maxCompleted < 5 ? maxCompleted + 1 : 5);
+
+          // Auto-recalcular score para projetos antigos com score=0 mas com etapas concluídas
+          const hasEvaluatedTasks = tasksData.some((t: { status?: string }) => t.status === 'evaluated');
+          if (projectData && Number(projectData.score ?? 0) === 0 && hasEvaluatedTasks && currentUser) {
+            const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+            fetch(`${API_BASE}/api/projects/${projectId}/recalculate-score`, {
+              method: 'POST',
+              headers: { 'x-user-id': currentUser.id },
+            })
+              .then(res => res.json())
+              .then((data: { score?: number }) => {
+                if (data.score && data.score > 0) {
+                  setProject(prev => prev ? { ...prev, score: data.score } : prev);
+                }
+              })
+              .catch(() => { /* fire-and-forget — score recalc não é bloqueante */ });
+          }
         }
       }
     };
