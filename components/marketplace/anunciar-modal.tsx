@@ -18,7 +18,7 @@ import { toast } from "sonner";
 
 interface AnunciarModalProps {
   open: boolean;
-  onClose: () => void;
+  onClose: (publishedType?: "project" | "service") => void;
 }
 
 type AnunciarType = "projeto" | "servico" | null;
@@ -109,7 +109,7 @@ export function AnunciarModal({ open, onClose }: AnunciarModalProps) {
     }
   };
 
-  function handleClose() {
+  function handleClose(publishedType?: "project" | "service") {
     setType(null);
     setTitle("");
     setDescription("");
@@ -117,7 +117,7 @@ export function AnunciarModal({ open, onClose }: AnunciarModalProps) {
     setContactEmail("");
     setSelectedProjectId("");
     setUserProjects([]);
-    onClose();
+    onClose(publishedType);
   }
 
   const handlePublish = async () => {
@@ -137,19 +137,21 @@ export function AnunciarModal({ open, onClose }: AnunciarModalProps) {
         return;
       }
 
+      const listingType = type === "projeto" ? "project" : "service";
       await createListing({
         owner_id: user.id,
         project_id: type === "projeto" && selectedProjectId ? selectedProjectId : null,
         title: title.trim(),
         description: description.trim() || null,
         category: category || null,
-        listing_type: type === "projeto" ? "project" : "service",
+        listing_type: listingType,
         contact_email: contactEmail.trim() || user.email || null,
       });
 
       toast.success("Anúncio publicado com sucesso!");
-      handleClose();
-    } catch {
+      handleClose(listingType);
+    } catch (err) {
+      console.error("Erro ao publicar anúncio:", err);
       toast.error("Erro ao publicar anúncio. Tente novamente.");
     } finally {
       setIsSubmitting(false);
@@ -159,7 +161,7 @@ export function AnunciarModal({ open, onClose }: AnunciarModalProps) {
   const categories = type === "projeto" ? PROJECT_CATEGORIES : SERVICE_CATEGORIES;
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={() => handleClose()}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>O que você quer anunciar?</DialogTitle>

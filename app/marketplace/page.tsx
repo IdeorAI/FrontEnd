@@ -380,8 +380,10 @@ export default function MarketplacePage() {
 
       <AnunciarModal
         open={anunciarOpen}
-        onClose={() => {
+        onClose={(publishedType) => {
           setAnunciarOpen(false);
+          if (publishedType === "project") setActiveTab("projetos");
+          else if (publishedType === "service") setActiveTab("servicos");
           reloadListings();
         }}
       />
