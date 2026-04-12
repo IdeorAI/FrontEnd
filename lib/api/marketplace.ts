@@ -22,7 +22,7 @@ export async function getListings(): Promise<ListingWithOwner[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("marketplace_listings")
-    .select("*, profiles:owner_id(name), projects:project_id(score)")
+    .select("*, profiles:owner_id(username), projects:project_id(score)")
     .eq("is_active", true)
     .order("published_at", { ascending: false })
     .limit(50);
@@ -31,11 +31,11 @@ export async function getListings(): Promise<ListingWithOwner[]> {
 
   return ((data ?? []) as unknown[]).map((row: unknown) => {
     const r = row as Record<string, unknown>;
-    const profiles = r.profiles as { name?: string } | null;
+    const profiles = r.profiles as { username?: string } | null;
     const projects = r.projects as { score?: number } | null;
     return {
       ...(r as unknown as MarketplaceListing),
-      owner_name: profiles?.name ?? null,
+      owner_name: profiles?.username ?? null,
       project_score: projects?.score ?? null,
     };
   });
@@ -45,18 +45,18 @@ export async function getListingById(id: string): Promise<ListingWithOwner | nul
   const supabase = createClient();
   const { data, error } = await supabase
     .from("marketplace_listings")
-    .select("*, profiles:owner_id(name), projects:project_id(score)")
+    .select("*, profiles:owner_id(username), projects:project_id(score)")
     .eq("id", id)
     .single();
 
   if (error) return null;
 
   const r = data as Record<string, unknown>;
-  const profiles = r.profiles as { name?: string } | null;
+  const profiles = r.profiles as { username?: string } | null;
   const projects = r.projects as { score?: number } | null;
   return {
     ...(r as unknown as MarketplaceListing),
-    owner_name: profiles?.name ?? null,
+    owner_name: profiles?.username ?? null,
     project_score: projects?.score ?? null,
   };
 }
