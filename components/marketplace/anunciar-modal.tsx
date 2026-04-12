@@ -309,7 +309,7 @@ export function AnunciarModal({ open, onClose }: AnunciarModalProps) {
             </div>
 
             <div className="flex gap-2">
-              <Button variant="outline" className="flex-1" onClick={handleClose}>
+              <Button variant="outline" className="flex-1" onClick={() => handleClose()}>
                 Cancelar
               </Button>
               <Button
