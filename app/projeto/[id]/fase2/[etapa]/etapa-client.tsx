@@ -22,12 +22,34 @@ interface EtapaClientProps {
   seenTooltips: Record<string, boolean>;
 }
 
+/** Remove markdown fences e tenta extrair JSON limpo */
+function stripJsonFences(raw: string): string {
+  let s = raw.trim();
+  // Remove ```json ... ``` ou ``` ... ```
+  if (s.startsWith("```")) {
+    s = s.replace(/^```(?:json)?\s*\n?/, "").replace(/\n?```\s*$/, "");
+  }
+  return s.trim();
+}
+
 /** Converte JSON (ou texto puro) para texto legível formatado */
 function contentToDisplayText(content: string): string {
+  const cleaned = stripJsonFences(content);
+
+  // Tenta parse direto
   try {
-    const json = JSON.parse(content);
-    return jsonToText(json);
+    const parsed = JSON.parse(cleaned);
+    // Se o parse resultou em string (double-encoded), tenta de novo
+    if (typeof parsed === "string") {
+      try {
+        const inner = JSON.parse(stripJsonFences(parsed));
+        if (typeof inner === "object" && inner !== null) return jsonToText(inner);
+      } catch { /* ignore */ }
+      return parsed; // era string pura dentro de JSON
+    }
+    return jsonToText(parsed);
   } catch {
+    // Não é JSON — retorna como texto
     return content;
   }
 }
@@ -36,11 +58,19 @@ function jsonToText(obj: unknown, depth = 0): string {
   if (obj === null || obj === undefined) return "";
   if (typeof obj === "string") return obj;
   if (typeof obj === "number" || typeof obj === "boolean") return String(obj);
+
   if (Array.isArray(obj)) {
     return (obj as unknown[])
-      .map((item) => `• ${jsonToText(item, depth + 1)}`)
+      .map((item) => {
+        const text = jsonToText(item, depth + 1);
+        // Se item é objeto, exibe como bloco; senão como bullet
+        return typeof item === "object" && item !== null && !Array.isArray(item)
+          ? text
+          : `  - ${text}`;
+      })
       .join("\n");
   }
+
   if (typeof obj === "object") {
     return Object.entries(obj as Record<string, unknown>)
       .filter(([, v]) => v !== null && v !== undefined && v !== "")
@@ -48,6 +78,11 @@ function jsonToText(obj: unknown, depth = 0): string {
         const label = key
           .replace(/_/g, " ")
           .replace(/\b\w/g, (l) => l.toUpperCase());
+
+        // Valor simples: inline. Valor complexo: próxima linha.
+        if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+          return `${label}: ${value}`;
+        }
         const valueText = jsonToText(value, depth + 1);
         return `${label}:\n${valueText}`;
       })

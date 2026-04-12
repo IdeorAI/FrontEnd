@@ -14,7 +14,6 @@ import { CreateProjectButton } from "@/components/create-project-button";
 import { TrendingUp, Star, Award } from "lucide-react";
 import { DeleteProjectButton } from "@/components/delete-project-button";
 import { DeleteButtonWrapper } from "@/components/delete-button-wrapper";
-import { ScoreRefresher } from "@/components/score-refresher";
 import {
   Tooltip,
   TooltipContent,
@@ -45,7 +44,7 @@ export default async function Page(props: PageProps) {
   let query = supabase
     .from("projects")
     .select(
-      "id, name, description, score, valuation, updated_at, created_at, category, current_phase, tasks(id, phase, status)"
+      "id, name, description, score, valuation, updated_at, created_at, category, current_phase, tasks(id, phase, status, content)"
     )
     .eq("owner_id", user.id);
 
@@ -129,22 +128,27 @@ export default async function Page(props: PageProps) {
   const { data: projects, error: loadErr } = await query;
   if (loadErr) console.error(loadErr);
 
-  // Projetos com score = 0 mas que têm tasks avaliadas → precisam de recálculo
-  const staleProjects = (projects ?? [])
-    .filter(p => {
-      const evaluated = Array.isArray(p.tasks)
-        ? p.tasks.filter((t: { status?: string }) => t.status === "evaluated").length
-        : 0;
-      return Number(p.score ?? 0) === 0 && evaluated > 0;
-    })
-    .map(p => ({
-      id: p.id,
-      score: p.score,
-      evaluatedTaskCount: Array.isArray(p.tasks)
-        ? p.tasks.filter((t: { status?: string }) => t.status === "evaluated").length
-        : 0,
-      userId: user.id,
-    }));
+  // Calcular score real a partir das tasks (não depende da coluna score do DB)
+  function computeScore(tasks: { status?: string; content?: string | null }[]): number {
+    const evaluated = tasks.filter(t => t.status === "evaluated");
+    let pts = evaluated.length * 15;
+    pts += evaluated.filter(t => (t.content?.length ?? 0) >= 100).length * 3;
+    if (evaluated.length >= 5) pts += 10;
+    return Math.min(pts, 100);
+  }
+
+  // Atualizar scores stale no DB em background (server-side, sem loop)
+  const projectsList = projects ?? [];
+  for (const p of projectsList) {
+    const tasks = Array.isArray(p.tasks) ? p.tasks : [];
+    const realScore = computeScore(tasks);
+    if (realScore > 0 && Number(p.score ?? 0) !== realScore) {
+      // Fire-and-forget: atualiza o DB para que da próxima vez já venha correto
+      supabase.from("projects").update({ score: realScore }).eq("id", p.id).then(() => {});
+      // Sobreescreve localmente para exibir correto agora
+      p.score = realScore;
+    }
+  }
 
   // Função auxiliar para calcular medalha baseada no progresso
   const getMedalha = (tasksCount: number) => {
@@ -333,8 +337,6 @@ export default async function Page(props: PageProps) {
       </div>
       </TooltipProvider>
 
-      {/* Recalcula score de projetos stale em background e força refresh do Server Component */}
-      <ScoreRefresher staleProjects={staleProjects} />
     </div>
   );
 }

@@ -263,21 +263,20 @@ function DashPageContent() {
           const maxCompleted = Math.max(...completed);
           setCurrentStage(maxCompleted < 5 ? maxCompleted + 1 : 5);
 
-          // Auto-recalcular score para projetos antigos com score=0 mas com etapas concluídas
-          const hasEvaluatedTasks = tasksData.some((t: { status?: string }) => t.status === 'evaluated');
-          if (projectData && Number(projectData.score ?? 0) === 0 && hasEvaluatedTasks && currentUser) {
-            const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-            fetch(`${API_BASE}/api/projects/${projectId}/recalculate-score`, {
-              method: 'POST',
-              headers: { 'x-user-id': currentUser.id },
-            })
-              .then(res => res.json())
-              .then((data: { score?: number }) => {
-                if (data.score && data.score > 0) {
-                  setProject(prev => prev ? { ...prev, score: data.score } : prev);
-                }
-              })
-              .catch(() => { /* fire-and-forget — score recalc não é bloqueante */ });
+          // Auto-recalcular score a partir das tasks locais
+          const evaluatedTasks = tasksData.filter((t: { status?: string }) => t.status === 'evaluated');
+          if (evaluatedTasks.length > 0) {
+            let pts = evaluatedTasks.length * 15;
+            pts += evaluatedTasks.filter((t: { content?: string | null }) => (t.content?.length ?? 0) >= 100).length * 3;
+            if (evaluatedTasks.length >= 5) pts += 10;
+            const realScore = Math.min(pts, 100);
+            const dbScore = Number(projectData?.score ?? 0);
+
+            if (realScore !== dbScore) {
+              setProject(prev => prev ? { ...prev, score: realScore } : prev);
+              // Persistir no DB em background
+              supabase.from("projects").update({ score: realScore }).eq("id", projectId).then(() => {});
+            }
           }
         }
       }
