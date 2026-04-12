@@ -14,6 +14,7 @@ import { CreateProjectButton } from "@/components/create-project-button";
 import { TrendingUp, Star, Award } from "lucide-react";
 import { DeleteProjectButton } from "@/components/delete-project-button";
 import { DeleteButtonWrapper } from "@/components/delete-button-wrapper";
+import { ScoreRefresher } from "@/components/score-refresher";
 import {
   Tooltip,
   TooltipContent,
@@ -127,6 +128,23 @@ export default async function Page(props: PageProps) {
 
   const { data: projects, error: loadErr } = await query;
   if (loadErr) console.error(loadErr);
+
+  // Projetos com score = 0 mas que têm tasks avaliadas → precisam de recálculo
+  const staleProjects = (projects ?? [])
+    .filter(p => {
+      const evaluated = Array.isArray(p.tasks)
+        ? p.tasks.filter((t: { status?: string }) => t.status === "evaluated").length
+        : 0;
+      return Number(p.score ?? 0) === 0 && evaluated > 0;
+    })
+    .map(p => ({
+      id: p.id,
+      score: p.score,
+      evaluatedTaskCount: Array.isArray(p.tasks)
+        ? p.tasks.filter((t: { status?: string }) => t.status === "evaluated").length
+        : 0,
+      userId: user.id,
+    }));
 
   // Função auxiliar para calcular medalha baseada no progresso
   const getMedalha = (tasksCount: number) => {
@@ -314,6 +332,9 @@ export default async function Page(props: PageProps) {
         )}
       </div>
       </TooltipProvider>
+
+      {/* Recalcula score de projetos stale em background e força refresh do Server Component */}
+      <ScoreRefresher staleProjects={staleProjects} />
     </div>
   );
 }
