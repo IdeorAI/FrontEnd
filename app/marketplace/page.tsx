@@ -380,11 +380,20 @@ export default function MarketplacePage() {
 
       <AnunciarModal
         open={anunciarOpen}
-        onClose={(publishedType) => {
+        onClose={(newListing) => {
           setAnunciarOpen(false);
-          if (publishedType === "project") setActiveTab("projetos");
-          else if (publishedType === "service") setActiveTab("servicos");
-          reloadListings();
+          if (newListing) {
+            // Muda para a aba correta e adiciona imediatamente ao estado
+            setActiveTab(newListing.listing_type === "project" ? "projetos" : "servicos");
+            setListings((prev) => [
+              { ...newListing, owner_name: null, project_score: null },
+              ...prev,
+            ]);
+            // Reload em background para enriquecer com owner_name e project_score
+            setTimeout(() => reloadListings(), 800);
+          } else {
+            reloadListings();
+          }
         }}
       />
     </div>

@@ -12,13 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Rocket, Briefcase } from "lucide-react";
-import { createListing } from "@/lib/api/marketplace";
+import { createListing, type MarketplaceListing } from "@/lib/api/marketplace";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
 interface AnunciarModalProps {
   open: boolean;
-  onClose: (publishedType?: "project" | "service") => void;
+  onClose: (newListing?: MarketplaceListing) => void;
 }
 
 type AnunciarType = "projeto" | "servico" | null;
@@ -109,7 +109,7 @@ export function AnunciarModal({ open, onClose }: AnunciarModalProps) {
     }
   };
 
-  function handleClose(publishedType?: "project" | "service") {
+  function handleClose(newListing?: MarketplaceListing) {
     setType(null);
     setTitle("");
     setDescription("");
@@ -117,7 +117,7 @@ export function AnunciarModal({ open, onClose }: AnunciarModalProps) {
     setContactEmail("");
     setSelectedProjectId("");
     setUserProjects([]);
-    onClose(publishedType);
+    onClose(newListing);
   }
 
   const handlePublish = async () => {
@@ -134,25 +134,26 @@ export function AnunciarModal({ open, onClose }: AnunciarModalProps) {
       } = await supabase.auth.getUser();
       if (!user) {
         toast.error("Faça login para publicar.");
+        setIsSubmitting(false);
         return;
       }
 
-      const listingType = type === "projeto" ? "project" : "service";
-      await createListing({
+      const newListing = await createListing({
         owner_id: user.id,
         project_id: type === "projeto" && selectedProjectId ? selectedProjectId : null,
         title: title.trim(),
         description: description.trim() || null,
         category: category || null,
-        listing_type: listingType,
+        listing_type: type === "projeto" ? "project" : "service",
         contact_email: contactEmail.trim() || user.email || null,
       });
 
       toast.success("Anúncio publicado com sucesso!");
-      handleClose(listingType);
+      handleClose(newListing);
     } catch (err) {
-      console.error("Erro ao publicar anúncio:", err);
-      toast.error("Erro ao publicar anúncio. Tente novamente.");
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("Erro ao publicar anúncio:", msg);
+      toast.error(`Erro ao publicar: ${msg}`);
     } finally {
       setIsSubmitting(false);
     }
