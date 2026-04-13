@@ -36,11 +36,14 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { DeleteProjectButton } from "@/components/delete-project-button";
 import { useStageOperations } from "@/hooks/use-stage-operations";
+import { ProjectAnalyticsPanel } from "@/components/projeto/project-analytics-panel";
+import { AnunciarModal } from "@/components/marketplace/anunciar-modal";
 
 function DashPageContent() {
   const [user, setUser] = useState<{ email?: string; user_metadata?: Record<string, unknown> } | null>(null);
-  const [project, setProject] = useState<{ name?: string; valuation?: number; description?: string; created_at?: string; score?: number } | null>(null);
+  const [project, setProject] = useState<{ name?: string; valuation?: number; description?: string; created_at?: string; score?: number; category?: string } | null>(null);
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
+  const [anunciarOpen, setAnunciarOpen] = useState(false);
   const [stageStatuses, setStageStatuses] = useState<StageStatus[]>([]); // Status dos badges das etapas
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -747,6 +750,15 @@ function DashPageContent() {
       {/* Linha de Progressão */}
       <ProjectProgressLine currentStage={currentStage} completedStages={completedStages} />
 
+      {/* Analytics Panel */}
+      {projectId && Object.keys(etapaContent).length > 0 && (
+        <ProjectAnalyticsPanel
+          etapaContent={etapaContent}
+          completedStages={completedStages}
+          onPublishToMarketplace={() => setAnunciarOpen(true)}
+        />
+      )}
+
       {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {cards.map((card) => {
@@ -838,6 +850,12 @@ function DashPageContent() {
           onClose={() => setActiveDialog(null)}
         />
       ))}
+
+      {/* Modal de anunciar no Marketplace */}
+      <AnunciarModal
+        open={anunciarOpen}
+        onClose={() => setAnunciarOpen(false)}
+      />
       </div>
     </TooltipProvider>
   );

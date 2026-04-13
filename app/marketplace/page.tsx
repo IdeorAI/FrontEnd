@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Rocket,
   Briefcase,
@@ -19,7 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AnunciarModal } from "@/components/marketplace/anunciar-modal";
-import { MarketplaceFilters } from "@/components/marketplace/marketplace-filters";
+import { MarketplaceFilters, type SortOrder } from "@/components/marketplace/marketplace-filters";
 import {
   getListings,
   expressInterest,
@@ -37,6 +37,10 @@ import {
 
 type Tab = "projetos" | "servicos";
 
+function escapeRegex(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export default function MarketplacePage() {
   const [activeTab, setActiveTab] = useState<Tab>("projetos");
   const [anunciarOpen, setAnunciarOpen] = useState(false);
@@ -44,6 +48,11 @@ export default function MarketplacePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [interestSent, setInterestSent] = useState<Set<string>>(new Set());
+
+  // Filter state
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("recent");
 
   // Modal de detalhes
   const [selectedListing, setSelectedListing] = useState<ListingWithOwner | null>(null);
@@ -111,7 +120,46 @@ export default function MarketplacePage() {
 
   const projects = listings.filter((l) => l.listing_type === "project");
   const services = listings.filter((l) => l.listing_type === "service");
-  const displayItems = activeTab === "projetos" ? projects : services;
+  const baseItems = activeTab === "projetos" ? projects : services;
+
+  // Available categories for current tab
+  const availableCategories = useMemo(
+    () => [...new Set(baseItems.map((l) => l.category).filter((c): c is string => !!c))].sort(),
+    [baseItems]
+  );
+
+  // Reset category filter when tab changes
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    setSelectedCategory("");
+    setSearchTerm("");
+  };
+
+  // Filtered + sorted items
+  const displayItems = useMemo(() => {
+    let items = baseItems;
+
+    if (searchTerm.trim()) {
+      const re = new RegExp(escapeRegex(searchTerm.trim()), "i");
+      items = items.filter((l) => re.test(l.title) || re.test(l.description ?? ""));
+    }
+
+    if (selectedCategory) {
+      items = items.filter((l) => l.category === selectedCategory);
+    }
+
+    if (sortOrder === "recent") {
+      items = [...items].sort((a, b) => b.published_at.localeCompare(a.published_at));
+    } else if (sortOrder === "oldest") {
+      items = [...items].sort((a, b) => a.published_at.localeCompare(b.published_at));
+    } else if (sortOrder === "score_desc") {
+      items = [...items].sort((a, b) => (b.project_score ?? 0) - (a.project_score ?? 0));
+    }
+
+    return items;
+  }, [baseItems, searchTerm, selectedCategory, sortOrder]);
+
+  const hasActiveFilters = !!searchTerm || !!selectedCategory || sortOrder !== "recent";
 
   const reloadListings = () => {
     getListings().then(setListings).catch(() => {});
@@ -129,7 +177,7 @@ export default function MarketplacePage() {
       {/* Tabs */}
       <div className="flex border-b">
         <button
-          onClick={() => setActiveTab("projetos")}
+          onClick={() => handleTabChange("projetos")}
           className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
             activeTab === "projetos"
               ? "border-primary text-primary"
@@ -145,7 +193,7 @@ export default function MarketplacePage() {
           )}
         </button>
         <button
-          onClick={() => setActiveTab("servicos")}
+          onClick={() => handleTabChange("servicos")}
           className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
             activeTab === "servicos"
               ? "border-primary text-primary"
@@ -163,7 +211,20 @@ export default function MarketplacePage() {
       </div>
 
       {/* Filters + anunciar */}
-      <MarketplaceFilters onAnunciar={() => setAnunciarOpen(true)} />
+      <MarketplaceFilters
+        onAnunciar={() => setAnunciarOpen(true)}
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+        sortOrder={sortOrder}
+        onSortChange={setSortOrder}
+        onClearFilters={() => { setSearchTerm(""); setSelectedCategory(""); setSortOrder("recent"); }}
+        availableCategories={availableCategories}
+        resultCount={displayItems.length}
+        totalCount={baseItems.length}
+        hasActiveFilters={hasActiveFilters}
+      />
 
       {/* Content */}
       {isLoading ? (
@@ -179,22 +240,41 @@ export default function MarketplacePage() {
               <Briefcase className="h-8 w-8 text-primary" />
             )}
           </div>
-          <div>
-            <p className="font-semibold text-lg">
-              {activeTab === "projetos"
-                ? "Nenhum projeto publicado ainda"
-                : "Nenhum serviço publicado ainda"}
-            </p>
-            <p className="text-muted-foreground text-sm mt-1">
-              {activeTab === "projetos"
-                ? "Seja o primeiro a publicar seu projeto no marketplace!"
-                : "Seja o primeiro a oferecer seus serviços!"}
-            </p>
-          </div>
-          <Button onClick={() => setAnunciarOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Publicar anúncio
-          </Button>
+          {hasActiveFilters ? (
+            <div>
+              <p className="font-semibold text-lg">Nenhum resultado encontrado</p>
+              <p className="text-muted-foreground text-sm mt-1">
+                {searchTerm
+                  ? `Nenhum anúncio corresponde a "${searchTerm}"`
+                  : "Nenhum anúncio corresponde aos filtros selecionados"}
+              </p>
+              <button
+                onClick={() => { setSearchTerm(""); setSelectedCategory(""); setSortOrder("recent"); }}
+                className="mt-3 text-sm text-primary hover:underline"
+              >
+                Limpar filtros
+              </button>
+            </div>
+          ) : (
+            <div>
+              <p className="font-semibold text-lg">
+                {activeTab === "projetos"
+                  ? "Nenhum projeto publicado ainda"
+                  : "Nenhum serviço publicado ainda"}
+              </p>
+              <p className="text-muted-foreground text-sm mt-1">
+                {activeTab === "projetos"
+                  ? "Seja o primeiro a publicar seu projeto no marketplace!"
+                  : "Seja o primeiro a oferecer seus serviços!"}
+              </p>
+            </div>
+          )}
+          {!hasActiveFilters && (
+            <Button onClick={() => setAnunciarOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Publicar anúncio
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -49,7 +49,20 @@ export function MarketplaceTabs({ projects, services }: MarketplaceTabsProps) {
       </div>
 
       {/* Filters */}
-      <MarketplaceFilters onAnunciar={() => setAnunciarOpen(true)} />
+      <MarketplaceFilters
+        onAnunciar={() => setAnunciarOpen(true)}
+        searchTerm=""
+        onSearchChange={() => {}}
+        selectedCategory=""
+        onCategoryChange={() => {}}
+        sortOrder="recent"
+        onSortChange={() => {}}
+        onClearFilters={() => {}}
+        availableCategories={[]}
+        resultCount={0}
+        totalCount={0}
+        hasActiveFilters={false}
+      />
 
       {/* Grid */}
       {activeTab === "projetos" && (
