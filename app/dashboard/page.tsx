@@ -175,15 +175,9 @@ export default async function Page(props: PageProps) {
       </div>
 
       {/* HEADER de filtros/busca/ordenação */}
-      <div>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-3">
-          <h2 className="text-lg font-semibold text-[#8c7dff]">
-            Minhas Startups
-          </h2>
-          <div className="w-full sm:flex-1 sm:max-w-2xl">
-            <DashboardFilters />
-          </div>
-        </div>
+      <div className="space-y-2">
+        <h2 className="text-lg font-semibold text-[#8c7dff]">Minhas Startups</h2>
+        <DashboardFilters />
       </div>
 
       {/* Progress Checklist — desativado temporariamente (onboarding revisado) */}
