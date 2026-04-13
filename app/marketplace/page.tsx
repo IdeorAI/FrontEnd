@@ -323,7 +323,7 @@ export default function MarketplacePage() {
                   {listing.listing_type === "project" && listing.project_score != null && listing.project_score > 0 && (
                     <span className="flex items-center gap-1">
                       <Star className="h-3 w-3 text-yellow-500" />
-                      {listing.project_score}
+                      {(listing.project_score / 10).toFixed(1)}
                     </span>
                   )}
                 </div>
@@ -388,7 +388,7 @@ export default function MarketplacePage() {
                     selectedListing.project_score > 0 && (
                       <span className="flex items-center gap-1">
                         <Star className="h-4 w-4 text-yellow-500" />
-                        Score: {selectedListing.project_score}
+                        Score: {(selectedListing.project_score / 10).toFixed(1)}/10
                       </span>
                     )}
                   <span className="flex items-center gap-1">

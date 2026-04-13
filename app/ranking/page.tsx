@@ -5,6 +5,7 @@ type Project = {
   id: string
   name: string
   score: number | null
+  ivo_index: number | null
   owner_id: string
 }
 
@@ -15,7 +16,7 @@ export default async function RankingPage() {
 
   const { data: projects } = await supabase
     .from("projects")
-    .select("id, name, score, owner_id")
+    .select("id, name, score, ivo_index, owner_id")
     .eq("is_public", true)
     .gt("score", 0)
     .order("score", { ascending: false })
@@ -63,12 +64,14 @@ export default async function RankingPage() {
                   </div>
                 </div>
                 <div className="flex-shrink-0 text-right">
-                  <span className="text-lg font-bold text-primary">
-                    {project.score !== null ? project.score : "—"}
-                  </span>
-                  {project.score !== null && (
-                    <span className="text-xs text-muted-foreground ml-1">pts</span>
-                  )}
+                  <div className="text-lg font-bold text-primary">
+                    {project.ivo_index !== null
+                      ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(project.ivo_index)
+                      : "R$ 100"}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Score: {project.score !== null ? (project.score / 10).toFixed(1) : "—"}/10
+                  </div>
                 </div>
               </div>
             )

@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { jsonToToon, toonToJson } from "@/lib/toon-converter";
 import { toast } from "sonner";
+import { RocketLoading } from "@/components/rocket-loading";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const debugLog = (...args: any[]) => {
@@ -80,6 +81,8 @@ function EditableSection({ sectionKey, value, onChange }: EditableSectionProps) 
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
             className="h-6 w-6 p-0"
+            aria-label={isExpanded ? `Recolher seção ${sectionKey.replace(/_/g, ' ')}` : `Expandir seção ${sectionKey.replace(/_/g, ' ')}`}
+            aria-expanded={isExpanded}
           >
             {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </Button>
@@ -92,6 +95,7 @@ function EditableSection({ sectionKey, value, onChange }: EditableSectionProps) 
           size="sm"
           onClick={() => setIsEditingField(!isEditingField)}
           className="h-7 text-xs"
+          aria-label={isEditingField ? `Cancelar edição de ${sectionKey.replace(/_/g, ' ')}` : `Editar seção ${sectionKey.replace(/_/g, ' ')}`}
         >
           {isEditingField ? "Cancelar" : "Editar"}
         </Button>
@@ -429,31 +433,33 @@ export function AIStageCard({
         {/* Input da ideia */}
         {!generatedContent && (
           <div className="space-y-2">
-            <label className="text-sm font-medium">Ideia de Negócio</label>
-            <Textarea
-              placeholder={placeholder}
-              value={idea}
-              onChange={(e) => setIdea(e.target.value)}
-              rows={4}
-              className="resize-none lg:min-h-[200px]"
-            />
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating || !idea.trim()}
-              className="w-full"
-            >
-              {isGenerating ? (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  Gerando com IA...
-                </>
-              ) : (
-                <>
+            {isGenerating ? (
+              <RocketLoading
+                fullScreen={false}
+                message="Gerando análise com IA... (30-60s)"
+              />
+            ) : (
+              <>
+                <label htmlFor={`idea-input-${title}`} className="text-sm font-medium">Ideia de Negócio</label>
+                <Textarea
+                  id={`idea-input-${title}`}
+                  placeholder={placeholder}
+                  value={idea}
+                  onChange={(e) => setIdea(e.target.value)}
+                  rows={4}
+                  className="resize-none lg:min-h-[200px]"
+                  aria-label="Descreva sua ideia de negócio"
+                />
+                <Button
+                  onClick={handleGenerate}
+                  disabled={!idea.trim()}
+                  className="w-full"
+                >
                   <Sparkles className="mr-2 h-4 w-4" />
                   Gerar com IA
-                </>
-              )}
-            </Button>
+                </Button>
+              </>
+            )}
           </div>
         )}
 
@@ -466,6 +472,7 @@ export function AIStageCard({
                 variant="outline"
                 size="sm"
                 onClick={handleStartEdit}
+                aria-label="Ajustar conteúdo gerado"
               >
                 <Edit2 className="mr-2 h-3 w-3" />
                 Ajustar

@@ -44,7 +44,7 @@ export default async function Page(props: PageProps) {
   let query = supabase
     .from("projects")
     .select(
-      "id, name, description, score, valuation, updated_at, created_at, category, current_phase, tasks(id, phase, status, content)"
+      "id, name, description, score, valuation, ivo_index, ivo_o, ivo_m, ivo_v, ivo_e, ivo_t, ivo_d, updated_at, created_at, category, current_phase, tasks(id, phase, status, content)"
     )
     .eq("owner_id", user.id);
 
@@ -249,7 +249,7 @@ export default async function Page(props: PageProps) {
 
                 {/* Badges laterais (lado direito) */}
                 <div className="flex flex-col gap-3 items-end justify-start py-1 w-[100px]">
-                  {/* Valuation Badge */}
+                  {/* IVO Index Badge */}
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="w-full px-3 py-2 bg-primary/10 rounded-full hover:bg-primary/15 transition-colors cursor-pointer flex items-center gap-2 justify-center">
@@ -259,27 +259,27 @@ export default async function Page(props: PageProps) {
                             style: "currency",
                             currency: "BRL",
                             maximumFractionDigits: 0,
-                          }).format(Number(p.valuation))}
+                          }).format(Number((p as { ivo_index?: number }).ivo_index ?? p.valuation ?? 100))}
                         </span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Valuation</p>
+                      <p>IVO Index</p>
                     </TooltipContent>
                   </Tooltip>
 
-                  {/* Score Badge */}
+                  {/* Score Badge — escala 0-10 */}
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="w-full px-3 py-2 bg-yellow-500/10 rounded-full hover:bg-yellow-500/15 transition-colors cursor-pointer flex items-center gap-2 justify-center">
                         <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                         <span className="text-xs font-bold text-white">
-                          {Number(p.score).toFixed(1)}
+                          {(Number(p.score) / 10).toFixed(1)}
                         </span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Score</p>
+                      <p>Score IdeorAI: {(Number(p.score) / 10).toFixed(1)} / 10</p>
                     </TooltipContent>
                   </Tooltip>
 

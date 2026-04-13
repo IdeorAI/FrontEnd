@@ -1,17 +1,19 @@
 "use client";
 
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { LeadCaptureDialog } from "@/components/lead-capture-dialog";
 import heroBg from "@/app/assets/hero-bg.jpg";
 
 export default function Hero() {
-  const bg = heroBg;
-
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-70"
-        style={{ backgroundImage: `url(${bg.src})` }}
+      <Image
+        src={heroBg}
+        alt=""
+        fill
+        priority
+        className="object-cover object-center opacity-70"
       />
       <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background opacity-60" />
       <div className="absolute inset-0 bg-gradient-to-r from-background/20 via-transparent to-background/20" />

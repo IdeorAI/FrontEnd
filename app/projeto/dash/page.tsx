@@ -41,7 +41,22 @@ import { AnunciarModal } from "@/components/marketplace/anunciar-modal";
 
 function DashPageContent() {
   const [user, setUser] = useState<{ email?: string; user_metadata?: Record<string, unknown> } | null>(null);
-  const [project, setProject] = useState<{ name?: string; valuation?: number; description?: string; created_at?: string; score?: number; category?: string } | null>(null);
+  const [project, setProject] = useState<{
+    name?: string;
+    valuation?: number;
+    description?: string;
+    created_at?: string;
+    score?: number;
+    category?: string;
+    ivo_index?: number;
+    ivo_o?: number;
+    ivo_m?: number;
+    ivo_v?: number;
+    ivo_e?: number;
+    ivo_t?: number;
+    ivo_d?: number;
+    ivo_score_10?: number;
+  } | null>(null);
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
   const [anunciarOpen, setAnunciarOpen] = useState(false);
   const [stageStatuses, setStageStatuses] = useState<StageStatus[]>([]); // Status dos badges das etapas
@@ -120,6 +135,7 @@ function DashPageContent() {
     };
     
     loadStageStatuses();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, user]);
 
   // Função para verificar se uma etapa está bloqueada (F-02)
@@ -286,6 +302,7 @@ function DashPageContent() {
     };
 
     loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, router]);
 
   useEffect(() => {
@@ -649,8 +666,8 @@ function DashPageContent() {
 
           {/* Badges e Notificações */}
           <div className="flex items-center gap-3">
-            {/* Valuation Badge com Tooltip */}
-            {project && project.valuation && (
+            {/* IVO Index Badge com Tooltip */}
+            {project && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="hidden sm:flex items-center gap-2.5 px-5 py-2.5 bg-primary/10 rounded-full hover:bg-primary/15 transition-colors cursor-pointer">
@@ -660,26 +677,35 @@ function DashPageContent() {
                         style: "currency",
                         currency: "BRL",
                         maximumFractionDigits: 0,
-                      }).format(Number(project.valuation))}
+                      }).format(Number(project.ivo_index ?? project.valuation ?? 100))}
                     </span>
+                    {/* Indicador de índice parcial */}
+                    {(!project.ivo_o || project.ivo_o === 5) && (!project.ivo_m || project.ivo_m === 5) && (
+                      <span className="text-xs text-amber-500 font-normal">~</span>
+                    )}
                   </div>
                 </TooltipTrigger>
-                <TooltipContent>
-                  <p>Valuation</p>
+                <TooltipContent className="max-w-[220px]">
+                  <p className="font-semibold mb-1">IVO Index</p>
+                  <p className="text-xs">O:{(project.ivo_o ?? 5).toFixed(1)} M:{(project.ivo_m ?? 5).toFixed(1)} V:{(project.ivo_v ?? 5).toFixed(1)}</p>
+                  <p className="text-xs">E:{(project.ivo_e ?? 5).toFixed(1)} T:{(project.ivo_t ?? 5).toFixed(1)} D:{(project.ivo_d ?? 1).toFixed(1)}</p>
+                  {(!project.ivo_o || project.ivo_o === 5) && (
+                    <p className="text-xs text-amber-400 mt-1">⚠ Índice parcial — complete mais etapas</p>
+                  )}
                 </TooltipContent>
               </Tooltip>
             )}
 
-            {/* Score Badge com Tooltip */}
+            {/* Score Badge com Tooltip — escala 0-10 */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-yellow-500/10 rounded-full hover:bg-yellow-500/15 transition-colors cursor-pointer">
                   <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
-                  <span className="text-base font-semibold">{Number(project?.score ?? 0).toFixed(1)}</span>
+                  <span className="text-base font-semibold">{(Number(project?.score ?? 0) / 10).toFixed(1)}</span>
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Score calculado com base nas etapas concluídas</p>
+                <p>Score IdeorAI: {(Number(project?.score ?? 0) / 10).toFixed(1)} / 10</p>
               </TooltipContent>
             </Tooltip>
 
