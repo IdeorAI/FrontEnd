@@ -13,6 +13,8 @@ import {
   Calendar,
   X,
   Send,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,6 +23,7 @@ import { MarketplaceFilters } from "@/components/marketplace/marketplace-filters
 import {
   getListings,
   expressInterest,
+  deleteListing,
   type ListingWithOwner,
 } from "@/lib/api/marketplace";
 import { createClient } from "@/lib/supabase/client";
@@ -46,6 +49,8 @@ export default function MarketplacePage() {
   const [selectedListing, setSelectedListing] = useState<ListingWithOwner | null>(null);
   const [contactMessage, setContactMessage] = useState("");
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isDeletingListing, setIsDeletingListing] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -84,6 +89,23 @@ export default function MarketplacePage() {
       toast.error("Não foi possível enviar a mensagem.");
     } finally {
       setIsSendingMessage(false);
+    }
+  };
+
+  const handleDeleteListing = async () => {
+    if (!selectedListing) return;
+    setIsDeletingListing(true);
+    try {
+      await deleteListing(selectedListing.id);
+      setListings((prev) => prev.filter((l) => l.id !== selectedListing.id));
+      toast.success("Anúncio removido com sucesso.");
+      setSelectedListing(null);
+      setConfirmDelete(false);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(`Erro ao remover anúncio: ${msg}`);
+    } finally {
+      setIsDeletingListing(false);
     }
   };
 
@@ -243,6 +265,7 @@ export default function MarketplacePage() {
           if (!open) {
             setSelectedListing(null);
             setContactMessage("");
+            setConfirmDelete(false);
           }
         }}
       >
@@ -354,10 +377,48 @@ export default function MarketplacePage() {
                 )}
 
                 {selectedListing.owner_id === currentUserId && (
-                  <div className="bg-muted/50 rounded-lg p-3 text-center">
-                    <p className="text-sm text-muted-foreground">
+                  <div className="border rounded-lg p-4 space-y-3">
+                    <p className="text-xs text-muted-foreground">
                       Este é o seu anúncio.
                     </p>
+                    {!confirmDelete ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                        onClick={() => setConfirmDelete(true)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Remover anúncio
+                      </Button>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-sm flex items-center gap-2 text-destructive font-medium">
+                          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                          Tem certeza? Esta ação não pode ser desfeita.
+                        </p>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="gap-2"
+                            onClick={handleDeleteListing}
+                            disabled={isDeletingListing}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            {isDeletingListing ? "Removendo..." : "Confirmar remoção"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setConfirmDelete(false)}
+                            disabled={isDeletingListing}
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
