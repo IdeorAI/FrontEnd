@@ -137,17 +137,20 @@ export default async function Page(props: PageProps) {
     return Math.min(pts, 100);
   }
 
-  // Atualizar scores stale no DB em background (server-side, sem loop)
+  // Recalcular scores a partir das tasks e corrigir no DB se necessário
   const projectsList = projects ?? [];
   for (const p of projectsList) {
     const tasks = Array.isArray(p.tasks) ? p.tasks : [];
     const realScore = computeScore(tasks);
-    if (realScore > 0 && Number(p.score ?? 0) !== realScore) {
-      // Fire-and-forget: atualiza o DB para que da próxima vez já venha correto
+    if (realScore !== Number(p.score ?? 0)) {
       supabase.from("projects").update({ score: realScore }).eq("id", p.id).then(() => {});
-      // Sobreescreve localmente para exibir correto agora
       p.score = realScore;
     }
+  }
+
+  // Re-ordenar client-side após recálculo de scores (o DB pode ter valores stale)
+  if (sort === "score_desc") {
+    projectsList.sort((a, b) => Number(b.score ?? 0) - Number(a.score ?? 0));
   }
 
   // Função auxiliar para calcular medalha baseada no progresso
