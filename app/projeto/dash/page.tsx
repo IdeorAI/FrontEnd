@@ -37,6 +37,7 @@ import { toast } from "sonner";
 import { DeleteProjectButton } from "@/components/delete-project-button";
 import { useStageOperations } from "@/hooks/use-stage-operations";
 import { ProjectAnalyticsPanel } from "@/components/projeto/project-analytics-panel";
+import { BenchmarkPanel } from "@/components/projeto/benchmark-panel";
 import { AnunciarModal } from "@/components/marketplace/anunciar-modal";
 
 function DashPageContent() {
@@ -59,7 +60,8 @@ function DashPageContent() {
   } | null>(null);
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
   const [anunciarOpen, setAnunciarOpen] = useState(false);
-  const [stageStatuses, setStageStatuses] = useState<StageStatus[]>([]); // Status dos badges das etapas
+  const [stageStatuses, setStageStatuses] = useState<StageStatus[]>([]);
+  const [peerProjects, setPeerProjects] = useState<{ score: number }[]>([]); // Status dos badges das etapas
   const searchParams = useSearchParams();
   const router = useRouter();
   const projectId = searchParams.get("project_id");
@@ -248,6 +250,21 @@ function DashPageContent() {
 
         if (projectData) {
           setProject(projectData);
+
+          // Benchmark: buscar projetos públicos da mesma categoria (não-bloqueante)
+          if (projectData.category) {
+            supabase
+              .from("projects")
+              .select("score")
+              .eq("category", projectData.category)
+              .eq("is_public", true)
+              .gt("score", 0)
+              .neq("id", projectId)
+              .limit(50)
+              .then(({ data: peers }) => {
+                if (peers) setPeerProjects(peers);
+              });
+          }
         }
 
         // Buscar conteúdo existente das etapas
@@ -820,6 +837,15 @@ function DashPageContent() {
           etapaContent={etapaContent}
           completedStages={completedStages}
           onPublishToMarketplace={() => setAnunciarOpen(true)}
+        />
+      )}
+
+      {/* Benchmark de Categoria */}
+      {project?.category && project?.score !== undefined && (
+        <BenchmarkPanel
+          projectScore={Number(project.score)}
+          projectCategory={project.category}
+          peerProjects={peerProjects}
         />
       )}
 

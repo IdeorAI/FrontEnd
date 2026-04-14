@@ -31,5 +31,5 @@ export async function middleware(request: NextRequest) {
 
 // Rode o middleware só onde precisa sessão
 export const config = {
-  matcher: ["/dashboard/:path*", "/api/:path*"],
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/api/:path*"],
 };
