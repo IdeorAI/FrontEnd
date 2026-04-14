@@ -750,6 +750,24 @@ function DashPageContent() {
               </TooltipContent>
             </Tooltip>
 
+            {/* Publicar no Marketplace */}
+            {completedStages.filter(s => s > 0).length >= 1 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setAnunciarOpen(true)}
+                    className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-sm font-medium transition-colors"
+                  >
+                    <Rocket className="h-4 w-4" />
+                    Publicar
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Publicar projeto no Marketplace</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+
             {/* Notificações */}
             <button className="relative p-3 hover:bg-muted rounded-full transition-colors">
               <Bell className="h-6 w-6" />
@@ -772,6 +790,26 @@ function DashPageContent() {
             </div>
           </div>
         </div>
+
+      {/* Barra de Progresso % */}
+      {(() => {
+        const completedCount = completedStages.filter(s => s > 0).length;
+        const pct = Math.round(completedCount / 5 * 100);
+        return (
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Progresso do projeto</span>
+              <span className="font-medium">{completedCount}/5 etapas · {pct}%</span>
+            </div>
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-500"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Linha de Progressão */}
       <ProjectProgressLine currentStage={currentStage} completedStages={completedStages} />

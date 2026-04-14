@@ -12,7 +12,8 @@ import { useUser } from "@/lib/supabase/use-user";
 import { FirstTimeTooltip } from "@/components/first-time-tooltip";
 import { toast } from "sonner";
 import { StageStatusBadge } from "@/components/stage-status-badge";
-import { AlertCircle, RefreshCw, Sparkles, Edit2, Save, X } from "lucide-react";
+import { AlertCircle, RefreshCw, Sparkles, Edit2, Save, X, ArrowLeft } from "lucide-react";
+import { MvpPromptPanel } from "@/components/projeto/mvp-prompt-panel";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
@@ -103,6 +104,8 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
 
   const [userId, setUserId] = useState<string>("");
   const [projectIdea, setProjectIdea] = useState<string>("");
+  const [projectName, setProjectName] = useState<string>("");
+  const [projectCategory, setProjectCategory] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isRefining, setIsRefining] = useState(false);
@@ -140,7 +143,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         // 1. Buscar descrição do projeto (fase 1) diretamente do Supabase
         const { data: project, error: projectError } = await supabase
           .from("projects")
-          .select("description")
+          .select("description, name, category")
           .eq("id", projectId)
           .eq("owner_id", realUserId)
           .single();
@@ -149,6 +152,8 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
           throw new Error("Projeto não encontrado ou acesso negado.");
         }
         setProjectIdea(project.description || "");
+        setProjectName(project.name || "");
+        setProjectCategory(project.category || null);
 
         // 2. Verificar se já existe task gerada para esta etapa
         const { data: existingTask } = await supabase
@@ -383,6 +388,15 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
 
   return (
     <div className="space-y-6">
+      {/* Botão voltar para o projeto */}
+      <button
+        onClick={() => router.push(`/projeto/dash?project_id=${projectId}`)}
+        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Voltar para o projeto
+      </button>
+
       {/* Badge de status */}
       {currentStageSaved === false && (
         <StageStatusBadge
@@ -527,6 +541,15 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
             </Card>
           )}
         </div>
+      )}
+
+      {/* Painel MVP NoCode — apenas na Etapa 5 */}
+      {currentStageNumber === 5 && (
+        <MvpPromptPanel
+          projectName={projectName}
+          projectCategory={projectCategory}
+          stage5Content={generatedContent ? contentToDisplayText(generatedContent) : null}
+        />
       )}
 
       {/* Navegação entre etapas */}

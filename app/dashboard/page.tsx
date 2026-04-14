@@ -12,8 +12,6 @@ import { RoadmapBar } from "@/components/roadmap-bar";
 import { ProjectCardLink } from "@/components/project-card-link";
 import { CreateProjectButton } from "@/components/create-project-button";
 import { TrendingUp, Star, Award } from "lucide-react";
-import { DeleteProjectButton } from "@/components/delete-project-button";
-import { DeleteButtonWrapper } from "@/components/delete-button-wrapper";
 import {
   Tooltip,
   TooltipContent,
@@ -208,14 +206,6 @@ export default async function Page(props: PageProps) {
           return (
             <ProjectCardLink projectId={p.id} key={p.id}>
               <article className="bg-card border rounded-lg p-5 flex flex-col gap-3 relative group hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer h-[280px]">
-                {/* Botão de excluir - aparece no hover */}
-                <DeleteButtonWrapper>
-                  <DeleteProjectButton
-                    projectId={p.id}
-                    projectName={projectName}
-                    variant="icon"
-                  />
-                </DeleteButtonWrapper>
                 {/* Linha superior com conteúdo e badges */}
                 <div className="flex gap-3 flex-1 min-h-0">
                   {/* Conteúdo principal (lado esquerdo) */}
