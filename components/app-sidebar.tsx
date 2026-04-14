@@ -13,11 +13,13 @@ import {
   Mail,
   Menu,
   X,
+  ShieldCheck,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { createClient } from "@/lib/supabase/client";
 
 interface AppSidebarProps {
   user?: { name: string; email: string };
@@ -27,8 +29,25 @@ export function AppSidebar({ user }: AppSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
+  const [isAdmin, setIsAdmin] = React.useState(false);
 
-  const items = [
+  React.useEffect(() => {
+    (async () => {
+      const supabase = createClient();
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+      const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
+      const res = await fetch(`${API}/api/admin/me`, {
+        headers: { "x-user-id": authUser.id },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setIsAdmin(data.isAdmin === true);
+      }
+    })();
+  }, []);
+
+  const baseItems = [
     { title: "Início", icon: Home, href: "/dashboard" },
     { title: "Novo Projeto", icon: PlusSquare, href: "/idea/create" },
     { title: "Marketplace", icon: Store, href: "/marketplace" },
@@ -38,6 +57,10 @@ export function AppSidebar({ user }: AppSidebarProps) {
     { title: "Planos", icon: CreditCard, href: "/planos" },
     { title: "Contato", icon: Mail, href: "/contato" },
   ];
+
+  const items = isAdmin
+    ? [...baseItems, { title: "Admin · Tokens", icon: ShieldCheck, href: "/admin/tokens" }]
+    : baseItems;
 
   return (
     <>
