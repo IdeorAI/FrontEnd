@@ -94,12 +94,19 @@ export async function generateDocument(
       API_BASE,
     });
 
-    // Se já é um erro tratado, repassar
-    if (error instanceof Error && error.message.includes('API de IA')) {
+    // Se já é um erro tratado (vindo do bloco res.ok acima), repassar sem modificar
+    if (error instanceof Error && (
+      error.message.includes('API de IA') ||
+      error.message.includes('Erro na solicitação') ||
+      error.message.includes('Limite de requisições') ||
+      error.message.includes('Projeto não encontrado') ||
+      error.message.includes('Erro no servidor') ||
+      error.message.includes('Erro ao gerar')
+    )) {
       throw error;
     }
 
-    // Erro de rede/fetch genérico
+    // Erro de rede/fetch genuíno (sem resposta do servidor)
     throw new Error('Problema de conexão com o servidor. Verifique sua internet e tente novamente.');
   }
 }
