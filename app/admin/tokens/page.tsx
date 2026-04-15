@@ -26,20 +26,32 @@ interface ModelStats {
   tokens: number;
 }
 
+interface UserStats {
+  userId: string;
+  calls: number;
+  tokens: number;
+}
+
 interface RecentCall {
   id: string;
+  userId: string;
   taskId: string;
   model: string;
   tokensUsed: number;
+  inputTokens: number;
+  outputTokens: number;
   createdAt: string;
 }
 
 interface TokenStats {
   totalCalls: number;
   totalTokens: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
   avgTokensPerCall: number;
   byDay: DayStats[];
   byModel: ModelStats[];
+  byUser: UserStats[];
   recentCalls: RecentCall[];
 }
 
@@ -209,24 +221,36 @@ export default function AdminTokensPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <SummaryCard
           icon={<Zap className="h-5 w-5 text-primary" />}
-          label="Total de chamadas"
+          label="Chamadas"
           value={fmt(stats?.totalCalls ?? 0)}
           sub={`últimos ${days} dias`}
         />
         <SummaryCard
           icon={<TrendingUp className="h-5 w-5 text-emerald-500" />}
-          label="Tokens consumidos"
+          label="Tokens total"
           value={fmt(stats?.totalTokens ?? 0)}
-          sub="estimativa de uso"
+          sub="input + output"
+        />
+        <SummaryCard
+          icon={<TrendingUp className="h-5 w-5 text-blue-500" />}
+          label="Tokens input"
+          value={fmt(stats?.totalInputTokens ?? 0)}
+          sub="prompts enviados"
+        />
+        <SummaryCard
+          icon={<TrendingUp className="h-5 w-5 text-violet-500" />}
+          label="Tokens output"
+          value={fmt(stats?.totalOutputTokens ?? 0)}
+          sub="respostas geradas"
         />
         <SummaryCard
           icon={<Clock className="h-5 w-5 text-amber-500" />}
-          label="Média por chamada"
+          label="Média/chamada"
           value={fmt(stats?.avgTokensPerCall ?? 0)}
-          sub="tokens/chamada"
+          sub="tokens totais"
         />
       </div>
 
@@ -259,25 +283,46 @@ export default function AdminTokensPage() {
         </div>
       )}
 
-      {/* Por modelo */}
-      {stats && stats.byModel.length > 0 && (
-        <div className="border rounded-lg p-5 space-y-3 bg-card">
-          <h2 className="font-semibold text-sm">Por modelo</h2>
-          <div className="divide-y text-sm">
-            {stats.byModel.map((m) => (
-              <div key={m.model} className="flex items-center justify-between py-2">
-                <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded">
-                  {m.model}
-                </span>
-                <div className="flex gap-6 text-xs text-muted-foreground">
-                  <span>{fmt(m.tokens)} tokens</span>
-                  <span>{m.calls} chamadas</span>
+      {/* Por modelo e Por usuário — lado a lado */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {stats && stats.byModel.length > 0 && (
+          <div className="border rounded-lg p-5 space-y-3 bg-card">
+            <h2 className="font-semibold text-sm">Por modelo</h2>
+            <div className="divide-y text-sm">
+              {stats.byModel.map((m) => (
+                <div key={m.model} className="flex items-center justify-between py-2">
+                  <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded">
+                    {m.model}
+                  </span>
+                  <div className="flex gap-4 text-xs text-muted-foreground">
+                    <span>{fmt(m.tokens)} tokens</span>
+                    <span>{m.calls}x</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {stats && stats.byUser.length > 0 && (
+          <div className="border rounded-lg p-5 space-y-3 bg-card">
+            <h2 className="font-semibold text-sm">Por usuário</h2>
+            <div className="divide-y text-sm">
+              {stats.byUser.map((u) => (
+                <div key={u.userId} className="flex items-center justify-between py-2">
+                  <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded max-w-[140px] truncate" title={u.userId}>
+                    {u.userId === "unknown" ? "sem id" : u.userId.slice(0, 8) + "…"}
+                  </span>
+                  <div className="flex gap-4 text-xs text-muted-foreground">
+                    <span>{fmt(u.tokens)} tokens</span>
+                    <span>{u.calls}x</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Chamadas recentes */}
       {stats && stats.recentCalls.length > 0 && (
@@ -287,26 +332,34 @@ export default function AdminTokensPage() {
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b text-muted-foreground">
+                  <th className="text-left pb-2 font-medium">Usuário</th>
                   <th className="text-left pb-2 font-medium">Modelo</th>
-                  <th className="text-right pb-2 font-medium">Tokens</th>
+                  <th className="text-right pb-2 font-medium text-blue-500">Input</th>
+                  <th className="text-right pb-2 font-medium text-violet-500">Output</th>
+                  <th className="text-right pb-2 font-medium">Total</th>
                   <th className="text-right pb-2 font-medium">Quando</th>
-                  <th className="text-right pb-2 font-medium">Task ID</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {stats.recentCalls.map((c) => (
                   <tr key={c.id} className="hover:bg-muted/40 transition-colors">
+                    <td className="py-2 font-mono text-muted-foreground text-[10px]" title={c.userId}>
+                      {c.userId === "unknown" ? "—" : c.userId.slice(0, 8) + "…"}
+                    </td>
                     <td className="py-2">
                       <span className="font-mono bg-muted px-1.5 py-0.5 rounded text-[11px]">
                         {c.model}
                       </span>
                     </td>
-                    <td className="py-2 text-right font-medium">{fmt(c.tokensUsed)}</td>
-                    <td className="py-2 text-right text-muted-foreground">
-                      {relativeDate(c.createdAt)}
+                    <td className="py-2 text-right text-blue-600 text-xs">
+                      {c.inputTokens > 0 ? fmt(c.inputTokens) : "—"}
                     </td>
-                    <td className="py-2 text-right font-mono text-muted-foreground text-[10px]">
-                      {c.taskId.slice(0, 8)}…
+                    <td className="py-2 text-right text-violet-600 text-xs">
+                      {c.outputTokens > 0 ? fmt(c.outputTokens) : "—"}
+                    </td>
+                    <td className="py-2 text-right font-medium text-xs">{fmt(c.tokensUsed)}</td>
+                    <td className="py-2 text-right text-muted-foreground text-xs">
+                      {relativeDate(c.createdAt)}
                     </td>
                   </tr>
                 ))}
