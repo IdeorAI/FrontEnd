@@ -31,7 +31,18 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  Area,
+  AreaChart,
+} from "recharts";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { DeleteProjectButton } from "@/components/delete-project-button";
@@ -61,7 +72,8 @@ function DashPageContent() {
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
   const [anunciarOpen, setAnunciarOpen] = useState(false);
   const [stageStatuses, setStageStatuses] = useState<StageStatus[]>([]);
-  const [peerProjects, setPeerProjects] = useState<{ score: number }[]>([]); // Status dos badges das etapas
+  const [peerProjects, setPeerProjects] = useState<{ score: number }[]>([]);
+  const [ivoHistory, setIvoHistory] = useState<{ date: string; value: number; label: string }[]>([]);
   const searchParams = useSearchParams();
   const router = useRouter();
   const projectId = searchParams.get("project_id");
@@ -315,6 +327,27 @@ function DashPageContent() {
             }
           }
         }
+
+        // Buscar histórico IVO para o gráfico de evolução
+        supabase
+          .from("ivo_history")
+          .select("recorded_at, ivo_index")
+          .eq("project_id", projectId)
+          .order("recorded_at", { ascending: true })
+          .limit(30)
+          .then(({ data: histData }) => {
+            if (histData && histData.length > 0) {
+              const formatted = histData.map((row: { recorded_at: string; ivo_index: number }) => {
+                const d = new Date(row.recorded_at);
+                return {
+                  date: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+                  label: d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }),
+                  value: Math.round(row.ivo_index),
+                };
+              });
+              setIvoHistory(formatted);
+            }
+          });
       }
     };
 
@@ -411,39 +444,154 @@ function DashPageContent() {
       ),
     },
     {
-      id: "valuation",
+      id: "ivo-evolution",
       icon: TrendingUp,
-      title: "Valuation",
-      description: "Valor estimado do seu projeto",
+      title: "IVO Index",
+      description: "Evolução do valor do seu projeto",
       preview: project ? (
-        <div className="mt-3">
-          <div className="text-2xl font-bold text-primary">
+        <div className="mt-2 space-y-1">
+          <div className="text-xl font-bold text-primary">
             {new Intl.NumberFormat("pt-BR", {
               style: "currency",
               currency: "BRL",
               maximumFractionDigits: 0,
-            }).format(Number(project.valuation || 0))}
+            }).format(Number(project.ivo_index ?? project.valuation ?? 100))}
           </div>
+          {ivoHistory.length > 1 && (
+            <div className="h-10 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={ivoHistory} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="ivoGradientMini" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={1.5} fill="url(#ivoGradientMini)" dot={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       ) : null,
-      dialogTitle: "Valuation do Projeto",
+      dialogTitle: "Evolução do IVO Index",
       dialogContent: (
-        <div className="space-y-4">
-          <div className="p-6 border rounded-lg bg-gradient-to-br from-primary/10 to-primary/5">
-            <div className="text-sm text-muted-foreground mb-2">Valor Estimado Atual</div>
-            <div className="text-4xl font-bold text-primary">
-              {project
-                ? new Intl.NumberFormat("pt-BR", {
+        <div className="space-y-5">
+          {/* Header com valor atual */}
+          <div className="p-5 rounded-xl bg-gradient-to-br from-primary/15 via-primary/8 to-transparent border border-primary/20">
+            <div className="flex items-end justify-between">
+              <div>
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">IVO Index Atual</div>
+                <div className="text-4xl font-bold text-primary">
+                  {new Intl.NumberFormat("pt-BR", {
                     style: "currency",
                     currency: "BRL",
                     maximumFractionDigits: 0,
-                  }).format(Number(project.valuation || 0))
-                : "R$ 0"}
+                  }).format(Number(project?.ivo_index ?? project?.valuation ?? 100))}
+                </div>
+              </div>
+              {ivoHistory.length >= 2 && (() => {
+                const first = ivoHistory[0].value;
+                const last = ivoHistory[ivoHistory.length - 1].value;
+                const pct = first > 0 ? ((last - first) / first) * 100 : 0;
+                return (
+                  <div className={`text-right ${pct >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                    <div className="text-2xl font-bold">{pct >= 0 ? "+" : ""}{pct.toFixed(0)}%</div>
+                    <div className="text-xs text-muted-foreground">desde o início</div>
+                  </div>
+                );
+              })()}
             </div>
+            {/* Breakdown variáveis */}
+            {project && (
+              <div className="mt-3 pt-3 border-t border-primary/10 grid grid-cols-6 gap-2 text-center">
+                {[
+                  { label: "O", val: project.ivo_o, tip: "Originalidade" },
+                  { label: "M", val: project.ivo_m, tip: "Mercado" },
+                  { label: "V", val: project.ivo_v, tip: "Validação" },
+                  { label: "E", val: project.ivo_e, tip: "Execução" },
+                  { label: "T", val: project.ivo_t, tip: "Timing" },
+                  { label: "D", val: project.ivo_d, tip: "Documentação" },
+                ].map(({ label, val, tip }) => (
+                  <div key={label} title={tip}>
+                    <div className="text-[10px] text-muted-foreground">{label}</div>
+                    <div className="text-sm font-semibold text-foreground">{(val ?? 5).toFixed(1)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          <p className="text-sm text-muted-foreground">
-            O valuation é calculado com base nas etapas concluídas e na qualidade das
-            informações fornecidas. Complete mais etapas para aumentar o valor do seu projeto.
+
+          {/* Gráfico de evolução */}
+          {ivoHistory.length > 1 ? (
+            <div>
+              <div className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                Evolução ao longo do tempo
+              </div>
+              <div className="h-52">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={ivoHistory} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="ivoGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.25} />
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis
+                      tickFormatter={(v) =>
+                        v >= 1000000 ? `R$${(v / 1000000).toFixed(1)}M` :
+                        v >= 1000 ? `R$${(v / 1000).toFixed(0)}k` : `R$${v}`
+                      }
+                      tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                      tickLine={false}
+                      axisLine={false}
+                      width={56}
+                    />
+                    <RechartsTooltip
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload?.length) return null;
+                        return (
+                          <div className="bg-popover border rounded-lg p-2 shadow-md text-xs">
+                            <div className="text-muted-foreground mb-1">{payload[0]?.payload?.label ?? label}</div>
+                            <div className="font-bold text-primary">
+                              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(Number(payload[0].value))}
+                            </div>
+                          </div>
+                        );
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="value"
+                      stroke="hsl(var(--primary))"
+                      strokeWidth={2}
+                      fill="url(#ivoGradient)"
+                      dot={{ r: 3, fill: "hsl(var(--primary))", strokeWidth: 0 }}
+                      activeDot={{ r: 5 }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
+              <TrendingUp className="h-10 w-10 mb-3 opacity-30" />
+              <p className="text-sm font-medium">Histórico ainda não disponível</p>
+              <p className="text-xs mt-1">Complete etapas para ver a evolução do seu IVO Index aqui.</p>
+            </div>
+          )}
+
+          <p className="text-xs text-muted-foreground">
+            O IVO Index combina originalidade, potencial de mercado, validação da dor, execução, timing e qualidade de documentação.
+            Complete mais etapas para refinar o índice.
           </p>
         </div>
       ),
