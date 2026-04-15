@@ -31,10 +31,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useState, useEffect, Suspense, useCallback } from "react";
+import { useState, useEffect, Suspense } from "react";
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
