@@ -18,55 +18,43 @@ export default function IdeaCreatePage() {
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // cria rascunho se não existir project_id
+  // Restaurar project_id da URL se já existir (navegação de volta)
   useEffect(() => {
     const existingPid = sp.get("project_id");
+    if (existingPid) setPid(existingPid);
+  }, [sp]);
 
-    // Se já tem project_id na URL, usa ele
-    if (existingPid) {
-      setPid(existingPid);
-      return;
-    }
-
-    // Se ainda está carregando user ou não tem user, retorna
-    if (loading || !user) return;
-
-    // Se não tem pid e tem user, cria projeto
-    if (!pid && !isCreatingProject) {
-      setIsCreatingProject(true);
-      setError(null);
-      (async () => {
-        try {
-          log.debug("Client: Chamando Server Action para criar projeto");
-          const result = await createDraftProject();
-
-          if (result.error) {
-            log.error("Client: Erro retornado:", result.error);
-            setError(result.error);
-            return;
-          }
-
-          if (result.projectId) {
-            log.debug("Client: Projeto criado:", result.projectId);
-            setPid(result.projectId);
-            router.replace(`/idea/create?project_id=${result.projectId}`);
-          }
-        } catch (error) {
-          log.error("Client: Erro ao criar projeto:", error);
-          setError("Erro inesperado ao criar projeto");
-        } finally {
-          setIsCreatingProject(false);
-        }
+  // Cria o projeto apenas quando o usuário escolhe uma opção
+  const createAndNavigate = async (destination: "self" | "assisted") => {
+    if (isCreatingProject) return;
+    setIsCreatingProject(true);
+    setError(null);
+    try {
+      const targetPid = pid ?? await (async () => {
+        log.debug("Client: Chamando Server Action para criar projeto");
+        const result = await createDraftProject();
+        if (result.error) throw new Error(result.error);
+        log.debug("Client: Projeto criado:", result.projectId);
+        setPid(result.projectId!);
+        return result.projectId!;
       })();
+
+      const path = destination === "self"
+        ? `/idea/questions-self?project_id=${targetPid}`
+        : `/idea/questions-assisted?project_id=${targetPid}`;
+      router.push(path);
+    } catch (error) {
+      log.error("Client: Erro ao criar projeto:", error);
+      setError(error instanceof Error ? error.message : "Erro inesperado ao criar projeto");
+    } finally {
+      setIsCreatingProject(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, loading, sp]);
+  };
 
-  const goToDescribe = () =>
-    pid && router.push(`/idea/questions-self?project_id=${pid}`);
-  const goToIdeor = () => pid && router.push(`/idea/questions-assisted?project_id=${pid}`);
+  const goToDescribe = () => createAndNavigate("self");
+  const goToIdeor = () => createAndNavigate("assisted");
 
-  const isDisabled = loading || isCreatingProject || !pid;
+  const isDisabled = loading || isCreatingProject || !user;
 
   // Mostrar RocketLoading quando estiver criando projeto
   if (isCreatingProject) {
