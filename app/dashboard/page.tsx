@@ -205,65 +205,54 @@ export default async function Page(props: PageProps) {
 
           return (
             <ProjectCardLink projectId={p.id} key={p.id}>
-              <article className="bg-card border rounded-lg p-5 flex flex-col gap-3 relative group hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer h-[280px]">
-                {/* Linha superior com conteúdo e badges */}
-                <div className="flex gap-3 flex-1 min-h-0">
-                  {/* Conteúdo principal (lado esquerdo) */}
-                  <div className="flex-1 flex flex-col gap-3 min-w-0">
-                    <header className="flex-1">
-                      <div className="overflow-hidden">
-                        <h3 className="font-semibold text-lg truncate">{projectName}</h3>
-                        {p.category && (
-                          <div className="text-xs text-primary mt-1 mb-2">
-                            {
-                              (
-                                categories.find((c) => c.value === p.category) || {
-                                  label: p.category,
-                                }
-                              ).label
-                            }
-                          </div>
-                        )}
-                        {p.description ? (
-                          <p className="text-sm text-muted-foreground line-clamp-3 mt-2">
-                            {p.description}
-                          </p>
-                        ) : (
-                          <p className="text-sm text-muted-foreground italic mt-2">
-                            Sem descrição
-                          </p>
-                        )}
-                      </div>
-                    </header>
-                  </div>
+              <article className="bg-card border rounded-xl p-5 flex flex-col gap-3 relative group hover:shadow-md transition-shadow duration-200 cursor-pointer overflow-hidden">
+                {/* Barra de acento superior */}
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary/60" />
 
-                {/* Badges laterais (lado direito) */}
-                <div className="flex flex-col gap-3 items-end justify-start py-1 w-[100px]">
-                  {/* IVO Index Badge */}
+                {/* Header: nome + bloco IVO */}
+                <div className="flex items-start justify-between gap-3 pt-1">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-base leading-snug truncate">{projectName}</h3>
+                    {p.category && (
+                      <span className="inline-block text-xs text-primary/80 bg-primary/10 px-2 py-0.5 rounded-full mt-1.5">
+                        {(categories.find((c) => c.value === p.category) || { label: p.category }).label}
+                      </span>
+                    )}
+                  </div>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="w-full px-3 py-2 bg-primary/10 rounded-full hover:bg-primary/15 transition-colors cursor-pointer flex items-center gap-2 justify-center">
-                        <TrendingUp className="h-4 w-4 text-primary" />
-                        <span className="text-xs font-bold text-white">
-                          {new Intl.NumberFormat("pt-BR", {
-                            style: "currency",
-                            currency: "BRL",
-                            maximumFractionDigits: 0,
-                          }).format(Number((p as { ivo_index?: number }).ivo_index ?? p.valuation ?? 100))}
+                      <div className="flex flex-col items-center bg-primary/10 rounded-lg px-3 py-2 min-w-[60px] shrink-0">
+                        <TrendingUp className="h-3.5 w-3.5 text-primary mb-0.5" />
+                        <span className="text-sm font-bold text-primary leading-tight">
+                          {Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 }).format(
+                            Number((p as { ivo_index?: number }).ivo_index ?? 0)
+                          )}
                         </span>
+                        <span className="text-[10px] text-muted-foreground">IVO</span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>IVO Index</p>
                     </TooltipContent>
                   </Tooltip>
+                </div>
 
-                  {/* Score Badge — escala 0-10 */}
+                {/* Descrição */}
+                <div className="flex-1 min-h-[40px]">
+                  {p.description ? (
+                    <p className="text-sm text-muted-foreground line-clamp-2">{p.description}</p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">Sem descrição</p>
+                  )}
+                </div>
+
+                {/* Score + Badge + Data */}
+                <div className="flex items-center gap-2 flex-wrap">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="w-full px-3 py-2 bg-yellow-500/10 rounded-full hover:bg-yellow-500/15 transition-colors cursor-pointer flex items-center gap-2 justify-center">
-                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                        <span className="text-xs font-bold text-white">
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 bg-yellow-500/10 rounded-full">
+                        <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                        <span className="text-xs font-semibold text-yellow-600 dark:text-yellow-400">
                           {(Number(p.score) / 10).toFixed(1)}
                         </span>
                       </div>
@@ -272,41 +261,30 @@ export default async function Page(props: PageProps) {
                       <p>Score IdeorAI: {(Number(p.score) / 10).toFixed(1)} / 10</p>
                     </TooltipContent>
                   </Tooltip>
-
-                  {/* Badge Badge */}
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className={`w-full px-3 py-2 rounded-full transition-colors cursor-pointer flex items-center gap-2 justify-center ${
-                        medalha.color === 'text-gray-500'
-                          ? 'bg-gray-500/10 hover:bg-gray-500/15'
-                          : medalha.color === 'text-blue-500'
-                          ? 'bg-blue-500/10 hover:bg-blue-500/15'
-                          : medalha.color === 'text-purple-500'
-                          ? 'bg-purple-500/10 hover:bg-purple-500/15'
-                          : medalha.color === 'text-orange-500'
-                          ? 'bg-orange-500/10 hover:bg-orange-500/15'
-                          : 'bg-green-500/10 hover:bg-green-500/15'
+                      <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
+                        medalha.color === 'text-gray-500' ? 'bg-gray-500/10' :
+                        medalha.color === 'text-blue-500' ? 'bg-blue-500/10' :
+                        medalha.color === 'text-purple-500' ? 'bg-purple-500/10' :
+                        medalha.color === 'text-orange-500' ? 'bg-orange-500/10' :
+                        'bg-green-500/10'
                       }`}>
-                        <Award className={`h-4 w-4 ${medalha.color}`} />
-                        <span className={`text-xs font-bold ${medalha.color}`}>
-                          {medalha.nome}
-                        </span>
+                        <Award className={`h-3 w-3 ${medalha.color}`} />
+                        <span className={`text-xs font-semibold ${medalha.color}`}>{medalha.nome}</span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Badge</p>
+                      <p>Badge de Progresso</p>
                     </TooltipContent>
                   </Tooltip>
+                  <time className="ml-auto text-xs text-muted-foreground">
+                    {new Date(p.updated_at).toLocaleDateString('pt-BR')}
+                  </time>
                 </div>
-              </div>
 
-              {/* Barra de roadmap e footer (ocupam toda a largura) */}
-              <div className="space-y-2">
-                <RoadmapBar completed={completedTasks} total={7} />
-                <footer className="text-xs text-muted-foreground text-right">
-                  Atualizado: {new Date(p.updated_at).toLocaleDateString("pt-BR")}
-                </footer>
-              </div>
+                {/* Barra de progresso */}
+                <RoadmapBar completed={completedTasks} total={5} />
               </article>
             </ProjectCardLink>
           );
