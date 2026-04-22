@@ -6,6 +6,8 @@ import { StageForm, FormField } from "@/components/stage-form";
 import { StageContextPanel } from "@/components/StageContextPanel";
 import { regenerateDocument, refineDocument, generateDocument } from "@/lib/api/documents";
 import { getStageSummaries, StageSummary } from "@/lib/api/stage-summaries";
+import { getGoPivot, GoPivotResponse } from "@/lib/api/go-pivot";
+import { GoPivotGate } from "@/app/projeto/[id]/components/go-pivot-gate";
 import { RocketLoading } from "@/components/rocket-loading";
 import { STAGE_CONFIGS } from "@/lib/stage-configs";
 import { useUser } from "@/lib/supabase/use-user";
@@ -117,6 +119,10 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
   const [stageSummaries, setStageSummaries] = useState<StageSummary[]>([]);
   const [currentStageSaved, setCurrentStageSaved] = useState<boolean | null>(null);
   const [previousStageSummary, setPreviousStageSummary] = useState<string | null>(null);
+
+  // GO/PIVOT gate
+  const [showGoPivotGate, setShowGoPivotGate] = useState(false);
+  const [goPivotCached, setGoPivotCached] = useState<GoPivotResponse | null>(null);
 
   // Estado para edição inline do conteúdo gerado
   const [isEditing, setIsEditing] = useState(false);
@@ -569,9 +575,16 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
           )}
           {getNextEtapa() && (
             <button
-              onClick={() =>
-                router.push(`/projeto/${projectId}/fase2/${getNextEtapa()}`)
-              }
+              onClick={async () => {
+                if (currentStageNumber === 2) {
+                  // Carregar avaliação em cache antes de abrir o gate
+                  const cached = await getGoPivot(projectId, userId).catch(() => null);
+                  setGoPivotCached(cached);
+                  setShowGoPivotGate(true);
+                } else {
+                  router.push(`/projeto/${projectId}/fase2/${getNextEtapa()}`);
+                }
+              }}
               className="ml-auto px-6 py-3 bg-[#8c7dff] hover:bg-[#7a6de6] text-white rounded-lg font-medium transition-colors"
             >
               Próxima Etapa →
@@ -586,6 +599,18 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
             </button>
           )}
         </div>
+      )}
+      {showGoPivotGate && (
+        <GoPivotGate
+          projectId={projectId}
+          userId={userId}
+          cached={goPivotCached}
+          onGo={() => {
+            setShowGoPivotGate(false);
+            router.push(`/projeto/${projectId}/fase2/etapa3`);
+          }}
+          onCancel={() => setShowGoPivotGate(false)}
+        />
       )}
     </div>
   );
