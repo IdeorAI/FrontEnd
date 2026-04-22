@@ -224,7 +224,7 @@ export default async function Page(props: PageProps) {
                       <div className="flex flex-col items-center bg-primary/10 rounded-lg px-3 py-2 min-w-[60px] shrink-0">
                         <TrendingUp className="h-3.5 w-3.5 text-primary mb-0.5" />
                         <span className="text-sm font-bold text-primary leading-tight">
-                          {Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 }).format(
+                          {Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact', maximumFractionDigits: 1 }).format(
                             Number((p as { ivo_index?: number }).ivo_index ?? 0)
                           )}
                         </span>
