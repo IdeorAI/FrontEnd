@@ -48,9 +48,10 @@ import { useStageOperations } from "@/hooks/use-stage-operations";
 import { ProjectAnalyticsPanel } from "@/components/projeto/project-analytics-panel";
 import { BenchmarkPanel } from "@/components/projeto/benchmark-panel";
 import { AnunciarModal } from "@/components/marketplace/anunciar-modal";
+import { GoPivotCard } from "@/app/projeto/[id]/components/go-pivot-gate";
 
 function DashPageContent() {
-  const [user, setUser] = useState<{ email?: string; user_metadata?: Record<string, unknown> } | null>(null);
+  const [user, setUser] = useState<{ id?: string; email?: string; user_metadata?: Record<string, unknown> } | null>(null);
   const [project, setProject] = useState<{
     name?: string;
     valuation?: number;
@@ -992,6 +993,15 @@ function DashPageContent() {
           projectScore={Number(project.score)}
           projectCategory={project.category}
           peerProjects={peerProjects}
+        />
+      )}
+
+      {/* GO or PIVOT — Avaliação de VC */}
+      {projectId && user?.id && (
+        <GoPivotCard
+          projectId={projectId}
+          userId={user.id}
+          etapa2Complete={completedStages.includes(2)}
         />
       )}
 

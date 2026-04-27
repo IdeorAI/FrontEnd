@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   ShieldCheck,
+  Bell,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const [isAdmin, setIsAdmin] = React.useState(false);
+  const [pendingInvites, setPendingInvites] = React.useState(0);
 
   React.useEffect(() => {
     (async () => {
@@ -37,6 +39,8 @@ export function AppSidebar({ user }: AppSidebarProps) {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) return;
       const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
+
+      // Admin check
       const res = await fetch(`${API}/api/admin/me`, {
         headers: { "x-user-id": authUser.id },
       });
@@ -44,12 +48,24 @@ export function AppSidebar({ user }: AppSidebarProps) {
         const data = await res.json();
         setIsAdmin(data.isAdmin === true);
       }
+
+      // Pending invites count
+      try {
+        const invRes = await fetch(`${API}/api/projects/invites/pending`, {
+          headers: { "x-user-id": authUser.id },
+        });
+        if (invRes.ok) {
+          const invites = await invRes.json();
+          setPendingInvites(Array.isArray(invites) ? invites.length : 0);
+        }
+      } catch { /* silencioso */ }
     })();
   }, []);
 
   const baseItems = [
     { title: "Início", icon: Home, href: "/dashboard" },
     { title: "Novo Projeto", icon: PlusSquare, href: "/idea/create" },
+    { title: "Convites", icon: Bell, href: "/convites", badge: pendingInvites },
     { title: "Marketplace", icon: Store, href: "/marketplace" },
     { title: "Ranking", icon: Trophy, href: "/ranking" },
     { title: "Configurações", icon: Settings, href: "/configuracoes" },
@@ -59,7 +75,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
   ];
 
   const items = isAdmin
-    ? [...baseItems, { title: "Admin · Tokens", icon: ShieldCheck, href: "/admin/tokens" }]
+    ? [...baseItems, { title: "Admin · Tokens", icon: ShieldCheck, href: "/admin/tokens", badge: 0 }]
     : baseItems;
 
   return (
@@ -129,6 +145,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
         <nav className="flex-1 overflow-auto py-4 px-3 space-y-1">
           {items.map((item) => {
             const active = pathname === item.href;
+            const badge = (item as { badge?: number }).badge ?? 0;
             return (
               <button
                 key={item.href}
@@ -144,7 +161,12 @@ export function AppSidebar({ user }: AppSidebarProps) {
                 )}
               >
                 <item.icon className="h-5 w-5" />
-                <span>{item.title}</span>
+                <span className="flex-1 text-left">{item.title}</span>
+                {badge > 0 && (
+                  <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">
+                    {badge > 99 ? "99+" : badge}
+                  </span>
+                )}
               </button>
             );
           })}

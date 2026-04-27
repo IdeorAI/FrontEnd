@@ -11,7 +11,7 @@ import categories from "@/lib/data/categories.json";
 import { RoadmapBar } from "@/components/roadmap-bar";
 import { ProjectCardLink } from "@/components/project-card-link";
 import { CreateProjectButton } from "@/components/create-project-button";
-import { TrendingUp, Star, Award } from "lucide-react";
+import { TrendingUp, Star, Award, Users } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -151,6 +151,26 @@ export default async function Page(props: PageProps) {
     projectsList.sort((a, b) => Number(b.score ?? 0) - Number(a.score ?? 0));
   }
 
+  // ── Projetos compartilhados comigo ────────────────────────────────────────
+  const { data: rawMemberships } = await supabase
+    .from("project_members")
+    .select(`role, project:project_id (id, name, description, score, valuation, ivo_index, updated_at, created_at, category, current_phase, tasks(id, phase, status, content))`)
+    .eq("user_id", user.id)
+    .eq("status", "accepted");
+
+  type SharedEntry = {
+    role: string;
+    project: {
+      id: string; name: string; description?: string; score?: number;
+      valuation?: number; ivo_index?: number; updated_at: string;
+      created_at: string; category?: string; current_phase?: string;
+      tasks?: { status?: string; content?: string | null }[];
+    };
+  };
+  const sharedProjects: SharedEntry[] = ((rawMemberships ?? []) as unknown as { role: string; project: SharedEntry["project"] | null }[])
+    .filter((m) => m.project != null)
+    .map((m) => ({ role: m.role, project: m.project! }));
+
   // Função auxiliar para calcular medalha baseada no progresso
   const getMedalha = (tasksCount: number) => {
     if (tasksCount === 0) return { nome: "Iniciante", color: "text-gray-500" };
@@ -177,7 +197,7 @@ export default async function Page(props: PageProps) {
 
       {/* HEADER de filtros/busca/ordenação */}
       <div className="space-y-2">
-        <h2 className="text-lg font-semibold text-[#8c7dff]">Minhas Startups</h2>
+        <h2 className="text-lg font-semibold text-[#8c7dff]">Meus Projetos</h2>
         <DashboardFilters />
       </div>
 
@@ -206,8 +226,8 @@ export default async function Page(props: PageProps) {
           return (
             <ProjectCardLink projectId={p.id} key={p.id}>
               <article className="bg-card border rounded-xl p-5 flex flex-col gap-3 relative group hover:shadow-md transition-shadow duration-200 cursor-pointer overflow-hidden">
-                {/* Barra de acento superior */}
-                <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary/60" />
+                {/* Barra de acento inferior */}
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary/60" />
 
                 {/* Header: nome + bloco IVO */}
                 <div className="flex items-start justify-between gap-3 pt-1">
@@ -301,6 +321,117 @@ export default async function Page(props: PageProps) {
         )}
       </div>
       </TooltipProvider>
+
+      {/* ── Compartilhados comigo ──────────────────────────────────────── */}
+      {sharedProjects.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-[#8c7dff]" />
+            <h2 className="text-lg font-semibold text-[#8c7dff]">Compartilhados comigo</h2>
+          </div>
+          <TooltipProvider>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {sharedProjects.map(({ role, project: p }) => {
+              const completedTasks = Array.isArray(p.tasks)
+                ? p.tasks.filter((t) => t.status === "evaluated").length
+                : 0;
+              const projectName =
+                p.name && p.name.trim() && !p.name.startsWith("NovoProjeto")
+                  ? p.name
+                  : `Startup${p.id.substring(0, 6)}`;
+              const medalha = getMedalha(completedTasks);
+              const isEditor = role === "editor";
+
+              return (
+                <ProjectCardLink projectId={p.id} key={p.id}>
+                  <article className="bg-card border rounded-xl p-5 flex flex-col gap-3 relative group hover:shadow-md transition-shadow duration-200 cursor-pointer overflow-hidden">
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500/60" />
+
+                    {/* Badge de role */}
+                    <div className="absolute top-3 right-3">
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                        isEditor
+                          ? "bg-blue-500/15 text-blue-500"
+                          : "bg-gray-500/15 text-gray-400"
+                      }`}>
+                        {isEditor ? "Editor" : "Visualizador"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start justify-between gap-3 pt-1 pr-20">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-base leading-snug truncate">{projectName}</h3>
+                        {p.category && (
+                          <span className="inline-block text-xs text-primary/80 bg-primary/10 px-2 py-0.5 rounded-full mt-1.5">
+                            {(categories.find((c) => c.value === p.category) || { label: p.category }).label}
+                          </span>
+                        )}
+                      </div>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex flex-col items-center bg-primary/10 rounded-lg px-3 py-2 min-w-[60px] shrink-0">
+                            <TrendingUp className="h-3.5 w-3.5 text-primary mb-0.5" />
+                            <span className="text-sm font-bold text-primary leading-tight">
+                              {Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", notation: "compact", maximumFractionDigits: 1 }).format(
+                                Number(p.ivo_index ?? 0)
+                              )}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">IVO</span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent><p>IVO Index</p></TooltipContent>
+                      </Tooltip>
+                    </div>
+
+                    <div className="flex-1 min-h-[40px]">
+                      {p.description ? (
+                        <p className="text-sm text-muted-foreground line-clamp-2">{p.description}</p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic">Sem descrição</p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-yellow-500/10 rounded-full">
+                            <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                            <span className="text-xs font-semibold text-yellow-600 dark:text-yellow-400">
+                              {(Number(p.score) / 10).toFixed(1)}
+                            </span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Score IdeorAI: {(Number(p.score) / 10).toFixed(1)} / 10</p></TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
+                            medalha.color === "text-gray-500" ? "bg-gray-500/10" :
+                            medalha.color === "text-blue-500" ? "bg-blue-500/10" :
+                            medalha.color === "text-purple-500" ? "bg-purple-500/10" :
+                            medalha.color === "text-orange-500" ? "bg-orange-500/10" :
+                            "bg-green-500/10"
+                          }`}>
+                            <Award className={`h-3 w-3 ${medalha.color}`} />
+                            <span className={`text-xs font-semibold ${medalha.color}`}>{medalha.nome}</span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Badge de Progresso</p></TooltipContent>
+                      </Tooltip>
+                      <time className="ml-auto text-xs text-muted-foreground">
+                        {new Date(p.updated_at).toLocaleDateString("pt-BR")}
+                      </time>
+                    </div>
+
+                    <RoadmapBar completed={completedTasks} total={5} />
+                  </article>
+                </ProjectCardLink>
+              );
+            })}
+          </div>
+          </TooltipProvider>
+        </div>
+      )}
 
     </div>
   );
