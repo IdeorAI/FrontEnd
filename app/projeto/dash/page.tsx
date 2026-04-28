@@ -5,7 +5,6 @@ import { LogoutButton } from "@/components/logout-button";
 import { TeamAvatars } from "@/components/team-avatars";
 import { CardDialog } from "@/components/card-dialog";
 import { AIStageCard } from "@/components/ai-stage-card";
-import { ProjectProgressLine } from "@/components/project-progress-line";
 import { StageBadge } from "@/components/StageBadge";
 import { calculateStageStatus, StageStatus, getStageSummaries } from "@/lib/api/stage-summaries";
 import { log } from "@/lib/logger";
@@ -32,15 +31,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useState, useEffect, Suspense } from "react";
-import {
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-  Area,
-  AreaChart,
-} from "recharts";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { DeleteProjectButton } from "@/components/delete-project-button";
@@ -49,6 +39,22 @@ import { ProjectAnalyticsPanel } from "@/components/projeto/project-analytics-pa
 import { BenchmarkPanel } from "@/components/projeto/benchmark-panel";
 import { AnunciarModal } from "@/components/marketplace/anunciar-modal";
 import { GoPivotCard } from "@/app/projeto/[id]/components/go-pivot-gate";
+import dynamic from "next/dynamic";
+
+const IvoMiniChart = dynamic(
+  () => import("./ivo-chart").then((m) => ({ default: m.IvoMiniChart })),
+  { ssr: false, loading: () => <div className="h-10 w-full bg-muted/30 rounded animate-pulse" /> }
+);
+
+const IvoFullChart = dynamic(
+  () => import("./ivo-chart").then((m) => ({ default: m.IvoFullChart })),
+  { ssr: false, loading: () => <div className="h-52 w-full bg-muted/30 rounded animate-pulse" /> }
+);
+
+const ProjectProgressLine = dynamic(
+  () => import("@/components/project-progress-line").then((m) => ({ default: m.ProjectProgressLine })),
+  { ssr: false, loading: () => <div className="h-16 w-full bg-muted/30 rounded-xl animate-pulse" /> }
+);
 
 function DashPageContent() {
   const [user, setUser] = useState<{ id?: string; email?: string; user_metadata?: Record<string, unknown> } | null>(null);
@@ -456,21 +462,7 @@ function DashPageContent() {
               maximumFractionDigits: 0,
             }).format(Number(project.ivo_index ?? project.valuation ?? 100))}
           </div>
-          {ivoHistory.length > 1 && (
-            <div className="h-10 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={ivoHistory} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="ivoGradientMini" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={1.5} fill="url(#ivoGradientMini)" dot={false} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          )}
+          <IvoMiniChart data={ivoHistory} />
         </div>
       ) : null,
       dialogTitle: "Evolução do IVO Index",
@@ -528,57 +520,7 @@ function DashPageContent() {
                 <TrendingUp className="h-4 w-4 text-primary" />
                 Evolução ao longo do tempo
               </div>
-              <div className="h-52">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={ivoHistory} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="ivoGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                    <XAxis
-                      dataKey="date"
-                      tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis
-                      tickFormatter={(v) =>
-                        v >= 1000000 ? `R$${(v / 1000000).toFixed(1)}M` :
-                        v >= 1000 ? `R$${(v / 1000).toFixed(0)}k` : `R$${v}`
-                      }
-                      tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                      tickLine={false}
-                      axisLine={false}
-                      width={56}
-                    />
-                    <RechartsTooltip
-                      content={({ active, payload, label }) => {
-                        if (!active || !payload?.length) return null;
-                        return (
-                          <div className="bg-popover border rounded-lg p-2 shadow-md text-xs">
-                            <div className="text-muted-foreground mb-1">{payload[0]?.payload?.label ?? label}</div>
-                            <div className="font-bold text-primary">
-                              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(Number(payload[0].value))}
-                            </div>
-                          </div>
-                        );
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth={2}
-                      fill="url(#ivoGradient)"
-                      dot={{ r: 3, fill: "hsl(var(--primary))", strokeWidth: 0 }}
-                      activeDot={{ r: 5 }}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+              <IvoFullChart data={ivoHistory} />
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">

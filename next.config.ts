@@ -7,7 +7,6 @@ const nextConfig: NextConfig = {
   // output: 'export',
 
   images: {
-    unoptimized: true, // Necessário para export estático
     remotePatterns: [
       {
         protocol: "https",
