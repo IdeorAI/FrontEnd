@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GoPivotResponse, triggerGoPivot, confirmOverride } from '@/lib/api/go-pivot';
 import { Lock, Shield, Loader2, AlertTriangle, CheckCircle2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,14 @@ export function GoPivotCard({ projectId, userId, etapa2Complete, initial }: Prop
     !etapa2Complete ? 'disabled' : initial ? 'result' : 'idle'
   );
   const [result, setResult] = useState<GoPivotResponse | null>(initial ?? null);
+
+  // Reage a mudanças no prop — o useState initializer só roda no mount
+  useEffect(() => {
+    if (etapa2Complete && cardState === 'disabled') {
+      setCardState(initial ? 'result' : 'idle');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [etapa2Complete]);
   const [error, setError] = useState<string | null>(null);
   const [showOverrideDialog, setShowOverrideDialog] = useState(false);
   const [overriding, setOverriding] = useState(false);

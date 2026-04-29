@@ -140,12 +140,25 @@ function DashPageContent() {
         const { data: { user: currentUser } } = await supabase.auth.getUser();
         
         if (currentUser?.id) {
-          const summaries = await getStageSummaries(projectId, currentUser.id);
-          const completed = summaries.map(s => s.stageNumber);
-          setCompletedStages([0, ...completed]); // 0 = Início
-          
+          const summaries = await getStageSummaries(projectId, currentUser.id).catch(() => []);
+          const completedFromSummaries = summaries.map((s: { stageNumber: number }) => s.stageNumber);
+
+          // Fallback: também verificar tasks diretamente (independe de NEXT_PUBLIC_API_URL)
+          const { data: tasks } = await supabase
+            .from('tasks')
+            .select('phase, status')
+            .eq('project_id', projectId)
+            .eq('status', 'evaluated');
+
+          const completedFromTasks = (tasks ?? [])
+            .map((t: { phase: string }) => parseInt(t.phase.replace('etapa', '')))
+            .filter((n: number) => !isNaN(n) && n > 0);
+
+          const allCompleted = [...new Set([...completedFromSummaries, ...completedFromTasks])].sort((a, b) => a - b);
+          setCompletedStages([0, ...allCompleted]); // 0 = Início
+
           // Calcular statuses baseado nos resumos reais
-          const statuses = calculateStageStatus(completed, completed);
+          const statuses = calculateStageStatus(allCompleted, completedFromSummaries);
           setStageStatuses(statuses);
         }
       } catch (error) {

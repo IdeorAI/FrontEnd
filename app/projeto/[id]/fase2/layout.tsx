@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { StageProgressNav } from "@/components/stage-progress-nav";
-import { getProjectTasks } from "@/lib/api/tasks";
 
 // Marcar como dinâmico para Next.js 15+
 export const dynamic = 'force-dynamic';
@@ -27,19 +26,17 @@ export default async function Fase2Layout({
   let currentStage = "etapa1";
 
   try {
-    const tasks = await getProjectTasks(projectId, user.id);
-    completedStages = tasks
-      .filter((t) => t.status === "evaluated")
-      .map((t) => t.phase);
+    // Lê diretamente do Supabase (evita dependência de NEXT_PUBLIC_API_URL)
+    const { data: tasks } = await supabase
+      .from("tasks")
+      .select("phase, status")
+      .eq("project_id", projectId);
 
-    // Determinar etapa atual (primeira não completa, máx 5 etapas)
-    const allStages = [
-      "etapa1",
-      "etapa2",
-      "etapa3",
-      "etapa4",
-      "etapa5",
-    ];
+    completedStages = (tasks ?? [])
+      .filter((t: { phase: string; status: string }) => t.status === "evaluated")
+      .map((t: { phase: string; status: string }) => t.phase);
+
+    const allStages = ["etapa1", "etapa2", "etapa3", "etapa4", "etapa5"];
     currentStage =
       allStages.find((stage) => !completedStages.includes(stage)) || "etapa5";
   } catch (error) {
