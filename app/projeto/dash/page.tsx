@@ -943,7 +943,7 @@ function DashPageContent() {
         <GoPivotCard
           projectId={projectId}
           userId={user.id}
-          etapa2Complete={!!etapaContent['etapa2']}
+          etapa2Complete={completedStages.includes(2)}
         />
       )}
 

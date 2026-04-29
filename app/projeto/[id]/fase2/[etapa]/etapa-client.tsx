@@ -257,6 +257,8 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
       } catch {
         // não-bloqueante
       }
+      // Invalida o layout Server Component para atualizar a barra de progresso
+      router.refresh();
     } catch (error) {
       console.error("[EtapaPage] Erro ao gerar documento:", error);
       toast.error("Falha ao gerar documento", {
@@ -275,6 +277,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
       const response = await regenerateDocument(taskId, {}, userId);
       setGeneratedContent(response.generatedContent);
       toast.success("Documento regenerado com sucesso!");
+      router.refresh();
     } catch (error) {
       console.error("Error regenerating document:", error);
       toast.error("Erro ao regenerar documento. Tente novamente.");
@@ -580,7 +583,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
           )}
           {!getNextEtapa() && (
             <button
-              onClick={() => router.push(`/projeto/${projectId}/dash`)}
+              onClick={() => router.push(`/projeto/dash?project_id=${projectId}`)}
               className="ml-auto px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
             >
               Finalizar Fase Projeto ✓
