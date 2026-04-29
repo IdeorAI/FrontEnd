@@ -80,16 +80,14 @@ export default function AdminTokensPage() {
   const [stats, setStats] = useState<TokenStats | null>(null);
   const [days, setDays] = useState(30);
   const [refreshing, setRefreshing] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const API = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
 
   async function fetchStats(userId: string, daysBack: number) {
-    const from = new Date();
-    from.setDate(from.getDate() - daysBack);
-    const fromStr = from.toISOString().split("T")[0];
-
+    setFetchError(null);
     const res = await fetch(
-      `${API}/api/admin/token-stats?from=${fromStr}`,
+      `${API}/api/admin/token-stats?days=${daysBack}`,
       { headers: { "x-user-id": userId } }
     );
 
@@ -98,7 +96,10 @@ export default function AdminTokensPage() {
       return;
     }
 
-    if (!res.ok) throw new Error("Falha ao buscar estatísticas");
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(`HTTP ${res.status}: ${body.slice(0, 200)}`);
+    }
     const data: TokenStats = await res.json();
     setStats(data);
   }
@@ -121,8 +122,8 @@ export default function AdminTokensPage() {
 
       try {
         await fetchStats(user.id, days);
-      } catch {
-        // stats ficam null — exibe erro inline
+      } catch (e) {
+        setFetchError(e instanceof Error ? e.message : String(e));
       } finally {
         setLoading(false);
       }
@@ -132,19 +133,29 @@ export default function AdminTokensPage() {
 
   async function handleRefresh() {
     setRefreshing(true);
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) await fetchStats(user.id, days);
-    setRefreshing(false);
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) await fetchStats(user.id, days);
+    } catch (e) {
+      setFetchError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setRefreshing(false);
+    }
   }
 
   async function handleDaysChange(d: number) {
     setDays(d);
     setRefreshing(true);
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) await fetchStats(user.id, d);
-    setRefreshing(false);
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) await fetchStats(user.id, d);
+    } catch (e) {
+      setFetchError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setRefreshing(false);
+    }
   }
 
   // ---- Render states ----
@@ -219,6 +230,13 @@ export default function AdminTokensPage() {
           </button>
         </div>
       </div>
+
+      {/* Error banner */}
+      {fetchError && (
+        <div className="border border-destructive/50 bg-destructive/10 rounded-lg p-4 text-sm text-destructive">
+          <strong>Erro ao buscar dados:</strong> {fetchError}
+        </div>
+      )}
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
