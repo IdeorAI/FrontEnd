@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { StageStatusBadge } from "@/components/stage-status-badge";
 import { AlertCircle, RefreshCw, Sparkles, Edit2, Save, X, ArrowLeft } from "lucide-react";
 import { MvpPromptPanel } from "@/components/projeto/mvp-prompt-panel";
+import { LlmLoadingOverlay } from "@/components/ui/llm-loading-overlay";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
@@ -387,7 +388,9 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="relative space-y-6">
+      <LlmLoadingOverlay isVisible={isGenerating || isRegenerating || isRefining} />
+
       {/* Botão voltar para o projeto */}
       <button
         onClick={() => router.push(`/projeto/dash?project_id=${projectId}`)}
