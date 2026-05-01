@@ -16,7 +16,7 @@ export default async function DashboardLayout({
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) redirect("/login")
+  if (!user) redirect("/auth/login")
 
   type UserMetadata = { full_name?: string } & Record<string, unknown>
   const meta = user.user_metadata as UserMetadata
