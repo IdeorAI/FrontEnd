@@ -39,6 +39,7 @@ import { ProjectAnalyticsPanel } from "@/components/projeto/project-analytics-pa
 import { BenchmarkPanel } from "@/components/projeto/benchmark-panel";
 import { AnunciarModal } from "@/components/marketplace/anunciar-modal";
 import { GoPivotCard } from "@/app/projeto/[id]/components/go-pivot-gate";
+import { ProjectHeroBanner } from "@/components/project-hero-banner";
 import dynamic from "next/dynamic";
 
 const IvoMiniChart = dynamic(
@@ -767,6 +768,13 @@ function DashPageContent() {
   return (
     <TooltipProvider>
       <div className="space-y-6">
+        {/* Hero Banner */}
+        {project && (
+          <ProjectHeroBanner
+            projectName={project.name ?? "Projeto"}
+            category={project.category}
+          />
+        )}
         {/* Novo Cabeçalho Superior */}
         <div className="flex items-center justify-between gap-4 pb-4 border-b">
           {/* Título e Subtítulo do Projeto */}
