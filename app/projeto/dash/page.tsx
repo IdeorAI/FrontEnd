@@ -330,18 +330,21 @@ function DashPageContent() {
           const maxCompleted = Math.max(...completed);
           setCurrentStage(maxCompleted < 5 ? maxCompleted + 1 : 5);
 
-          // Auto-recalcular score a partir das tasks locais
+          // Auto-recalcular score (Option A: 30% completion + 20% depth + 50% IVO quality)
           const evaluatedTasks = tasksData.filter((t: { status?: string }) => t.status === 'evaluated');
           if (evaluatedTasks.length > 0) {
-            let pts = evaluatedTasks.length * 15;
-            pts += evaluatedTasks.filter((t: { content?: string | null }) => (t.content?.length ?? 0) >= 100).length * 3;
-            if (evaluatedTasks.length >= 5) pts += 10;
-            const realScore = Math.min(pts, 100);
+            const totalStages = 5;
+            const completionPts = (Math.min(evaluatedTasks.length, totalStages) / totalStages) * 30;
+            const contentTier = (len: number) => len >= 1500 ? 3 : len >= 500 ? 2 : len >= 100 ? 1 : 0;
+            const avgTier = evaluatedTasks.reduce((sum: number, t: { content?: string | null }) => sum + contentTier(t.content?.length ?? 0), 0) / evaluatedTasks.length;
+            const depthPts = (avgTier / 3) * 20;
+            const ivoAvg = projectData ? ((projectData.ivo_o ?? 5) + (projectData.ivo_m ?? 5) + (projectData.ivo_v ?? 5) + (projectData.ivo_e ?? 5) + (projectData.ivo_t ?? 5)) / 5 : 5;
+            const qualityPts = (ivoAvg / 10) * 50;
+            const realScore = Math.min(Math.round(completionPts + depthPts + qualityPts), 100);
             const dbScore = Number(projectData?.score ?? 0);
 
             if (realScore !== dbScore) {
               setProject(prev => prev ? { ...prev, score: realScore } : prev);
-              // Persistir no DB em background
               supabase.from("projects").update({ score: realScore }).eq("id", projectId).then(() => {});
             }
           }
@@ -355,17 +358,36 @@ function DashPageContent() {
           .order("recorded_at", { ascending: true })
           .limit(30)
           .then(({ data: histData }) => {
-            if (histData && histData.length > 0) {
-              const formatted = histData.map((row: { recorded_at: string; ivo_index: number }) => {
-                const d = new Date(row.recorded_at);
-                return {
-                  date: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
-                  label: d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }),
-                  value: Math.round(row.ivo_index),
-                };
+            const points = (histData ?? []).map((row: { recorded_at: string; ivo_index: number }) => {
+              const d = new Date(row.recorded_at);
+              return {
+                date: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+                label: d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }),
+                value: Math.round(row.ivo_index),
+              };
+            });
+
+            // Adicionar ponto "Agora" com o ivo_index atual do projeto
+            if (projectData?.ivo_index) {
+              const now = new Date();
+              points.push({
+                date: now.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+                label: "Agora",
+                value: Math.round(projectData.ivo_index),
               });
-              setIvoHistory(formatted);
             }
+
+            // Se ainda < 2 pontos, sintetizar baseline na data de criação do projeto
+            if (points.length < 2 && projectData?.created_at) {
+              const d = new Date(projectData.created_at);
+              points.unshift({
+                date: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+                label: `Início — ${d.toLocaleDateString("pt-BR")}`,
+                value: 214076,
+              });
+            }
+
+            if (points.length >= 2) setIvoHistory(points);
           });
       }
     };
