@@ -12,6 +12,7 @@ import { RoadmapBar } from "@/components/roadmap-bar";
 import { ProjectCardLink } from "@/components/project-card-link";
 import { CreateProjectButton } from "@/components/create-project-button";
 import { TrendingUp, Star, Award, Users } from "lucide-react";
+import { ProjectAvatar } from "@/components/project-hero-banner";
 import {
   Tooltip,
   TooltipContent,
@@ -225,19 +226,22 @@ export default async function Page(props: PageProps) {
 
           return (
             <ProjectCardLink projectId={p.id} key={p.id}>
-              <article className="bg-card border rounded-xl p-5 flex flex-col gap-3 relative group hover:shadow-md transition-shadow duration-200 cursor-pointer overflow-hidden">
+              <article className="bg-card border rounded-xl p-6 flex flex-col gap-5 relative group hover:shadow-md transition-shadow duration-200 cursor-pointer overflow-hidden">
                 {/* Barra de acento inferior */}
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary/60" />
 
-                {/* Header: nome + bloco IVO */}
-                <div className="flex items-start justify-between gap-3 pt-1">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-base leading-snug truncate">{projectName}</h3>
-                    {p.category && (
-                      <span className="inline-block text-xs text-primary/80 bg-primary/10 px-2 py-0.5 rounded-full mt-1.5">
-                        {(categories.find((c) => c.value === p.category) || { label: p.category }).label}
-                      </span>
-                    )}
+                {/* Header: avatar + nome + bloco IVO */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                    <ProjectAvatar projectName={projectName} category={p.category} size={48} />
+                    <div className="min-w-0 flex-1 pt-0.5">
+                      <h3 className="font-semibold text-base leading-snug truncate">{projectName}</h3>
+                      {p.category && (
+                        <span className="inline-block text-xs text-primary/80 bg-primary/10 px-2 py-0.5 rounded-full mt-1.5">
+                          {(categories.find((c) => c.value === p.category) || { label: p.category }).label}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -258,7 +262,7 @@ export default async function Page(props: PageProps) {
                 </div>
 
                 {/* Descrição */}
-                <div className="flex-1 min-h-[40px]">
+                <div className="flex-1 min-h-[52px]">
                   {p.description ? (
                     <p className="text-sm text-muted-foreground line-clamp-2">{p.description}</p>
                   ) : (
@@ -344,7 +348,7 @@ export default async function Page(props: PageProps) {
 
               return (
                 <ProjectCardLink projectId={p.id} key={p.id}>
-                  <article className="bg-card border rounded-xl p-5 flex flex-col gap-3 relative group hover:shadow-md transition-shadow duration-200 cursor-pointer overflow-hidden">
+                  <article className="bg-card border rounded-xl p-6 flex flex-col gap-5 relative group hover:shadow-md transition-shadow duration-200 cursor-pointer overflow-hidden">
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500/60" />
 
                     {/* Badge de role */}
@@ -358,14 +362,17 @@ export default async function Page(props: PageProps) {
                       </span>
                     </div>
 
-                    <div className="flex items-start justify-between gap-3 pt-1 pr-20">
-                      <div className="min-w-0 flex-1">
-                        <h3 className="font-semibold text-base leading-snug truncate">{projectName}</h3>
-                        {p.category && (
-                          <span className="inline-block text-xs text-primary/80 bg-primary/10 px-2 py-0.5 rounded-full mt-1.5">
-                            {(categories.find((c) => c.value === p.category) || { label: p.category }).label}
-                          </span>
-                        )}
+                    <div className="flex items-start justify-between gap-3 pr-20">
+                      <div className="flex items-start gap-3 min-w-0 flex-1">
+                        <ProjectAvatar projectName={projectName} category={p.category} size={48} />
+                        <div className="min-w-0 flex-1 pt-0.5">
+                          <h3 className="font-semibold text-base leading-snug truncate">{projectName}</h3>
+                          {p.category && (
+                            <span className="inline-block text-xs text-primary/80 bg-primary/10 px-2 py-0.5 rounded-full mt-1.5">
+                              {(categories.find((c) => c.value === p.category) || { label: p.category }).label}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -383,7 +390,7 @@ export default async function Page(props: PageProps) {
                       </Tooltip>
                     </div>
 
-                    <div className="flex-1 min-h-[40px]">
+                    <div className="flex-1 min-h-[52px]">
                       {p.description ? (
                         <p className="text-sm text-muted-foreground line-clamp-2">{p.description}</p>
                       ) : (

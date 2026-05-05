@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 
-const HERO_MAP: Record<string, string> = {
+export const HERO_MAP: Record<string, string> = {
   "software-ia-dados": "/hero/software-ia-dados.webp",
   "financas-seguros": "/hero/financas-seguros.webp",
   "saude-ciencias-vida": "/hero/saude-ciencias-vida.webp",
@@ -17,12 +17,42 @@ const HERO_MAP: Record<string, string> = {
   "midia-entretenimento-criadores": "/hero/midia-entretenimento-criadores.webp",
 };
 
-const DEFAULT_HERO = "/hero/default.webp";
+export const DEFAULT_HERO = "/hero/default.webp";
 
-function getInitials(name: string): string {
+export function getInitials(name: string): string {
   const words = name.trim().split(/\s+/);
   if (words.length === 1) return words[0].substring(0, 2).toUpperCase();
   return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+interface ProjectAvatarProps {
+  projectName: string;
+  category?: string | null;
+  size?: number;
+}
+
+export function ProjectAvatar({ projectName, category, size = 48 }: ProjectAvatarProps) {
+  const heroSrc = (category && HERO_MAP[category]) ?? DEFAULT_HERO;
+  const initials = getInitials(projectName);
+  const fontSize = size >= 56 ? "text-base" : size >= 44 ? "text-sm" : "text-xs";
+
+  return (
+    <div
+      className="relative rounded-full overflow-hidden shrink-0 ring-2 ring-border/60 shadow-sm"
+      style={{ width: size, height: size }}
+    >
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${heroSrc})` }}
+      />
+      <div className="absolute inset-0 bg-black/55" />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className={`text-white font-bold ${fontSize} leading-none select-none drop-shadow`}>
+          {initials}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 interface ProjectHeroBannerProps {
