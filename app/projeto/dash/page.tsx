@@ -330,18 +330,20 @@ function DashPageContent() {
           const maxCompleted = Math.max(...completed);
           setCurrentStage(maxCompleted < 5 ? maxCompleted + 1 : 5);
 
-          // Auto-recalcular score (Option A: 30% completion + 20% depth + 50% IVO quality)
+          // Auto-recalcular score (A+B: 25% completion + 15% depth + 40% IVO + 20% marcos vindo do backend)
           const evaluatedTasks = tasksData.filter((t: { status?: string }) => t.status === 'evaluated');
           if (evaluatedTasks.length > 0) {
             const totalStages = 5;
-            const completionPts = (Math.min(evaluatedTasks.length, totalStages) / totalStages) * 30;
+            const completionPts = (Math.min(evaluatedTasks.length, totalStages) / totalStages) * 25;
             const contentTier = (len: number) => len >= 1500 ? 3 : len >= 500 ? 2 : len >= 100 ? 1 : 0;
             const avgTier = evaluatedTasks.reduce((sum: number, t: { content?: string | null }) => sum + contentTier(t.content?.length ?? 0), 0) / evaluatedTasks.length;
-            const depthPts = (avgTier / 3) * 20;
+            const depthPts = (avgTier / 3) * 15;
             const ivoAvg = projectData ? ((projectData.ivo_o ?? 5) + (projectData.ivo_m ?? 5) + (projectData.ivo_v ?? 5) + (projectData.ivo_e ?? 5) + (projectData.ivo_t ?? 5)) / 5 : 5;
-            const qualityPts = (ivoAvg / 10) * 50;
-            const realScore = Math.min(Math.round(completionPts + depthPts + qualityPts), 100);
+            const qualityPts = (ivoAvg / 10) * 40;
+            const localScore = Math.round(completionPts + depthPts + qualityPts);
             const dbScore = Number(projectData?.score ?? 0);
+            // Preserva score do DB se for maior (inclui contribuição dos marcos calculada no backend)
+            const realScore = Math.min(Math.max(localScore, dbScore), 100);
 
             if (realScore !== dbScore) {
               setProject(prev => prev ? { ...prev, score: realScore } : prev);

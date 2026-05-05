@@ -127,20 +127,32 @@ export default async function Page(props: PageProps) {
   const { data: projects, error: loadErr } = await query;
   if (loadErr) console.error(loadErr);
 
-  // Calcular score real a partir das tasks (não depende da coluna score do DB)
-  function computeScore(tasks: { status?: string; content?: string | null }[]): number {
+  // Score local — preview rápido do score; backend recalcula com marcos (Opção B).
+  // Estrutura: 25% conclusão + 15% profundidade + 40% IVO + (até 20% marcos vem do backend).
+  // Aqui usamos peso balanceado de IVO (sem categoria) só como aproximação visual.
+  function computeScore(
+    tasks: { status?: string; content?: string | null }[],
+    p: { ivo_o?: number; ivo_m?: number; ivo_v?: number; ivo_e?: number; ivo_t?: number },
+    dbScore?: number,
+  ): number {
     const evaluated = tasks.filter(t => t.status === "evaluated");
-    let pts = evaluated.length * 15;
-    pts += evaluated.filter(t => (t.content?.length ?? 0) >= 100).length * 3;
-    if (evaluated.length >= 5) pts += 10;
-    return Math.min(pts, 100);
+    const completionPts = (Math.min(evaluated.length, 5) / 5) * 25;
+    const tier = (len: number) => (len >= 1500 ? 3 : len >= 500 ? 2 : len >= 100 ? 1 : 0);
+    const depthPts = evaluated.length === 0
+      ? 0
+      : (evaluated.reduce((s, t) => s + tier(t.content?.length ?? 0), 0) / evaluated.length / 3) * 15;
+    const ivoAvg = ((p.ivo_o ?? 5) + (p.ivo_m ?? 5) + (p.ivo_v ?? 5) + (p.ivo_e ?? 5) + (p.ivo_t ?? 5)) / 5;
+    const qualityPts = (ivoAvg / 10) * 40;
+    const localScore = Math.round(completionPts + depthPts + qualityPts);
+
+    // Se o DB tem score maior (provavelmente com marcos), preserva
+    return Math.min(Math.max(localScore, Number(dbScore ?? 0)), 100);
   }
 
-  // Recalcular scores a partir das tasks e corrigir no DB se necessário
   const projectsList = projects ?? [];
   for (const p of projectsList) {
     const tasks = Array.isArray(p.tasks) ? p.tasks : [];
-    const realScore = computeScore(tasks);
+    const realScore = computeScore(tasks, p as { ivo_o?: number; ivo_m?: number; ivo_v?: number; ivo_e?: number; ivo_t?: number }, Number(p.score ?? 0));
     if (realScore !== Number(p.score ?? 0)) {
       supabase.from("projects").update({ score: realScore }).eq("id", p.id).then(() => {});
       p.score = realScore;
