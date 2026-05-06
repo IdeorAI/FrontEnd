@@ -246,7 +246,7 @@ export default async function Page(props: PageProps) {
                   {/* TOP: avatar retangular + nome */}
                   <div className="flex items-center gap-3">
                     <ProjectAvatar projectName={projectName} category={p.category} size={48} />
-                    <h3 className="font-semibold text-base leading-snug truncate flex-1">{projectName}</h3>
+                    <h3 className="font-semibold text-base leading-snug line-clamp-2 flex-1">{projectName}</h3>
                   </div>
 
                   {/* MEIO: categoria + IVO */}
@@ -378,7 +378,7 @@ export default async function Page(props: PageProps) {
                       {/* TOP: avatar retangular + nome */}
                       <div className="flex items-center gap-3 pr-20">
                         <ProjectAvatar projectName={projectName} category={p.category} size={48} />
-                        <h3 className="font-semibold text-base leading-snug truncate flex-1">{projectName}</h3>
+                        <h3 className="font-semibold text-base leading-snug line-clamp-2 flex-1">{projectName}</h3>
                       </div>
 
                       {/* MEIO: categoria + IVO */}
