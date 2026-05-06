@@ -360,33 +360,43 @@ function DashPageContent() {
           .order("recorded_at", { ascending: true })
           .limit(30)
           .then(({ data: histData }) => {
-            const points = (histData ?? []).map((row: { recorded_at: string; ivo_index: number }) => {
-              const d = new Date(row.recorded_at);
-              return {
-                date: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
-                label: d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }),
-                value: Math.round(row.ivo_index),
-              };
-            });
+            // Trajetória completa: baseline (criação) → snapshots históricos → valor atual
+            const BASELINE_IVO = 100; // ivo_index default na criação do projeto (ProjectModel.IvoIndex = 100)
+            type Point = { date: string; label: string; value: number };
+            const points: Point[] = [];
 
-            // Adicionar ponto "Agora" com o ivo_index atual do projeto
-            if (projectData?.ivo_index) {
-              const now = new Date();
+            // 1. Sempre começar com o baseline na data de criação
+            if (projectData?.created_at) {
+              const d = new Date(projectData.created_at);
               points.push({
-                date: now.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
-                label: "Agora",
-                value: Math.round(projectData.ivo_index),
+                date: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+                label: `Início — ${d.toLocaleDateString("pt-BR")}`,
+                value: BASELINE_IVO,
               });
             }
 
-            // Se ainda < 2 pontos, sintetizar baseline na data de criação do projeto
-            if (points.length < 2 && projectData?.created_at) {
-              const d = new Date(projectData.created_at);
-              points.unshift({
+            // 2. Adicionar todos os snapshots históricos
+            (histData ?? []).forEach((row: { recorded_at: string; ivo_index: number }) => {
+              const d = new Date(row.recorded_at);
+              points.push({
                 date: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
-                label: `Início — ${d.toLocaleDateString("pt-BR")}`,
-                value: 214076,
+                label: d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }),
+                value: Math.round(row.ivo_index),
               });
+            });
+
+            // 3. Sempre encerrar com o valor atual ("Agora") se diferente do último ponto
+            if (projectData?.ivo_index) {
+              const currentValue = Math.round(projectData.ivo_index);
+              const last = points[points.length - 1];
+              if (!last || last.value !== currentValue) {
+                const now = new Date();
+                points.push({
+                  date: now.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+                  label: "Agora",
+                  value: currentValue,
+                });
+              }
             }
 
             if (points.length >= 2) setIvoHistory(points);
@@ -797,24 +807,11 @@ function DashPageContent() {
           <ProjectHeroBanner
             projectName={project.name ?? "Projeto"}
             category={project.category}
+            createdAt={project.created_at}
           />
         )}
-        {/* Novo Cabeçalho Superior */}
-        <div className="flex items-center justify-between gap-4 pb-4 border-b">
-          {/* Título e Subtítulo do Projeto */}
-          <div className="flex-1 text-left">
-            {project && (
-              <>
-                <h1 className="text-lg sm:text-xl font-bold text-foreground">
-                  {project.name}
-                </h1>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Startup criada em {project.created_at ? new Date(project.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'N/A'}
-                </p>
-              </>
-            )}
-          </div>
-
+        {/* Cabeçalho Superior */}
+        <div className="flex items-center justify-end gap-4 pb-4 border-b">
           {/* Badges e Notificações */}
           <div className="flex items-center gap-3">
             {/* IVO Index Badge com Tooltip */}

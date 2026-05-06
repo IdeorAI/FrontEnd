@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import categories from "@/lib/data/categories.json";
 
 export const HERO_MAP: Record<string, string> = {
   "software-ia-dados": "/hero/software-ia-dados.webp",
@@ -38,8 +39,8 @@ export function ProjectAvatar({ projectName, category, size = 48 }: ProjectAvata
 
   return (
     <div
-      className="relative rounded-full overflow-hidden shrink-0 ring-2 ring-border/60 shadow-sm"
-      style={{ width: size, height: size }}
+      className="relative rounded-xl overflow-hidden shrink-0 ring-2 ring-border/60 shadow-sm"
+      style={{ width: Math.round(size * 1.5), height: size }}
     >
       <div
         className="absolute inset-0 bg-cover bg-center"
@@ -58,15 +59,17 @@ export function ProjectAvatar({ projectName, category, size = 48 }: ProjectAvata
 interface ProjectHeroBannerProps {
   projectName: string;
   category?: string | null;
+  createdAt?: string | null;
 }
 
-export function ProjectHeroBanner({ projectName, category }: ProjectHeroBannerProps) {
+export function ProjectHeroBanner({ projectName, category, createdAt }: ProjectHeroBannerProps) {
   const heroSrc = (category && HERO_MAP[category]) ?? DEFAULT_HERO;
-  const initials = getInitials(projectName);
-  const showName = projectName.length <= 25;
+  const categoryLabel = category
+    ? (categories.find((c: { value: string }) => c.value === category)?.label ?? category)
+    : null;
 
   return (
-    <div className="relative w-full h-36 md:h-48 overflow-hidden rounded-xl mb-6">
+    <div className="relative w-full h-24 md:h-32 overflow-hidden rounded-xl mb-6">
       <Image
         src={heroSrc}
         alt=""
@@ -76,18 +79,21 @@ export function ProjectHeroBanner({ projectName, category }: ProjectHeroBannerPr
         priority
         sizes="100vw"
       />
-      {/* Gradiente overlay */}
       <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-transparent" />
-      {/* Texto */}
       <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-10">
-        <span className="text-white font-black text-5xl md:text-7xl leading-none tracking-tight drop-shadow-lg select-none">
-          {initials}
-        </span>
-        {showName && (
-          <span className="text-white/85 text-base md:text-xl font-semibold mt-1 drop-shadow">
-            {projectName}
-          </span>
-        )}
+        <h2 className="text-white font-bold text-xl md:text-2xl leading-tight drop-shadow-lg truncate">
+          {projectName}
+        </h2>
+        <div className="flex items-center mt-1.5">
+          {categoryLabel && (
+            <span className="text-white/75 text-sm font-medium">{categoryLabel}</span>
+          )}
+          {createdAt && (
+            <span className="ml-auto text-white/60 text-xs">
+              {new Date(createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
