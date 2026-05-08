@@ -4,8 +4,8 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/components/logout-button";
+import { ThemeAwareLogo } from "@/components/theme-aware-logo";
 import heroBg from "@/app/assets/hero-bg1.jpg";
-import Logo from "@/app/assets/logo_branco.png";
 import Link from "next/link";
 
 export default async function IdeaLayout({
@@ -52,8 +52,7 @@ export default async function IdeaLayout({
           {/* Logo (esquerda) */}
           <div className="flex items-center">
             <Link href="/dashboard" aria-label="Ir para o dashboard">
-              <Image
-                src={Logo}
+              <ThemeAwareLogo
                 alt="Ideor.AI"
                 width={176}
                 height={53}

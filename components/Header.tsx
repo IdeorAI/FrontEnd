@@ -1,28 +1,20 @@
 // components/Header.tsx
 "use client";
 
-import * as React from "react";
 import Image from "next/image";
+import Logo from "../app/assets/logo_branco.png";
 import Link from "next/link";
-import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { LeadCaptureDialog } from "@/components/lead-capture-dialog";
 
 export default function Header() {
-  const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => setMounted(true), []);
-  const logoSrc = mounted && resolvedTheme === "light"
-    ? "/assets/ideorLogo.png"
-    : "/assets/logo_branco.png";
-
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="text-2xl font-bold">
           <Link href="/" aria-label="Ir para a página inicial">
             <Image
-              src={logoSrc}
+              src={Logo}
               alt="Ideor.AI"
               width={176}
               height={53}
