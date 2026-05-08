@@ -132,7 +132,7 @@ export default function IdeorChoicePage() {
       </div>
 
       {/* Main Card */}
-      <Card className="rounded-3xl border-white/10 p-5 shadow-2xl sm:p-8">
+      <Card className="rounded-3xl border-white/10 bg-[#202a31] text-white p-5 shadow-2xl sm:p-8">
         <CardHeader className="pb-4">
           <CardTitle className="text-base font-semibold sm:text-lg">
             Escolha uma das ideias abaixo:

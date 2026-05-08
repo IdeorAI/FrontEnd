@@ -20,6 +20,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { useTheme } from "next-themes";
 import { createClient } from "@/lib/supabase/client";
 
 interface AppSidebarProps {
@@ -32,6 +33,12 @@ export function AppSidebar({ user }: AppSidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const [isAdmin, setIsAdmin] = React.useState(false);
   const [pendingInvites, setPendingInvites] = React.useState(0);
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
+  const logoSrc = mounted && resolvedTheme === "light"
+    ? "/assets/ideorLogo.png"
+    : "/assets/logo_branco.png";
 
   React.useEffect(() => {
     (async () => {
@@ -122,7 +129,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
             {/* Logo IDEOR - Centralizado - 120px */}
             <div className="relative w-[120px] h-[120px] flex-shrink-0">
               <Image
-                src="/assets/logo_branco.png"
+                src={logoSrc}
                 alt="IDEOR Logo"
                 width={120}
                 height={120}

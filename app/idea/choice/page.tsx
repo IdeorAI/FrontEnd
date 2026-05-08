@@ -98,7 +98,7 @@ export default function ChoicePage() {
       </div>
 
       {/* CARD PRINCIPAL */}
-      <Card className="rounded-3xl border-white/10 shadow-2xl p-6 sm:p-8">
+      <Card className="rounded-3xl border-white/10 bg-[#202a31] text-white shadow-2xl p-6 sm:p-8">
         <CardHeader className="pb-4">
           <CardTitle className="text-base sm:text-lg font-semibold">
             Escolha uma das descrições:
