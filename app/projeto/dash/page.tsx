@@ -5,10 +5,9 @@ import { LogoutButton } from "@/components/logout-button";
 import { TeamAvatars } from "@/components/team-avatars";
 import { CardDialog } from "@/components/card-dialog";
 import { AIStageCard } from "@/components/ai-stage-card";
-import { StageBadge } from "@/components/StageBadge";
 import { calculateStageStatus, StageStatus, getStageSummaries } from "@/lib/api/stage-summaries";
 import { log } from "@/lib/logger";
-import Image from "next/image";
+import categories from "@/lib/data/categories.json";
 import {
   ListChecks,
   TrendingUp,
@@ -21,8 +20,6 @@ import {
   FileText,
   Download,
   Bell,
-  Star,
-  FileCheck2,
 } from "lucide-react";
 import {
   Tooltip,
@@ -40,6 +37,12 @@ import { BenchmarkPanel } from "@/components/projeto/benchmark-panel";
 import { AnunciarModal } from "@/components/marketplace/anunciar-modal";
 import { GoPivotCard } from "@/app/projeto/[id]/components/go-pivot-gate";
 import { ProjectHeroBanner } from "@/components/project-hero-banner";
+import { JourneyStepper, DEFAULT_STAGES } from "@/components/projeto/journey-stepper";
+import { StageDetailCard } from "@/components/projeto/stage-detail-card";
+import { IvoCard } from "@/components/projeto/ivo-card";
+import { KeywordsBlock } from "@/components/projeto/keywords-block";
+import { MilestoneStrip, DEFAULT_MILESTONES } from "@/components/projeto/milestone-strip";
+import { Folder, Eye, ShieldCheck, Flag, ChevronRight as ChevronRightLucide } from "lucide-react";
 import dynamic from "next/dynamic";
 
 const IvoMiniChart = dynamic(
@@ -50,11 +53,6 @@ const IvoMiniChart = dynamic(
 const IvoFullChart = dynamic(
   () => import("./ivo-chart").then((m) => ({ default: m.IvoFullChart })),
   { ssr: false, loading: () => <div className="h-52 w-full bg-muted/30 rounded animate-pulse" /> }
-);
-
-const ProjectProgressLine = dynamic(
-  () => import("@/components/project-progress-line").then((m) => ({ default: m.ProjectProgressLine })),
-  { ssr: false, loading: () => <div className="h-16 w-full bg-muted/30 rounded-xl animate-pulse" /> }
 );
 
 function DashPageContent() {
@@ -810,93 +808,65 @@ function DashPageContent() {
             createdAt={project.created_at}
           />
         )}
-        {/* Cabeçalho Superior */}
-        <div className="flex items-center justify-end gap-4 pb-4 border-b">
-          {/* Badges e Notificações */}
-          <div className="flex items-center gap-3">
-            {/* IVO Index Badge com Tooltip */}
-            {project && (
+        {/* Action Bar — breadcrumb + ações primárias + utilidades compactas */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-border">
+          {/* Breadcrumb */}
+          <nav className="flex items-center gap-1.5 text-xs text-ink-tertiary" aria-label="Breadcrumb">
+            <Folder className="h-3 w-3 text-ink-muted" strokeWidth={2} />
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="hover:text-ink-primary transition-colors"
+            >
+              Meus Projetos
+            </button>
+            <ChevronRightLucide className="h-3 w-3 text-ink-muted" strokeWidth={2} />
+            <span className="text-ink-secondary truncate max-w-[260px]">{project?.name ?? 'Projeto'}</span>
+            {todasEtapasCompletas && (
+              <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400">
+                Concluído
+              </span>
+            )}
+          </nav>
+
+          {/* Cluster de ações */}
+          <div className="flex items-center gap-2">
+            {/* Pré-visualizar (placeholder visual) */}
+            <button
+              type="button"
+              className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-card text-sm font-semibold text-ink-secondary hover:border-strong hover:text-ink-primary transition-colors"
+              title="Pré-visualizar projeto"
+            >
+              <Eye className="h-4 w-4" strokeWidth={2} />
+              Pré-visualizar
+            </button>
+
+            {/* Exportar */}
+            {todasEtapasCompletas && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="hidden sm:flex items-center gap-2.5 px-5 py-2.5 bg-primary/10 rounded-full hover:bg-primary/15 transition-colors cursor-pointer">
-                    <TrendingUp className="h-6 w-6 text-primary" />
-                    <span className="text-base font-semibold">
-                      {new Intl.NumberFormat("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                        maximumFractionDigits: 0,
-                      }).format(Number(project.ivo_index ?? project.valuation ?? 100))}
-                    </span>
-                    {/* Indicador de índice parcial */}
-                    {(!project.ivo_o || project.ivo_o === 5) && (!project.ivo_m || project.ivo_m === 5) && (
-                      <span className="text-xs text-amber-500 font-normal">~</span>
-                    )}
-                  </div>
+                  <button
+                    type="button"
+                    className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-card text-sm font-semibold text-ink-secondary hover:border-strong hover:text-ink-primary transition-colors"
+                    title="Exportar relatório"
+                  >
+                    <Download className="h-4 w-4" strokeWidth={2} />
+                    Exportar
+                  </button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-[220px]">
-                  <p className="font-semibold mb-1">IVO Index</p>
-                  <p className="text-xs">O:{(project.ivo_o ?? 5).toFixed(1)} M:{(project.ivo_m ?? 5).toFixed(1)} V:{(project.ivo_v ?? 5).toFixed(1)}</p>
-                  <p className="text-xs">E:{(project.ivo_e ?? 5).toFixed(1)} T:{(project.ivo_t ?? 5).toFixed(1)} D:{(project.ivo_d ?? 1).toFixed(1)}</p>
-                  {(!project.ivo_o || project.ivo_o === 5) && (
-                    <p className="text-xs text-amber-400 mt-1">⚠ Índice parcial — complete mais etapas</p>
-                  )}
-                </TooltipContent>
+                <TooltipContent><p>Gerar relatório consolidado</p></TooltipContent>
               </Tooltip>
             )}
 
-            {/* Score Badge com Tooltip — escala 0-10 */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-yellow-500/10 rounded-full hover:bg-yellow-500/15 transition-colors cursor-pointer">
-                  <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
-                  <span className="text-base font-semibold">{(Number(project?.score ?? 0) / 10).toFixed(1)}</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Score IdeorAI: {(Number(project?.score ?? 0) / 10).toFixed(1)} / 10</p>
-              </TooltipContent>
-            </Tooltip>
-
-            {/* Medalha Badge (PNG) com Tooltip */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button className={`hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full transition-colors ${medalhaAtual.color === 'text-gray-500' ? 'bg-gray-500/10 hover:bg-gray-500/15' : 'bg-purple-500/10 hover:bg-purple-500/20'}`}>
-                  <Image
-                    src={medalhaAtual.badge}
-                    alt={medalhaAtual.nome}
-                    width={27}
-                    height={27}
-                    className="object-contain"
-                  />
-                  <span className={`text-base font-semibold ${medalhaAtual.color}`}>{medalhaAtual.nome}</span>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Badge: {medalhaAtual.nome}</p>
-              </TooltipContent>
-            </Tooltip>
-
-            {/* Certificado Badge com Tooltip - On/Off baseado em etapas */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  className={`hidden lg:flex items-center gap-2 px-5 py-2.5 rounded-full transition-colors ${
-                    todasEtapasCompletas
-                      ? 'bg-green-500/10 hover:bg-green-500/20'
-                      : 'bg-muted hover:bg-muted/80 opacity-50 cursor-not-allowed'
-                  }`}
-                  disabled={!todasEtapasCompletas}
-                >
-                  <FileCheck2 className={`h-6 w-6 ${todasEtapasCompletas ? 'text-green-500' : 'text-muted-foreground'}`} />
-                  <span className={`text-base font-semibold ${todasEtapasCompletas ? 'text-green-500' : 'text-muted-foreground'}`}>
-                    Certificado Ideor
-                  </span>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Certificado Ideor</p>
-              </TooltipContent>
-            </Tooltip>
+            {/* GO or PIVOT — ação primária */}
+            {completedStages.filter(s => s > 0).length >= 5 && (
+              <a
+                href="#go-pivot"
+                className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md bg-brand text-brand-foreground text-sm font-semibold shadow-sm hover:bg-brand-hover transition-colors"
+              >
+                <ShieldCheck className="h-4 w-4" strokeWidth={2} />
+                GO or PIVOT
+              </a>
+            )}
 
             {/* Publicar no Marketplace */}
             {completedStages.filter(s => s > 0).length >= 1 && (
@@ -904,25 +874,31 @@ function DashPageContent() {
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => setAnunciarOpen(true)}
-                    className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full text-sm font-medium transition-colors"
+                    className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-md bg-brand-subtle text-ink-brand text-sm font-semibold hover:bg-brand-muted transition-colors"
                   >
-                    <Rocket className="h-4 w-4" />
+                    <Rocket className="h-4 w-4" strokeWidth={2} />
                     Publicar
                   </button>
                 </TooltipTrigger>
-                <TooltipContent>
-                  <p>Publicar projeto no Marketplace</p>
-                </TooltipContent>
+                <TooltipContent><p>Publicar no Marketplace</p></TooltipContent>
               </Tooltip>
             )}
 
-            {/* Notificações */}
-            <button className="relative p-3 hover:bg-muted rounded-full transition-colors">
-              <Bell className="h-6 w-6" />
-              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full" />
-            </button>
+            {/* Separador visual */}
+            <span className="hidden sm:inline-block h-6 w-px bg-border mx-1" aria-hidden />
 
-            {/* Botão de excluir projeto */}
+            {/* Notificações (icon-only) */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button className="relative h-9 w-9 inline-flex items-center justify-center rounded-md hover:bg-surface-sunken transition-colors">
+                  <Bell className="h-4 w-4 text-ink-secondary" strokeWidth={2} />
+                  <span className="absolute top-2 right-2 h-1.5 w-1.5 bg-red-500 rounded-full" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent><p>Notificações</p></TooltipContent>
+            </Tooltip>
+
+            {/* Excluir projeto (icon-only via componente existente) */}
             {projectId && project && (
               <DeleteProjectButton
                 projectId={projectId}
@@ -933,36 +909,144 @@ function DashPageContent() {
             )}
 
             {/* Logout */}
-            <div className="ml-2">
-              <LogoutButton />
-            </div>
+            <LogoutButton />
           </div>
         </div>
 
-      {/* Barra de Progresso % */}
+      {/* ─── Journey Stepper (HERO da jornada) ─────────────────── */}
       {(() => {
-        const completedCount = completedStages.filter(s => s > 0).length;
-        const pct = Math.round(completedCount / 5 * 100);
+        // currentIndex: primeira etapa não-concluída (0..5)
+        const completedAdj = completedStages.filter(s => s >= 0);
+        const lastDone = completedAdj.length > 0 ? Math.max(...completedAdj) : -1;
+        const currentIdx = Math.min(DEFAULT_STAGES.length - 1, lastDone + 1);
+        const completedSet = Array.from(new Set(completedAdj)); // 0 = Início
         return (
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Progresso do projeto</span>
-              <span className="font-medium">{completedCount}/5 etapas · {pct}%</span>
-            </div>
-            <div className="h-2 bg-muted rounded-full overflow-hidden">
-              <div
-                className="h-full bg-primary rounded-full transition-all duration-500"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-          </div>
+          <JourneyStepper
+            currentIndex={currentIdx}
+            completed={completedSet}
+            onStageClick={(stage) => {
+              if (stage.id === 'etapa0') return; // Início é informativo
+              const num = parseInt(stage.id.replace('etapa', ''), 10);
+              if (!isNaN(num) && projectId) {
+                router.push(`/projeto/${projectId}/fase2/etapa${num}`);
+              }
+            }}
+          />
         );
       })()}
 
-      {/* Linha de Progressão */}
-      <ProjectProgressLine currentStage={currentStage} completedStages={completedStages} />
+      {/* ─── Grid 2 colunas: etapas (esq) · right rail (dir) ──── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
+        {/* Esquerda: Stage Detail Cards */}
+        <div className="flex flex-col gap-3">
+          <div className="px-1 pt-1 text-[11px] font-bold uppercase tracking-[0.08em] text-ink-tertiary">
+            Etapas da jornada
+          </div>
 
-      {/* Analytics Panel */}
+          {/* Início (etapa0) — sempre concluída */}
+          <StageDetailCard
+            short="01"
+            label="Início"
+            description="Projeto iniciado — pronto para a jornada de validação."
+            icon={Flag}
+            status="completed"
+          />
+
+          {/* Etapas 1-5 */}
+          {(() => {
+            const stageDefs: { id: string; short: string; label: string; description: string; icon: React.ComponentType<{ className?: string; strokeWidth?: number }> }[] = [
+              { id: 'etapa1', short: '02', label: 'Problema e Oportunidade', description: 'Identifique o problema, persona e oportunidade de mercado.', icon: Lightbulb },
+              { id: 'etapa2', short: '03', label: 'Pesquisa de Mercado',     description: 'Análise do mercado-alvo, concorrentes e tendências.', icon: Search },
+              { id: 'etapa3', short: '04', label: 'Proposta de Valor',       description: 'O que torna sua solução única e desejável.', icon: Target },
+              { id: 'etapa4', short: '05', label: 'Modelo de Negócio',       description: 'Como sua startup gera receita e captura valor.', icon: Briefcase },
+              { id: 'etapa5', short: '06', label: 'MVP',                     description: 'Produto mínimo viável para validar com usuários reais.', icon: Rocket },
+            ];
+            return stageDefs.map((s) => {
+              const num = parseInt(s.id.replace('etapa', ''), 10);
+              const isCompleted = completedStages.includes(num);
+              const isLocked = isEtapaBloqueada(s.id);
+              const status = isCompleted ? 'completed' : isLocked ? 'locked' : 'in-progress';
+              return (
+                <StageDetailCard
+                  key={s.id}
+                  short={s.short}
+                  label={s.label}
+                  description={s.description}
+                  icon={s.icon}
+                  status={status}
+                  onClick={() => projectId && router.push(`/projeto/${projectId}/fase2/etapa${num}`)}
+                />
+              );
+            });
+          })()}
+        </div>
+
+        {/* Direita: Right rail */}
+        <div className="flex flex-col gap-3">
+          {/* IVO Card */}
+          {project && (
+            <IvoCard
+              value={Number(project.ivo_index ?? project.valuation ?? 100)}
+              prevValue={
+                ivoHistory.length >= 2
+                  ? ivoHistory[ivoHistory.length - 2].value
+                  : undefined
+              }
+              history={ivoHistory}
+              partial={(!project.ivo_o || project.ivo_o === 5) && (!project.ivo_m || project.ivo_m === 5)}
+              onClick={() => setActiveDialog('ivo-evolution')}
+            />
+          )}
+
+          {/* GO or PIVOT */}
+          <div id="go-pivot">
+            {projectId && user?.id && (
+              <GoPivotCard
+                projectId={projectId}
+                userId={user.id}
+                etapa2Complete={completedStages.includes(2)}
+              />
+            )}
+          </div>
+
+          {/* Keywords */}
+          <KeywordsBlock
+            keywords={[
+              ...(project?.category ? [(categories.find((c) => c.value === project.category) || { label: project.category }).label] : []),
+            ].filter(Boolean) as string[]}
+          />
+
+          {/* Equipe */}
+          <button
+            onClick={() => setActiveDialog('equipe')}
+            className="rounded-xl border border-border bg-card p-5 text-left transition-all hover:border-strong hover:shadow-md"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="h-3.5 w-3.5 text-ink-brand" strokeWidth={2} />
+                <span className="text-[13px] font-bold text-ink-primary">Equipe</span>
+              </div>
+              <ChevronRightLucide className="h-3.5 w-3.5 text-ink-muted" strokeWidth={2} />
+            </div>
+            <p className="mt-1 text-xs leading-relaxed text-ink-tertiary">
+              Convide co-fundadores e colaboradores para o projeto.
+            </p>
+          </button>
+        </div>
+      </div>
+
+      {/* ─── Milestone Strip ──────────────────────────────────── */}
+      {(() => {
+        const completedCount = completedStages.filter(s => s > 0).length;
+        // Mapeia conclusão de etapas para marcos correspondentes
+        const milestones = DEFAULT_MILESTONES.map((m, idx) => ({
+          ...m,
+          unlocked: idx < completedCount + 1, // primeira ideia unlocked desde criação
+        }));
+        return <MilestoneStrip milestones={milestones} />;
+      })()}
+
+      {/* ─── Analytics + Benchmark (mantidos abaixo) ──────────── */}
       {projectId && Object.keys(etapaContent).length > 0 && (
         <ProjectAnalyticsPanel
           etapaContent={etapaContent}
@@ -971,7 +1055,6 @@ function DashPageContent() {
         />
       )}
 
-      {/* Benchmark de Categoria */}
       {project?.category && project?.score !== undefined && (
         <BenchmarkPanel
           projectScore={Number(project.score)}
@@ -979,96 +1062,6 @@ function DashPageContent() {
           peerProjects={peerProjects}
         />
       )}
-
-      {/* GO or PIVOT — Avaliação de VC */}
-      {projectId && user?.id && (
-        <GoPivotCard
-          projectId={projectId}
-          userId={user.id}
-          etapa2Complete={completedStages.includes(2)}
-        />
-      )}
-
-      {/* Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {cards.map((card) => {
-          const Icon = card.icon;
-          const isBloqueado = isEtapaBloqueada(card.id);
-          const etapaAnterior = getEtapaAnteriorNome(card.id);
-          
-          // Verificar se é um card de etapa (etapa1, etapa2, etc)
-          const etapaMatch = card.id.match(/^etapa(\d+)$/);
-          const etapaNum = etapaMatch ? parseInt(etapaMatch[1]) : null;
-          const stageStatus = etapaNum 
-            ? stageStatuses.find(s => s.stageNumber === etapaNum)?.status 
-            : null;
-
-          // Verificar se é um card de etapa (etapa1-5) para navegar para página dedicada
-          const handleCardClick = () => {
-            if (isBloqueado) return;
-            
-            if (etapaNum) {
-              // Navegar para página dedicada da etapa
-              router.push(`/projeto/${projectId}/fase2/etapa${etapaNum}`);
-            } else {
-              // Cards não-etapa (roadmap, valuation, etc) - abrir modal
-              setActiveDialog(card.id);
-            }
-          };
-
-          return (
-            <Tooltip key={card.id}>
-              <TooltipTrigger asChild>
-                <div
-                  onClick={handleCardClick}
-                  className={`bg-card border rounded-lg p-6 transition-all duration-300 relative ${
-                    isBloqueado
-                      ? 'opacity-50 cursor-not-allowed'
-                      : 'hover:shadow-lg hover:scale-[1.02] cursor-pointer'
-                  }`}
-                >
-                  {/* Ícone de cadeado para etapas bloqueadas */}
-                  {isBloqueado && (
-                    <div className="absolute top-3 right-3">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 text-muted-foreground"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                      </svg>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-3 mb-2">
-                    <Icon className={`h-6 w-6 ${isBloqueado ? 'text-muted-foreground' : 'text-primary'}`} />
-                    <h3 className="font-semibold text-lg">{card.title}</h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{card.description}</p>
-                  
-                  {/* Badge de status da etapa */}
-                  {stageStatus && stageStatus !== 'valid' && !isBloqueado && (
-                    <div className="mt-3">
-                      <StageBadge status={stageStatus} />
-                    </div>
-                  )}
-                  
-                  {card.preview && <div className="mt-2">{card.preview}</div>}
-                </div>
-              </TooltipTrigger>
-              {isBloqueado && (
-                <TooltipContent>
-                  <p>Complete &quot;{etapaAnterior}&quot; para desbloquear</p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          );
-        })}
-      </div>
 
       {/* Modais */}
       {cards.map((card) => (
