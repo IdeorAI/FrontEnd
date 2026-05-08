@@ -85,45 +85,12 @@ function DashPageContent() {
   const {
     etapaContent,
     completedStages,
-    currentStage,
     setEtapaContent,
     setCompletedStages,
     setCurrentStage,
     generateStage,
     saveStage,
   } = useStageOperations({ projectId });
-
-  // Calcular medalha baseada no progresso
-  const getMedalha = () => {
-    const completedCount = completedStages.filter(s => s > 0).length; // Excluir "Início"
-    if (completedCount === 0) {
-      return {
-        nome: "Iniciante",
-        badge: "/assets/badges/badge_visionário PENDENTE.png",
-        color: "text-gray-500"
-      };
-    }
-    if (completedCount >= 1 && completedCount < 3) {
-      return {
-        nome: "Visionário",
-        badge: "/assets/badges/badge_visionario.png",
-        color: "text-cyan-400"
-      };
-    }
-    if (completedCount >= 3 && completedCount < 5) {
-      return {
-        nome: "Explorador",
-        badge: "/assets/badges/badge_explorador.png",
-        color: "text-rose-600"
-      };
-    }
-    // Fase 2 completa (etapas 4-5)
-    return {
-      nome: "Explorador",
-      badge: "/assets/badges/badge_explorador.png",
-      color: "text-rose-600"
-    };
-  };
 
   // Verificar se todas etapas estão completas (exceto Início)
   const todasEtapasCompletas = completedStages.filter(s => s > 0).length >= 5;
@@ -181,20 +148,6 @@ function DashPageContent() {
     // F-02: Usar status real das etapas ao invés de lógica hardcoded
     const previousStageStatus = stageStatuses.find(s => s.stageNumber === etapaNumero - 1);
     return !previousStageStatus || previousStageStatus.status === 'pending';
-  };
-
-  // Obter nome da etapa anterior que precisa ser concluída
-  const getEtapaAnteriorNome = (etapaId: string): string => {
-    const etapaNumero = parseInt(etapaId.replace('etapa', ''));
-    const nomesEtapas = [
-      "Início",
-      "Ideia e Problema",    // etapa1
-      "Pesquisa de Mercado", // etapa2
-      "Proposta de Valor",   // etapa3
-      "Modelo de Negócio",   // etapa4
-      "Definição do MVP",    // etapa5
-    ];
-    return nomesEtapas[etapaNumero - 1] || "Etapa anterior";
   };
 
 
@@ -794,8 +747,6 @@ function DashPageContent() {
       ),
     },
   ];
-
-  const medalhaAtual = getMedalha();
 
   return (
     <TooltipProvider>
