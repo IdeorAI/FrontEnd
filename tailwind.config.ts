@@ -59,6 +59,46 @@ export default {
 					secondary: 'hsl(var(--ideor-secondary))',
 					white: 'hsl(var(--ideor-white))'
 				},
+				/* Design Handoff — Brand purple scale + semantic helpers */
+				brand: {
+					DEFAULT: 'hsl(var(--brand))',
+					hover: 'hsl(var(--brand-hover))',
+					active: 'hsl(var(--brand-active))',
+					subtle: 'hsl(var(--brand-subtle))',
+					muted: 'hsl(var(--brand-muted))',
+					foreground: 'hsl(var(--fg-on-brand))'
+				},
+				purple: {
+					50:  'hsl(var(--purple-50))',
+					100: 'hsl(var(--purple-100))',
+					200: 'hsl(var(--purple-200))',
+					300: 'hsl(var(--purple-300))',
+					400: 'hsl(var(--purple-400))',
+					500: 'hsl(var(--purple-500))',
+					600: 'hsl(var(--purple-600))',
+					700: 'hsl(var(--purple-700))',
+					800: 'hsl(var(--purple-800))',
+					900: 'hsl(var(--purple-900))',
+					950: 'hsl(var(--purple-950))'
+				},
+				/* Foreground scale — uso: text-ink-tertiary, text-ink-muted, etc. */
+				ink: {
+					DEFAULT:   'hsl(var(--fg-primary))',
+					primary:   'hsl(var(--fg-primary))',
+					secondary: 'hsl(var(--fg-secondary))',
+					tertiary:  'hsl(var(--fg-tertiary))',
+					muted:     'hsl(var(--fg-muted))',
+					brand:     'hsl(var(--fg-brand))',
+					'on-brand': 'hsl(var(--fg-on-brand))'
+				},
+				/* Background scale — uso: bg-surface-raised, bg-surface-sunken, etc. */
+				surface: {
+					DEFAULT: 'hsl(var(--bg-surface))',
+					canvas:  'hsl(var(--bg-canvas))',
+					raised:  'hsl(var(--bg-raised))',
+					sunken:  'hsl(var(--bg-sunken))',
+					tinted:  'hsl(var(--bg-tinted))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
@@ -72,11 +112,18 @@ export default {
 			},
 			backgroundImage: {
 				'gradient-hero': 'var(--gradient-hero)',
-				'gradient-card': 'var(--gradient-card)'
+				'gradient-card': 'var(--gradient-card)',
+				'gradient-brand-subtle': 'var(--gradient-brand-subtle)'
 			},
 			boxShadow: {
 				'glow': 'var(--shadow-glow)',
-				'card': 'var(--shadow-card)'
+				'card': 'var(--shadow-card)',
+				'purple-glow': 'var(--shadow-purple-glow)',
+				'purple-md': 'var(--shadow-purple-md)'
+			},
+			borderColor: {
+				'brand-soft': 'hsl(var(--border-brand))',
+				'strong':     'hsl(var(--border-strong))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

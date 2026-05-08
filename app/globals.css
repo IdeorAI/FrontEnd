@@ -6,116 +6,192 @@
 
 
 @layer base {
-  /* ── Tema Claro ─────────────────────────────────────────── */
+  /* ──────────────────────────────────────────────────────────
+     Tema Claro (Design Handoff — paleta refinada)
+     Brand: purple-500 #8B5CF6 · Neutral: warm slate
+     ────────────────────────────────────────────────────────── */
   :root {
-    --background: 0 0% 97%;
-    --foreground: 206 30% 12%;
+    /* Tokens shadcn (mantidos pelo Tailwind config) */
+    --background: 240 14% 98%;          /* design --bg-canvas #F8F8FB */
+    --foreground: 240 16% 9%;           /* design --fg-primary #14141B */
 
-    --card: 0 0% 100%;
-    --card-foreground: 206 30% 12%;
+    --card: 0 0% 100%;                  /* design --bg-surface #FFFFFF */
+    --card-foreground: 240 16% 9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 206 30% 12%;
+    --popover-foreground: 240 16% 9%;
 
-    --primary: 261 70% 55%;
+    --primary: 258 90% 66%;             /* design --brand #8B5CF6 */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 175 70% 38%;
+    --secondary: 175 70% 38%;           /* mantido — usado em gradient-hero */
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 206 15% 92%;
-    --muted-foreground: 206 15% 42%;
+    --muted: 240 17% 96%;               /* design --bg-sunken #F1F1F6 */
+    --muted-foreground: 240 7% 45%;     /* design --fg-tertiary #6B6B7B */
 
-    --accent: 261 70% 94%;
-    --accent-foreground: 261 70% 35%;
+    --accent: 250 100% 98%;             /* design --brand-subtle #F5F3FF */
+    --accent-foreground: 263 70% 50%;   /* design --purple-700 #6D28D9 */
 
-    --destructive: 0 84% 55%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 206 15% 85%;
-    --input: 206 15% 85%;
-    --ring: 261 70% 55%;
+    --border: 240 13% 91%;              /* design --border-default #E5E5EC */
+    --input: 240 13% 91%;
+    --ring: 258 90% 66%;
 
-    /* Custom Ideor AI colors */
-    --ideor-bg: 0 0% 97%;
-    --ideor-primary: 261 70% 55%;
+    /* Tokens semânticos do Design Handoff (extras p/ novos componentes) */
+    --bg-canvas:     240 14% 98%;
+    --bg-surface:    0 0% 100%;
+    --bg-raised:     0 0% 100%;
+    --bg-sunken:     240 17% 96%;
+    --bg-tinted:     250 100% 98%;
+
+    --fg-primary:    240 16% 9%;
+    --fg-secondary:  240 8% 32%;        /* neutral-600 #4A4A58 */
+    --fg-tertiary:   240 7% 45%;        /* neutral-500 #6B6B7B */
+    --fg-muted:      240 8% 64%;        /* neutral-400 #9C9CAB */
+    --fg-on-brand:   0 0% 100%;
+    --fg-brand:      263 83% 58%;       /* purple-600 #7C3AED */
+
+    --border-default: 240 13% 91%;
+    --border-strong:  240 12% 84%;      /* neutral-300 #D1D1DC */
+    --border-brand:   252 95% 85%;      /* purple-300 #C4B5FD */
+
+    --brand:         258 90% 66%;       /* purple-500 */
+    --brand-hover:   263 83% 58%;       /* purple-600 */
+    --brand-active:  263 70% 50%;       /* purple-700 */
+    --brand-subtle:  250 100% 98%;      /* purple-50 */
+    --brand-muted:   251 91% 95%;       /* purple-100 #EDE9FE */
+
+    /* Escala completa de roxo */
+    --purple-50:  250 100% 98%;
+    --purple-100: 251 91% 95%;
+    --purple-200: 251 95% 92%;
+    --purple-300: 252 95% 85%;
+    --purple-400: 255 92% 76%;
+    --purple-500: 258 90% 66%;
+    --purple-600: 263 83% 58%;
+    --purple-700: 263 70% 50%;
+    --purple-800: 263 69% 42%;
+    --purple-900: 263 67% 35%;
+    --purple-950: 264 69% 22%;
+
+    /* Custom Ideor AI colors (mantidos para gradient/glow legados) */
+    --ideor-bg: 240 14% 98%;
+    --ideor-primary: 258 90% 66%;
     --ideor-secondary: 175 70% 38%;
     --ideor-white: 0 0% 100%;
 
     /* Gradients */
     --gradient-hero: linear-gradient(135deg, hsl(var(--ideor-primary)) 0%, hsl(var(--ideor-secondary)) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(206 15% 95%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(240 17% 96%) 100%);
+    --gradient-brand-subtle: linear-gradient(135deg, hsl(var(--brand-subtle)) 0%, hsla(258, 90%, 66%, 0.04) 100%);
 
     /* Shadows */
-    --shadow-glow: 0 0 40px hsl(var(--ideor-primary) / 0.2);
+    --shadow-glow: 0 0 40px hsl(var(--brand) / 0.2);
     --shadow-card: 0 4px 20px -4px hsl(0 0% 0% / 0.1);
+    --shadow-purple-glow: 0 0 0 4px hsl(var(--brand) / 0.12);
+    --shadow-purple-md: 0 4px 12px -2px hsl(var(--brand) / 0.25);
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 206 30% 20%;
-    --sidebar-primary: 261 70% 55%;
+    /* Sidebar — alinhado à nova paleta */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 16% 9%;
+    --sidebar-primary: 258 90% 66%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 261 70% 94%;
-    --sidebar-accent-foreground: 261 70% 35%;
-    --sidebar-border: 206 15% 88%;
-    --sidebar-ring: 261 70% 55%;
+    --sidebar-accent: 250 100% 98%;
+    --sidebar-accent-foreground: 263 70% 50%;
+    --sidebar-border: 240 13% 91%;
+    --sidebar-ring: 258 90% 66%;
   }
 
-  /* ── Tema Escuro IdeorAI (padrão) ───────────────────────── */
+  /* ──────────────────────────────────────────────────────────
+     Tema Escuro (Design Handoff)
+     bg: #0A0A10 / #14141B / #1F1F28 — neutro frio escuro
+     ────────────────────────────────────────────────────────── */
   .dark {
-    --background: 206 21% 16%;
-    --foreground: 0 0% 100%;
+    --background: 240 24% 5%;           /* design dark --bg-canvas #0A0A10 */
+    --foreground: 240 14% 98%;          /* design dark --fg-primary #F8F8FB */
 
-    --card: 206 21% 18%;
-    --card-foreground: 0 0% 100%;
+    --card: 240 16% 9%;                 /* design dark --bg-surface #14141B */
+    --card-foreground: 240 14% 98%;
 
-    --popover: 206 21% 18%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 240 16% 9%;
+    --popover-foreground: 240 14% 98%;
 
-    --primary: 261 77% 70%;
+    --primary: 258 90% 66%;             /* brand é o mesmo no dark */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 175 100% 68%;
-    --secondary-foreground: 206 21% 16%;
+    --secondary: 175 100% 68%;          /* teal mantido */
+    --secondary-foreground: 240 24% 5%;
 
-    --muted: 206 21% 20%;
-    --muted-foreground: 0 0% 70%;
+    --muted: 232 14% 14%;               /* design dark --bg-raised #1F1F28 */
+    --muted-foreground: 240 8% 64%;     /* design dark --fg-tertiary #9C9CAB */
 
-    --accent: 175 100% 68%;
-    --accent-foreground: 206 21% 16%;
+    --accent: 258 30% 22%;              /* brand-muted aproximação opaca */
+    --accent-foreground: 252 95% 85%;   /* purple-300 */
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 206 21% 24%;
-    --input: 206 21% 24%;
-    --ring: 261 77% 70%;
+    --border: 232 13% 19%;              /* design dark --border-default #2A2A36 */
+    --input: 232 13% 19%;
+    --ring: 258 90% 66%;
+
+    /* Tokens semânticos extras (dark) */
+    --bg-canvas:     240 24% 5%;
+    --bg-surface:    240 16% 9%;
+    --bg-raised:     232 14% 14%;
+    --bg-sunken:     240 24% 5%;
+    --bg-tinted:     258 30% 18%;
+
+    --fg-primary:    240 14% 98%;
+    --fg-secondary:  240 13% 79%;       /* #C4C4D0 */
+    --fg-tertiary:   240 8% 64%;        /* #9C9CAB */
+    --fg-muted:      240 7% 45%;        /* #6B6B7B */
+    --fg-on-brand:   0 0% 100%;
+    --fg-brand:      255 92% 76%;       /* purple-400 */
+
+    --border-default: 232 13% 19%;
+    --border-strong:  234 11% 26%;      /* #3A3A48 */
+    --border-brand:   263 70% 50%;      /* purple-700 */
+
+    --brand:         258 90% 66%;
+    --brand-hover:   255 92% 76%;
+    --brand-active:  252 95% 85%;
+    --brand-subtle:  258 30% 16%;       /* aprox de rgba(139,92,246,0.10) sobre dark */
+    --brand-muted:   258 30% 22%;
 
     /* Custom Ideor AI colors */
-    --ideor-bg: 206 21% 16%;
-    --ideor-primary: 261 77% 70%;
+    --ideor-bg: 240 24% 5%;
+    --ideor-primary: 258 90% 66%;
     --ideor-secondary: 175 100% 68%;
     --ideor-white: 0 0% 100%;
 
     /* Gradients */
     --gradient-hero: linear-gradient(135deg, hsl(var(--ideor-primary)) 0%, hsl(var(--ideor-secondary)) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(var(--ideor-bg)) 0%, hsl(206 21% 18%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(var(--ideor-bg)) 0%, hsl(240 16% 9%) 100%);
+    --gradient-brand-subtle: linear-gradient(135deg, hsl(var(--brand-subtle)) 0%, hsla(258, 90%, 66%, 0.04) 100%);
 
-    /* Shadows */
-    --shadow-glow: 0 0 40px hsl(var(--ideor-primary) / 0.3);
-    --shadow-card: 0 10px 30px -10px hsl(0 0% 0% / 0.3);
+    /* Shadows (dark) */
+    --shadow-glow: 0 0 40px hsl(var(--brand) / 0.3);
+    --shadow-card: 0 10px 30px -10px hsl(0 0% 0% / 0.5);
+    --shadow-purple-glow: 0 0 0 4px hsl(var(--brand) / 0.18);
+    --shadow-purple-md: 0 4px 12px -2px hsl(var(--brand) / 0.4);
 
     --radius: 0.5rem;
 
-    --sidebar-background: 206 21% 13%;
-    --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 261 77% 70%;
+    /* Sidebar (dark) */
+    --sidebar-background: 240 16% 9%;
+    --sidebar-foreground: 240 14% 98%;
+    --sidebar-primary: 258 90% 66%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 206 21% 20%;
-    --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 206 21% 22%;
-    --sidebar-ring: 261 77% 70%;
+    --sidebar-accent: 258 30% 22%;
+    --sidebar-accent-foreground: 252 95% 85%;
+    --sidebar-border: 232 13% 19%;
+    --sidebar-ring: 258 90% 66%;
   }
 }
 

@@ -44,10 +44,7 @@ export default async function IdeaLayout({
       <div className="absolute inset-0 pointer-events-none" />
 
       {/* Header fixo */}
-      <header
-        className="fixed inset-x-0 top-0 z-[9999] border-b border-white/10"
-        style={{ backgroundColor: "#202a31" }}
-      >
+      <header className="fixed inset-x-0 top-0 z-[9999] border-b border-border bg-background/85 backdrop-blur-md">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 flex items-center justify-between">
           {/* Logo (esquerda) */}
           <div className="flex items-center">
