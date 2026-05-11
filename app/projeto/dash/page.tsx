@@ -19,7 +19,6 @@ import {
   Users,
   FileText,
   Download,
-  Bell,
 } from "lucide-react";
 import {
   Tooltip,
@@ -32,7 +31,6 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { DeleteProjectButton } from "@/components/delete-project-button";
 import { useStageOperations } from "@/hooks/use-stage-operations";
-import { ProjectAnalyticsPanel } from "@/components/projeto/project-analytics-panel";
 import { BenchmarkPanel } from "@/components/projeto/benchmark-panel";
 import { AnunciarModal } from "@/components/marketplace/anunciar-modal";
 import { GoPivotCard } from "@/app/projeto/[id]/components/go-pivot-gate";
@@ -72,11 +70,20 @@ function DashPageContent() {
     ivo_t?: number;
     ivo_d?: number;
     ivo_score_10?: number;
+    keywords?: string[] | null;
   } | null>(null);
   const [activeDialog, setActiveDialog] = useState<string | null>(null);
   const [anunciarOpen, setAnunciarOpen] = useState(false);
   const [stageStatuses, setStageStatuses] = useState<StageStatus[]>([]);
   const [peerProjects, setPeerProjects] = useState<{ score: number }[]>([]);
+  const [projectKeywords, setProjectKeywords] = useState<string[]>([]);
+
+  const handleKeywordsChange = async (next: string[]) => {
+    setProjectKeywords(next);
+    if (!projectId) return;
+    const supabase = createClient();
+    await supabase.from("projects").update({ keywords: next }).eq("id", projectId);
+  };
   const [ivoHistory, setIvoHistory] = useState<{ date: string; value: number; label: string }[]>([]);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -232,6 +239,14 @@ function DashPageContent() {
 
         if (projectData) {
           setProject(projectData);
+
+          // Inicializar keywords — DB tem prioridade, fallback para label da categoria
+          if (projectData.keywords && projectData.keywords.length > 0) {
+            setProjectKeywords(projectData.keywords);
+          } else if (projectData.category) {
+            const catLabel = (categories.find((c) => c.value === projectData.category) || { label: projectData.category }).label;
+            setProjectKeywords([catLabel]);
+          }
 
           // Benchmark: buscar projetos públicos da mesma categoria (não-bloqueante)
           if (projectData.category) {
@@ -835,20 +850,6 @@ function DashPageContent() {
               </Tooltip>
             )}
 
-            {/* Separador visual */}
-            <span className="hidden sm:inline-block h-6 w-px bg-border mx-1" aria-hidden />
-
-            {/* Notificações (icon-only) */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button className="relative h-9 w-9 inline-flex items-center justify-center rounded-md hover:bg-surface-sunken transition-colors">
-                  <Bell className="h-4 w-4 text-ink-secondary" strokeWidth={2} />
-                  <span className="absolute top-2 right-2 h-1.5 w-1.5 bg-red-500 rounded-full" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent><p>Notificações</p></TooltipContent>
-            </Tooltip>
-
             {/* Excluir projeto (icon-only via componente existente) */}
             {projectId && project && (
               <DeleteProjectButton
@@ -962,9 +963,8 @@ function DashPageContent() {
 
           {/* Keywords */}
           <KeywordsBlock
-            keywords={[
-              ...(project?.category ? [(categories.find((c) => c.value === project.category) || { label: project.category }).label] : []),
-            ].filter(Boolean) as string[]}
+            keywords={projectKeywords}
+            onKeywordsChange={handleKeywordsChange}
           />
 
           {/* Equipe */}
@@ -996,15 +996,6 @@ function DashPageContent() {
         }));
         return <MilestoneStrip milestones={milestones} />;
       })()}
-
-      {/* ─── Analytics + Benchmark (mantidos abaixo) ──────────── */}
-      {projectId && Object.keys(etapaContent).length > 0 && (
-        <ProjectAnalyticsPanel
-          etapaContent={etapaContent}
-          completedStages={completedStages}
-          onPublishToMarketplace={() => setAnunciarOpen(true)}
-        />
-      )}
 
       {project?.category && project?.score !== undefined && (
         <BenchmarkPanel

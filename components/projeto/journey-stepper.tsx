@@ -140,7 +140,7 @@ export function JourneyStepper({
                   ) : isLocked ? (
                     <Lock className="h-4 w-4" strokeWidth={2} />
                   ) : (
-                    <Icon className="h-5 w-5" strokeWidth={2} />
+                    <Rocket className="h-5 w-5" strokeWidth={2} />
                   )}
                 </span>
                 <span className="font-mono text-[10px] font-semibold leading-none text-ink-muted">

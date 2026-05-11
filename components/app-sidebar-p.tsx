@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react"
-import { Home, Settings, User, Menu, X, Trash2, ListChecks, ChevronDown, Rocket, Users, FileText, ShieldCheck } from "lucide-react"
+import { Home, Settings, User, Menu, X, Trash2, ChevronDown, Rocket, Users, FileText, ShieldCheck } from "lucide-react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -129,30 +129,6 @@ export function AppSidebar({ user, onCardOpen }: AppSidebarProps) {
     {
       title: "Desenvolvimento",
       items: [
-        {
-          title: "Roadmap",
-          icon: ListChecks,
-          expandable: true,
-          cardId: "tasks",
-          subitems: [
-            {
-              title: "Problema e Oportunidade",
-              cardId: "etapa1",
-            },
-            {
-              title: "Pesquisa de Mercado",
-              cardId: "etapa2",
-            },
-            {
-              title: "Proposta de Valor",
-              cardId: "etapa3",
-            },
-            {
-              title: "Modelo de Negócio",
-              cardId: "etapa4",
-            },
-          ],
-        },
         {
           title: "MVP",
           icon: Rocket,
