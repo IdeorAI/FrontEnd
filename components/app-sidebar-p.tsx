@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react"
-import { Home, Settings, User, Menu, X, Trash2, ChevronDown, Rocket, Users, FileText, ShieldCheck } from "lucide-react"
+import { Home, Settings, User, Menu, X, Trash2, ChevronDown, Rocket, Users, FileText, ShieldCheck, LogOut } from "lucide-react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -91,6 +91,12 @@ export function AppSidebar({ user, onCardOpen }: AppSidebarProps) {
       setIsDeleting(false);
       setShowDeleteDialog(false);
     }
+  };
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
   };
 
   type MenuItem = {
@@ -319,8 +325,8 @@ export function AppSidebar({ user, onCardOpen }: AppSidebarProps) {
             </div>
           ))}
 
-          {/* Botão Excluir Projeto */}
-          <div className="px-4 py-2 mt-4 border-t pt-4">
+          {/* Ações de projeto: Excluir + Sair */}
+          <div className="px-4 mt-4 border-t pt-4 space-y-2">
             <Button
               variant="destructive"
               className="w-full justify-start"
@@ -328,6 +334,14 @@ export function AppSidebar({ user, onCardOpen }: AppSidebarProps) {
             >
               <Trash2 className="h-5 w-5 mr-3" />
               Excluir Projeto
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-ink-secondary hover:text-ink-primary"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-5 w-5 mr-3" />
+              Sair
             </Button>
           </div>
         </div>

@@ -1,7 +1,6 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { LogoutButton } from "@/components/logout-button";
 import { TeamAvatars } from "@/components/team-avatars";
 import { CardDialog } from "@/components/card-dialog";
 import { AIStageCard } from "@/components/ai-stage-card";
@@ -29,7 +28,6 @@ import {
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { DeleteProjectButton } from "@/components/delete-project-button";
 import { useStageOperations } from "@/hooks/use-stage-operations";
 import { BenchmarkPanel } from "@/components/projeto/benchmark-panel";
 import { AnunciarModal } from "@/components/marketplace/anunciar-modal";
@@ -40,7 +38,7 @@ import { StageDetailCard } from "@/components/projeto/stage-detail-card";
 import { IvoCard } from "@/components/projeto/ivo-card";
 import { KeywordsBlock } from "@/components/projeto/keywords-block";
 import { MilestoneStrip, DEFAULT_MILESTONES } from "@/components/projeto/milestone-strip";
-import { Folder, Eye, ShieldCheck, Flag, ChevronRight as ChevronRightLucide } from "lucide-react";
+import { Folder, ShieldCheck, Flag, ChevronRight as ChevronRightLucide } from "lucide-react";
 import dynamic from "next/dynamic";
 
 const IvoMiniChart = dynamic(
@@ -796,16 +794,6 @@ function DashPageContent() {
 
           {/* Cluster de ações */}
           <div className="flex items-center gap-2">
-            {/* Pré-visualizar (placeholder visual) */}
-            <button
-              type="button"
-              className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-card text-sm font-semibold text-ink-secondary hover:border-strong hover:text-ink-primary transition-colors"
-              title="Pré-visualizar projeto"
-            >
-              <Eye className="h-4 w-4" strokeWidth={2} />
-              Pré-visualizar
-            </button>
-
             {/* Exportar */}
             {todasEtapasCompletas && (
               <Tooltip>
@@ -850,18 +838,6 @@ function DashPageContent() {
               </Tooltip>
             )}
 
-            {/* Excluir projeto (icon-only via componente existente) */}
-            {projectId && project && (
-              <DeleteProjectButton
-                projectId={projectId}
-                projectName={project.name || 'Projeto'}
-                variant="full"
-                onDeleted={() => router.push('/dashboard')}
-              />
-            )}
-
-            {/* Logout */}
-            <LogoutButton />
           </div>
         </div>
 
