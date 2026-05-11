@@ -107,7 +107,6 @@ export function JourneyStepper({
             const isCompleted = completed.includes(i);
             const isActive = !isCompleted && i === currentIndex;
             const isLocked = !isCompleted && !isActive && i > currentIndex;
-            const Icon = stage.icon;
             const clickable = !isLocked && onStageClick;
 
             return (
