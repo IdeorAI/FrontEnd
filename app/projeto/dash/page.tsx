@@ -16,7 +16,6 @@ import {
   Briefcase,
   Rocket,
   Users,
-  FileText,
   Download,
 } from "lucide-react";
 import {
