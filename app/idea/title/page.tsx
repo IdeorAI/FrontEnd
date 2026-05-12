@@ -15,8 +15,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Lightbulb, ChevronLeft, Save } from "lucide-react";
+import { Lightbulb, ChevronLeft, Save, Sparkles } from "lucide-react";
 import categories from "@/lib/data/categories.json";
+import { streamChat } from "@/lib/api/chat";
 
 export default function TitlePage() {
   const router = useRouter();
@@ -29,6 +30,7 @@ export default function TitlePage() {
   const [description, setDescription] = useState<string>("");
   const [category, setCategory] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -50,6 +52,24 @@ export default function TitlePage() {
 
   const handleBack = () =>
     projectId && router.replace(`/idea/choice?project_id=${projectId}`);
+
+  const handleSuggestName = async () => {
+    if (!description || suggesting) return;
+    setSuggesting(true);
+    setName("");
+    try {
+      const prompt = `Com base na descrição a seguir, sugira um nome criativo, curto e memorável (máx. 5 palavras) para este projeto de startup. Responda APENAS com o nome, sem explicações, sem aspas, sem pontuação final.\n\nDescrição: ${description}\nCategoria: ${getCategoryLabel(category)}`;
+      let full = "";
+      for await (const delta of streamChat(prompt, [], { mode: "guide" })) {
+        full += delta;
+        setName(full.trim());
+      }
+    } catch {
+      // silently ignore — user can type manually
+    } finally {
+      setSuggesting(false);
+    }
+  };
 
   const handleSave = async () => {
     setError("");
@@ -133,15 +153,26 @@ export default function TitlePage() {
           <CardContent className="p-0 space-y-6">
             {/* Nome do projeto */}
             <div>
-              <Input
-                value={name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setName(e.target.value)
-                }
-                placeholder="Digite o nome do projeto"
-                maxLength={100}
-                className="h-10"
-              />
+              <div className="flex gap-2">
+                <Input
+                  value={name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setName(e.target.value)
+                  }
+                  placeholder="Digite o nome do projeto"
+                  maxLength={100}
+                  className="h-10 flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus-visible:ring-brand/50"
+                />
+                <button
+                  type="button"
+                  onClick={handleSuggestName}
+                  disabled={!description || suggesting}
+                  title="Sugerir nome com IA"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-brand/40 bg-brand/10 text-brand hover:bg-brand/20 transition-colors disabled:opacity-40"
+                >
+                  <Sparkles className={`h-4 w-4 ${suggesting ? "animate-pulse" : ""}`} />
+                </button>
+              </div>
               <div className="mt-1 text-right text-xs text-white/60">
                 {name.length}/100
               </div>
@@ -187,7 +218,7 @@ export default function TitlePage() {
                 type="button"
                 variant="outline"
                 onClick={handleBack}
-                className="order-1 sm:order-1"
+                className="order-1 sm:order-1 text-brand border-brand/40 hover:bg-brand/10 hover:text-brand"
               >
                 <ChevronLeft className="mr-2 h-4 w-4" />
                 Voltar

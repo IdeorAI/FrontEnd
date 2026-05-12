@@ -1,4 +1,6 @@
 // API client para projetos
+import { authHeaders } from './auth-headers';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export interface Project {
@@ -38,9 +40,7 @@ export interface UpdateProjectDto {
 
 export async function getProjects(userId: string): Promise<Project[]> {
   const res = await fetch(`${API_BASE}/api/projects`, {
-    headers: {
-      'x-user-id': userId,
-    },
+    headers: await authHeaders(userId),
   });
 
   if (!res.ok) throw new Error('Failed to fetch projects');
@@ -49,9 +49,7 @@ export async function getProjects(userId: string): Promise<Project[]> {
 
 export async function getProject(projectId: string, userId: string): Promise<Project> {
   const res = await fetch(`${API_BASE}/api/projects/${projectId}`, {
-    headers: {
-      'x-user-id': userId,
-    },
+    headers: await authHeaders(userId),
   });
 
   if (!res.ok) throw new Error('Failed to fetch project');
@@ -61,10 +59,7 @@ export async function getProject(projectId: string, userId: string): Promise<Pro
 export async function createProject(data: CreateProjectDto, userId: string): Promise<Project> {
   const res = await fetch(`${API_BASE}/api/projects`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-user-id': userId,
-    },
+    headers: await authHeaders(userId, { 'Content-Type': 'application/json' }),
     body: JSON.stringify(data),
   });
 
@@ -79,10 +74,7 @@ export async function updateProject(
 ): Promise<Project> {
   const res = await fetch(`${API_BASE}/api/projects/${projectId}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-user-id': userId,
-    },
+    headers: await authHeaders(userId, { 'Content-Type': 'application/json' }),
     body: JSON.stringify(data),
   });
 
@@ -97,10 +89,7 @@ export async function changePhase(
 ): Promise<Project> {
   const res = await fetch(`${API_BASE}/api/projects/${projectId}/phase`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-user-id': userId,
-    },
+    headers: await authHeaders(userId, { 'Content-Type': 'application/json' }),
     body: JSON.stringify({ newPhase }),
   });
 
@@ -111,9 +100,7 @@ export async function changePhase(
 export async function deleteProject(projectId: string, userId: string): Promise<void> {
   const res = await fetch(`${API_BASE}/api/projects/${projectId}`, {
     method: 'DELETE',
-    headers: {
-      'x-user-id': userId,
-    },
+    headers: await authHeaders(userId),
   });
 
   if (!res.ok) {

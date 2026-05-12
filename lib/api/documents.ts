@@ -1,5 +1,6 @@
 // API client para geração de documentos
 import { log } from '@/lib/logger';
+import { authHeaders } from './auth-headers';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -48,10 +49,7 @@ export async function generateDocument(
   try {
     const res = await fetch(`${API_BASE}/api/projects/${projectId}/documents/generate`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-user-id': userId,
-      },
+      headers: await authHeaders(userId, { 'Content-Type': 'application/json' }),
       body: JSON.stringify(data),
     });
 
@@ -118,10 +116,7 @@ export async function regenerateDocument(
 ): Promise<GenerateDocumentResponse> {
   const res = await fetch(`${API_BASE}/api/documents/${taskId}/regenerate`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-user-id': userId,
-    },
+    headers: await authHeaders(userId, { 'Content-Type': 'application/json' }),
     body: JSON.stringify(newInputs),
   });
 
@@ -136,10 +131,7 @@ export async function refineDocument(
 ): Promise<GenerateDocumentResponse> {
   const res = await fetch(`${API_BASE}/api/documents/${taskId}/refine`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-user-id': userId,
-    },
+    headers: await authHeaders(userId, { 'Content-Type': 'application/json' }),
     body: JSON.stringify({ feedback }),
   });
 

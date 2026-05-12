@@ -78,7 +78,7 @@ export default function ChoicePage() {
             <p className="text-muted-foreground mb-4">
               Não foi possível carregar as ideias. Tente voltar e gerar novamente.
             </p>
-            <Button onClick={handleBack}>
+            <Button onClick={handleBack} variant="outline" className="text-brand border-brand/40 hover:bg-brand/10 hover:text-brand">
               <ChevronLeft className="mr-2 h-4 w-4" />
               Voltar
             </Button>
@@ -166,7 +166,7 @@ export default function ChoicePage() {
               type="button"
               variant="outline"
               onClick={handleBack}
-              className="order-1 sm:order-1"
+              className="order-1 sm:order-1 text-brand border-brand/40 hover:bg-brand/10 hover:text-brand"
             >
               <ChevronLeft className="mr-2 h-4 w-4" />
               Voltar

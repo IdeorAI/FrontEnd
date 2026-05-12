@@ -1,4 +1,6 @@
 // API client para stage summaries (resumos das etapas)
+import { authHeaders } from './auth-headers';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export interface StageSummary {
@@ -33,9 +35,7 @@ export async function getStageSummaries(
   userId: string
 ): Promise<StageSummary[]> {
   const res = await fetch(`${API_BASE}/api/projects/${projectId}/stage-summaries`, {
-    headers: {
-      'x-user-id': userId,
-    },
+    headers: await authHeaders(userId),
   });
 
   if (!res.ok) {
@@ -59,9 +59,7 @@ export async function getStageStatuses(
   userId: string
 ): Promise<StageStatus[]> {
   const res = await fetch(`${API_BASE}/api/projects/${projectId}/stage-statuses`, {
-    headers: {
-      'x-user-id': userId,
-    },
+    headers: await authHeaders(userId),
   });
 
   if (!res.ok) {

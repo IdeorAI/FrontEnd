@@ -1,4 +1,6 @@
 // API client para tasks/etapas
+import { authHeaders } from './auth-headers';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 export interface ProjectTask {
@@ -24,9 +26,7 @@ export interface CreateTaskDto {
 
 export async function getProjectTasks(projectId: string, userId: string): Promise<ProjectTask[]> {
   const res = await fetch(`${API_BASE}/api/projects/${projectId}/tasks`, {
-    headers: {
-      'x-user-id': userId,
-    },
+    headers: await authHeaders(userId),
   });
 
   if (!res.ok) throw new Error('Failed to fetch tasks');
@@ -35,9 +35,7 @@ export async function getProjectTasks(projectId: string, userId: string): Promis
 
 export async function getTask(taskId: string, userId: string): Promise<ProjectTask> {
   const res = await fetch(`${API_BASE}/api/tasks/${taskId}`, {
-    headers: {
-      'x-user-id': userId,
-    },
+    headers: await authHeaders(userId),
   });
 
   if (!res.ok) throw new Error('Failed to fetch task');
@@ -49,9 +47,7 @@ export async function getNextStage(
   userId: string
 ): Promise<{ nextStage: string | null; message: string }> {
   const res = await fetch(`${API_BASE}/api/projects/${projectId}/next-stage`, {
-    headers: {
-      'x-user-id': userId,
-    },
+    headers: await authHeaders(userId),
   });
 
   if (!res.ok) throw new Error('Failed to get next stage');
@@ -63,9 +59,7 @@ export async function canAdvance(
   userId: string
 ): Promise<{ canAdvance: boolean; projectId: string }> {
   const res = await fetch(`${API_BASE}/api/projects/${projectId}/can-advance`, {
-    headers: {
-      'x-user-id': userId,
-    },
+    headers: await authHeaders(userId),
   });
 
   if (!res.ok) throw new Error('Failed to check if can advance');
