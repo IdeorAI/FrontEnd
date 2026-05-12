@@ -132,17 +132,13 @@ export function JourneyStepper({
                 aria-current={isActive ? "step" : undefined}
                 aria-expanded={isExpanded}
               >
-                <span className="relative">
-                  {isActive && (
-                    <span className="absolute inset-0 rounded-xl border-2 border-brand animate-pulse" />
-                  )}
                 <span
                   className={cn(
                     "flex h-11 w-11 items-center justify-center rounded-xl transition-all",
                     isCompleted &&
                       "bg-brand text-brand-foreground shadow-sm group-hover:bg-brand-hover",
                     isActive &&
-                      "border-2 border-brand bg-card text-ink-brand shadow-purple-md",
+                      "border-2 border-brand bg-card text-ink-brand shadow-purple-md ring-4 ring-brand/12 animate-pulse",
                     isLocked &&
                       "border-2 border-dashed border-strong bg-card text-ink-muted",
                     isExpanded && !isCompleted &&
@@ -156,7 +152,6 @@ export function JourneyStepper({
                   ) : (
                     <Rocket className="h-5 w-5" strokeWidth={2} />
                   )}
-                </span>
                 </span>
                 <span className="font-mono text-[10px] font-semibold leading-none text-ink-muted">
                   {stage.short}
