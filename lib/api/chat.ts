@@ -14,6 +14,9 @@ export interface ChatContext {
   score?: number;
   goPivotVerdict?: string;
   projectName?: string;
+  mode?: 'guide' | 'refine';
+  stageContent?: string;
+  stageName?: string;
 }
 
 async function authHeaders(): Promise<Record<string, string>> {
@@ -42,12 +45,15 @@ export async function* streamChat(
     body: JSON.stringify({
       message,
       history: history.slice(-6),
+      mode: ctx.mode ?? 'guide',
       projectId: ctx.projectId,
       currentStageIndex: ctx.currentStageIndex ?? 0,
       ivoScore: ctx.ivoScore,
       score: ctx.score,
       goPivotVerdict: ctx.goPivotVerdict,
       projectName: ctx.projectName,
+      stageContent: ctx.stageContent,
+      stageName: ctx.stageName,
     }),
     signal,
   });

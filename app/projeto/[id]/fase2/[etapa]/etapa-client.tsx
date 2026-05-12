@@ -15,6 +15,7 @@ import { StageStatusBadge } from "@/components/stage-status-badge";
 import { AlertCircle, RefreshCw, Sparkles, Edit2, Save, X, ArrowLeft } from "lucide-react";
 import { MvpPromptPanel } from "@/components/projeto/mvp-prompt-panel";
 import { LlmLoadingOverlay } from "@/components/ui/llm-loading-overlay";
+import { RefineChat } from "@/components/chat/refine-chat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
@@ -513,38 +514,24 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
             )}
           </Card>
 
-          {/* Refinamento com IA */}
+          {/* Refinamento com IA — chat iterativo */}
           {!isEditing && (
-            <Card className="p-6 space-y-4">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-[#8c7dff]" />
-                <h3 className="text-lg font-semibold text-[#8c7dff]">
-                  Refinar com IA
-                </h3>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Forneça feedback específico sobre o que deseja melhorar ou
-                ajustar no documento.
-              </p>
-              <Textarea
-                placeholder="Ex: Detalhe mais a seção de mercado com dados quantitativos..."
-                value={refineText}
-                onChange={(e) => setRefineText(e.target.value)}
-                rows={3}
-                className="resize-none"
-              />
-              <Button
-                onClick={handleRefineSubmit}
-                disabled={!refineText.trim() || isRefining}
-                size="sm"
-                className="gap-2 bg-[#8c7dff] hover:bg-[#7a6de6]"
-              >
-                <Sparkles
-                  className={`w-4 h-4 ${isRefining ? "animate-pulse" : ""}`}
-                />
-                {isRefining ? "Refinando..." : "Refinar com IA"}
-              </Button>
-            </Card>
+            <RefineChat
+              stageContent={contentToDisplayText(generatedContent)}
+              stageName={stageConfig.title}
+              ctx={{ projectId, projectName, currentStageIndex: currentStageNumber - 1 }}
+              onApply={async (newContent) => {
+                if (!taskId) return;
+                try {
+                  const supabase = createClient();
+                  await supabase.from("tasks").update({ content: newContent, updated_at: new Date().toISOString() }).eq("id", taskId);
+                  setGeneratedContent(newContent);
+                  toast.success("Conteúdo refinado aplicado!");
+                } catch {
+                  toast.error("Erro ao salvar conteúdo refinado.");
+                }
+              }}
+            />
           )}
         </div>
       )}
