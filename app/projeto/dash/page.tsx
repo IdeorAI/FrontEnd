@@ -26,6 +26,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useState, useEffect, Suspense } from "react";
+import { cn } from "@/lib/utils";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useStageOperations } from "@/hooks/use-stage-operations";
@@ -36,6 +37,7 @@ import { ProjectHeroBanner } from "@/components/project-hero-banner";
 import { JourneyStepper, DEFAULT_STAGES } from "@/components/projeto/journey-stepper";
 import { StageDetailCard } from "@/components/projeto/stage-detail-card";
 import { IvoCard } from "@/components/projeto/ivo-card";
+import { ScoreCard } from "@/components/projeto/score-card";
 import { KeywordsBlock } from "@/components/projeto/keywords-block";
 import { MilestoneStrip, DEFAULT_MILESTONES } from "@/components/projeto/milestone-strip";
 import { Folder, ShieldCheck, Flag, ChevronRight as ChevronRightLucide } from "lucide-react";
@@ -75,6 +77,8 @@ function DashPageContent() {
   const [stageStatuses, setStageStatuses] = useState<StageStatus[]>([]);
   const [peerProjects, setPeerProjects] = useState<{ score: number }[]>([]);
   const [projectKeywords, setProjectKeywords] = useState<string[]>([]);
+  const [stageSummaries, setStageSummaries] = useState<Partial<Record<string, string>>>({});
+  const [railTab, setRailTab] = useState<'ivo' | 'score'>('ivo');
 
   const handleKeywordsChange = async (next: string[]) => {
     setProjectKeywords(next);
@@ -113,6 +117,9 @@ function DashPageContent() {
         if (currentUser?.id) {
           const summaries = await getStageSummaries(projectId, currentUser.id).catch(() => []);
           const completedFromSummaries = summaries.map((s: { stageNumber: number }) => s.stageNumber);
+          const summaryMap: Partial<Record<string, string>> = {};
+          for (const s of summaries) { summaryMap[`etapa${s.stageNumber}`] = s.summary; }
+          setStageSummaries(summaryMap);
 
           // Fallback: também verificar tasks diretamente (independe de NEXT_PUBLIC_API_URL)
           const { data: tasks } = await supabase
@@ -852,8 +859,8 @@ function DashPageContent() {
           <JourneyStepper
             currentIndex={currentIdx}
             completed={completedSet}
-            onStageClick={(stage) => {
-              if (stage.id === 'etapa0') return; // Início é informativo
+            stageSummaries={stageSummaries}
+            onStageNavigate={(stage) => {
               const num = parseInt(stage.id.replace('etapa', ''), 10);
               if (!isNaN(num) && projectId) {
                 router.push(`/projeto/${projectId}/fase2/etapa${num}`);
@@ -911,19 +918,40 @@ function DashPageContent() {
 
         {/* Direita: Right rail */}
         <div className="flex flex-col gap-3">
-          {/* IVO Card */}
+          {/* IVO + Score tabs */}
           {project && (
-            <IvoCard
-              value={Number(project.ivo_index ?? project.valuation ?? 100)}
-              prevValue={
-                ivoHistory.length >= 2
-                  ? ivoHistory[ivoHistory.length - 2].value
-                  : undefined
-              }
-              history={ivoHistory}
-              partial={(!project.ivo_o || project.ivo_o === 5) && (!project.ivo_m || project.ivo_m === 5)}
-              onClick={() => setActiveDialog('ivo-evolution')}
-            />
+            <div>
+              <div className="mb-2 flex rounded-lg border border-border bg-card p-0.5">
+                {(['ivo', 'score'] as const).map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setRailTab(tab)}
+                    className={cn(
+                      "flex-1 rounded-md py-1.5 text-[11px] font-semibold transition-colors",
+                      railTab === tab
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-ink-muted hover:text-ink-primary",
+                    )}
+                  >
+                    {tab === 'ivo' ? 'IVO Index' : 'Score'}
+                  </button>
+                ))}
+              </div>
+              {railTab === 'ivo' ? (
+                <IvoCard
+                  value={Number(project.ivo_index ?? project.valuation ?? 100)}
+                  prevValue={ivoHistory.length >= 2 ? ivoHistory[ivoHistory.length - 2].value : undefined}
+                  history={ivoHistory}
+                  partial={(!project.ivo_o || project.ivo_o === 5) && (!project.ivo_m || project.ivo_m === 5)}
+                  onClick={() => setActiveDialog('ivo-evolution')}
+                />
+              ) : (
+                <ScoreCard
+                  score={Number(project.score ?? 0)}
+                  onClick={() => setActiveDialog('benchmark')}
+                />
+              )}
+            </div>
           )}
 
           {/* GO or PIVOT */}

@@ -11,6 +11,9 @@ import {
   Check,
   Lock,
   Sparkles,
+  ChevronDown,
+  FileText,
+  Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,35 +34,46 @@ export const DEFAULT_STAGES: JourneyStage[] = [
 ];
 
 interface JourneyStepperProps {
-  /** Index (0..stages.length-1) da etapa atualmente em andamento. */
   currentIndex: number;
-  /** Indices das etapas concluídas. */
   completed: number[];
   stages?: JourneyStage[];
-  onStageClick?: (stage: JourneyStage, index: number) => void;
+  /** Resumos por stage.id — ex: { "etapa1": "Problema validado com 20 entrevistas..." } */
+  stageSummaries?: Partial<Record<string, string>>;
+  /** Chamado quando o usuário confirma navegar para a etapa (editar ou iniciar). */
+  onStageNavigate?: (stage: JourneyStage, index: number) => void;
+  /** Chamado quando o usuário clica em "Gerar Relatório" (spec 014). */
+  onReportClick?: (stage: JourneyStage) => void;
   className?: string;
 }
 
-/**
- * Hero stepper da jornada da startup (Design Handoff).
- * - Linha conectora: trecho concluído com gradient brand
- * - Etapas concluídas: bg brand sólido + check
- * - Etapa ativa: bg surface + 2px brand border + brand-glow
- * - Etapas bloqueadas: dashed border + lock
- */
 export function JourneyStepper({
   currentIndex,
   completed,
   stages = DEFAULT_STAGES,
-  onStageClick,
+  stageSummaries = {},
+  onStageNavigate,
+  onReportClick,
   className,
 }: JourneyStepperProps) {
+  const [expandedId, setExpandedId] = React.useState<string | null>(null);
+
   const lastCompletedIdx = Math.max(-1, ...completed);
-  // % do conector que deve ser preenchido (gradient brand)
   const fillPct =
     stages.length <= 1
       ? 0
       : Math.max(0, Math.min(1, (lastCompletedIdx + 0.5) / (stages.length - 1))) * 100;
+
+  function handleStageClick(stage: JourneyStage, index: number) {
+    if (stage.id === "etapa0") return; // Início é informativo
+    const isLocked = !completed.includes(index) && index > currentIndex;
+    if (isLocked) return;
+    setExpandedId(prev => (prev === stage.id ? null : stage.id));
+  }
+
+  const expandedStage = stages.find(s => s.id === expandedId);
+  const expandedIndex = expandedStage ? stages.indexOf(expandedStage) : -1;
+  const expandedSummary = expandedId ? stageSummaries[expandedId] : undefined;
+  const expandedCompleted = expandedIndex >= 0 && completed.includes(expandedIndex);
 
   return (
     <div
@@ -89,9 +103,7 @@ export function JourneyStepper({
 
       {/* Stepper rail */}
       <div className="relative">
-        {/* Conector base */}
         <div className="absolute left-[22px] right-[22px] top-[22px] h-0.5 -translate-y-1/2 rounded bg-surface-sunken" />
-        {/* Conector preenchido (gradient) */}
         <div
           className="absolute left-[22px] top-[22px] h-0.5 -translate-y-1/2 rounded"
           style={{
@@ -101,19 +113,19 @@ export function JourneyStepper({
           }}
         />
 
-        {/* Steps */}
         <div className="relative flex items-start justify-between">
           {stages.map((stage, i) => {
             const isCompleted = completed.includes(i);
             const isActive = !isCompleted && i === currentIndex;
             const isLocked = !isCompleted && !isActive && i > currentIndex;
-            const clickable = !isLocked && onStageClick;
+            const isExpanded = expandedId === stage.id;
+            const clickable = stage.id !== "etapa0" && !isLocked;
 
             return (
               <button
                 key={stage.id}
                 type="button"
-                onClick={clickable ? () => onStageClick!(stage, i) : undefined}
+                onClick={clickable ? () => handleStageClick(stage, i) : undefined}
                 disabled={!clickable}
                 className={cn(
                   "group flex flex-col items-center gap-1.5 outline-none",
@@ -122,6 +134,7 @@ export function JourneyStepper({
                 )}
                 aria-label={`${stage.short} ${stage.label}`}
                 aria-current={isActive ? "step" : undefined}
+                aria-expanded={isExpanded}
               >
                 <span
                   className={cn(
@@ -132,6 +145,8 @@ export function JourneyStepper({
                       "border-2 border-brand bg-card text-ink-brand shadow-purple-md ring-4 ring-brand/12",
                     isLocked &&
                       "border-2 border-dashed border-strong bg-card text-ink-muted",
+                    isExpanded && !isCompleted &&
+                      "ring-4 ring-brand/20",
                   )}
                 >
                   {isCompleted ? (
@@ -153,11 +168,75 @@ export function JourneyStepper({
                 >
                   {stage.label}
                 </span>
+                {clickable && (
+                  <ChevronDown
+                    className={cn(
+                      "h-3 w-3 text-ink-muted transition-transform duration-200",
+                      isExpanded && "rotate-180",
+                    )}
+                    strokeWidth={2}
+                  />
+                )}
               </button>
             );
           })}
         </div>
       </div>
+
+      {/* Expanded panel */}
+      {expandedStage && (
+        <div className="mt-5 rounded-xl border border-brand/30 bg-brand-subtle/40 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="font-mono text-[10px] font-bold text-ink-muted">{expandedStage.short}</span>
+            <span className="text-sm font-bold text-ink-primary">{expandedStage.label}</span>
+            {expandedCompleted && (
+              <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-brand/15 px-2 py-0.5 text-[10px] font-semibold text-ink-brand">
+                <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                Concluída
+              </span>
+            )}
+          </div>
+
+          {expandedSummary ? (
+            <>
+              <p className="text-xs leading-relaxed text-ink-secondary line-clamp-4">
+                {expandedSummary}
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  onClick={() => onStageNavigate?.(expandedStage, expandedIndex)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-ink-primary transition-colors hover:border-strong hover:bg-surface-raised"
+                >
+                  <Pencil className="h-3 w-3" strokeWidth={2} />
+                  Editar
+                </button>
+                <button
+                  onClick={() => onReportClick?.(expandedStage)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-brand/40 bg-brand/10 px-3 py-1.5 text-xs font-semibold text-ink-brand transition-colors hover:bg-brand/20"
+                >
+                  <FileText className="h-3 w-3" strokeWidth={2} />
+                  Gerar Relatório
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-xs leading-relaxed text-ink-tertiary">
+                Esta etapa ainda não foi realizada. Clique em "Desenvolver" para iniciar com o apoio da IA.
+              </p>
+              <div className="mt-4">
+                <button
+                  onClick={() => onStageNavigate?.(expandedStage, expandedIndex)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-xs font-bold text-brand-foreground transition-colors hover:bg-brand-hover"
+                >
+                  <Rocket className="h-3 w-3" strokeWidth={2} />
+                  Desenvolver Etapa
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

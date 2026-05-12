@@ -37,7 +37,7 @@ export default async function Page() {
   // Se já estiver autenticado, manda pro dashboard
   if (user) redirect("/dashboard");
   return (
-    <>
+    <div className="dark">
       <Header />
 
       <main className="min-h-screen bg-background text-foreground">
@@ -51,6 +51,6 @@ export default async function Page() {
       </main>
 
       <Footer />
-    </>
+    </div>
   );
 }

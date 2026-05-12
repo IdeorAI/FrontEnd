@@ -39,8 +39,8 @@ export function ProjectAvatar({ projectName, category, size = 48 }: ProjectAvata
 
   return (
     <div
-      className="relative rounded-xl overflow-hidden shrink-0 ring-2 ring-border/60 shadow-sm"
-      style={{ width: Math.round(size * 1.5), height: size }}
+      className="relative rounded-full overflow-hidden shrink-0 ring-2 ring-border/60 shadow-sm"
+      style={{ width: size, height: size }}
     >
       <div
         className="absolute inset-0 bg-cover bg-center"
