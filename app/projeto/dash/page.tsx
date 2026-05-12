@@ -1,5 +1,6 @@
 "use client";
 
+import { FEATURES } from "@/lib/feature-flags";
 import { createClient } from "@/lib/supabase/client";
 import { TeamAvatars } from "@/components/team-avatars";
 import { CardDialog } from "@/components/card-dialog";
@@ -829,8 +830,8 @@ function DashPageContent() {
               </a>
             )}
 
-            {/* Publicar no Marketplace */}
-            {completedStages.filter(s => s > 0).length >= 1 && (
+            {/* Publicar no Marketplace — oculto até NEXT_PUBLIC_ENABLE_MARKETPLACE=true */}
+            {FEATURES.MARKETPLACE && completedStages.filter(s => s > 0).length >= 1 && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button

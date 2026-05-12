@@ -33,7 +33,7 @@ export function RocketLoading({
         {/* Foguete principal */}
         <div className="relative z-10 animate-bounce-slow">
           <Rocket
-            className="h-16 w-16 text-[#8c7dff] -rotate-45 drop-shadow-2xl"
+            className="h-16 w-16 text-[#8c7dff] drop-shadow-2xl"
             strokeWidth={2}
           />
           {/* Rastro do foguete */}
@@ -73,7 +73,7 @@ export function RocketLoading({
 export function RocketLoadingInline({ className }: { className?: string }) {
   return (
     <div className={`inline-flex items-center gap-2 ${className || ""}`}>
-      <Rocket className="h-4 w-4 text-[#8c7dff] -rotate-45 animate-bounce" />
+      <Rocket className="h-4 w-4 text-[#8c7dff] animate-bounce" />
       <span className="text-sm text-muted-foreground">Carregando...</span>
     </div>
   );

@@ -10,7 +10,6 @@ import {
   Rocket,
   Check,
   Lock,
-  Sparkles,
   ChevronDown,
   FileText,
   Pencil,
@@ -58,10 +57,11 @@ export function JourneyStepper({
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
 
   const lastCompletedIdx = Math.max(-1, ...completed);
+  const targetIdx = Math.max(lastCompletedIdx, currentIndex);
   const fillPct =
     stages.length <= 1
       ? 0
-      : Math.max(0, Math.min(1, (lastCompletedIdx + 0.5) / (stages.length - 1))) * 100;
+      : Math.max(0, Math.min(1, targetIdx / (stages.length - 1))) * 100;
 
   function handleStageClick(stage: JourneyStage, index: number) {
     if (stage.id === "etapa0") return; // Início é informativo
@@ -94,10 +94,6 @@ export function JourneyStepper({
               <span className="text-ink-tertiary"> · {stages[currentIndex].label}</span>
             )}
           </h2>
-        </div>
-        <div className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-brand-soft bg-brand-subtle px-2.5 py-1 text-[11px] font-semibold text-ink-brand">
-          <Sparkles className="h-3 w-3" strokeWidth={2.25} />
-          IA acompanhando
         </div>
       </div>
 
@@ -136,13 +132,17 @@ export function JourneyStepper({
                 aria-current={isActive ? "step" : undefined}
                 aria-expanded={isExpanded}
               >
+                <span className="relative">
+                  {isActive && (
+                    <span className="absolute inset-0 rounded-xl border-2 border-brand animate-pulse" />
+                  )}
                 <span
                   className={cn(
                     "flex h-11 w-11 items-center justify-center rounded-xl transition-all",
                     isCompleted &&
                       "bg-brand text-brand-foreground shadow-sm group-hover:bg-brand-hover",
                     isActive &&
-                      "border-2 border-brand bg-card text-ink-brand shadow-purple-md ring-4 ring-brand/12",
+                      "border-2 border-brand bg-card text-ink-brand shadow-purple-md",
                     isLocked &&
                       "border-2 border-dashed border-strong bg-card text-ink-muted",
                     isExpanded && !isCompleted &&
@@ -156,6 +156,7 @@ export function JourneyStepper({
                   ) : (
                     <Rocket className="h-5 w-5" strokeWidth={2} />
                   )}
+                </span>
                 </span>
                 <span className="font-mono text-[10px] font-semibold leading-none text-ink-muted">
                   {stage.short}
