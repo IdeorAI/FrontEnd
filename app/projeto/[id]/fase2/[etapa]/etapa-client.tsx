@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { StageForm, FormField } from "@/components/stage-form";
 import { StageContextPanel } from "@/components/StageContextPanel";
-import { regenerateDocument, refineDocument, generateDocument } from "@/lib/api/documents";
+import { regenerateDocument, generateDocument } from "@/lib/api/documents";
 import { getStageSummaries, StageSummary } from "@/lib/api/stage-summaries";
 import { RocketLoading } from "@/components/rocket-loading";
 import { STAGE_CONFIGS } from "@/lib/stage-configs";
@@ -110,7 +110,6 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
   const [projectCategory, setProjectCategory] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
-  const [isRefining, setIsRefining] = useState(false);
   const [taskId, setTaskId] = useState<string | null>(null);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -287,20 +286,6 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
     }
   };
 
-  const handleRefine = async (feedback: string) => {
-    if (!taskId || !userId) return;
-    setIsRefining(true);
-    try {
-      const response = await refineDocument(taskId, feedback, userId);
-      setGeneratedContent(response.generatedContent);
-      toast.success("Documento refinado com sucesso!");
-    } catch (error) {
-      console.error("Error refining document:", error);
-      toast.error("Erro ao refinar documento. Tente novamente.");
-    } finally {
-      setIsRefining(false);
-    }
-  };
 
   const handleStartEdit = () => {
     if (!generatedContent) return;
@@ -386,7 +371,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
 
   return (
     <div className="relative space-y-6">
-      <LlmLoadingOverlay isVisible={isGenerating || isRegenerating || isRefining} />
+      <LlmLoadingOverlay isVisible={isGenerating || isRegenerating} />
 
       {/* Botão voltar para o projeto */}
       <button
