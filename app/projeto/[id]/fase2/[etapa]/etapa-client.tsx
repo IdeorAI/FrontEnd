@@ -12,7 +12,7 @@ import { useUser } from "@/lib/supabase/use-user";
 import { FirstTimeTooltip } from "@/components/first-time-tooltip";
 import { toast } from "sonner";
 import { StageStatusBadge } from "@/components/stage-status-badge";
-import { AlertCircle, RefreshCw, Sparkles, Edit2, Save, X, ArrowLeft } from "lucide-react";
+import { AlertCircle, RefreshCw, Edit2, Save, X, ArrowLeft } from "lucide-react";
 import { MvpPromptPanel } from "@/components/projeto/mvp-prompt-panel";
 import { LlmLoadingOverlay } from "@/components/ui/llm-loading-overlay";
 import { RefineChat } from "@/components/chat/refine-chat";
@@ -332,13 +332,6 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
     } finally {
       setIsSavingEdit(false);
     }
-  };
-
-  const [refineText, setRefineText] = useState("");
-  const handleRefineSubmit = async () => {
-    if (!refineText.trim()) return;
-    await handleRefine(refineText);
-    setRefineText("");
   };
 
   const getNextEtapa = () => {
