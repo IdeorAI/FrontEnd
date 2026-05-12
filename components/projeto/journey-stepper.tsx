@@ -222,7 +222,7 @@ export function JourneyStepper({
           ) : (
             <>
               <p className="text-xs leading-relaxed text-ink-tertiary">
-                Esta etapa ainda não foi realizada. Clique em "Desenvolver" para iniciar com o apoio da IA.
+                Esta etapa ainda não foi realizada. Clique em &quot;Desenvolver&quot; para iniciar com o apoio da IA.
               </p>
               <div className="mt-4">
                 <button
