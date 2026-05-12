@@ -18,7 +18,7 @@ const sortLabels: Record<SortKey, string> = {
   updated_desc: "Atualizados recentemente",
   created_desc: "Mais recentes",
   score_desc: "Maior score",
-  valuation_desc: "Maior valuation",
+  valuation_desc: "Maior IVO Index",
   name_asc: "Nome (A–Z)",
 };
 

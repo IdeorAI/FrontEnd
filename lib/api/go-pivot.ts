@@ -4,9 +4,14 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 async function authHeaders(userId: string): Promise<Record<string, string>> {
   const supabase = createClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  // getUser() verifies the token with the server and auto-refreshes if expired
+  const { data: { user } } = await supabase.auth.getUser();
   const headers: Record<string, string> = { 'x-user-id': userId };
-  if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+  if (user) {
+    // After getUser(), getSession() returns the refreshed token
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+  }
   return headers;
 }
 
