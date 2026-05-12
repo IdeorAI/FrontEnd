@@ -132,26 +132,31 @@ export function JourneyStepper({
                 aria-current={isActive ? "step" : undefined}
                 aria-expanded={isExpanded}
               >
-                <span
-                  className={cn(
-                    "flex h-11 w-11 items-center justify-center rounded-xl transition-all",
-                    isCompleted &&
-                      "bg-brand text-brand-foreground shadow-sm group-hover:bg-brand-hover",
-                    isActive &&
-                      "border-2 border-brand bg-card text-ink-brand shadow-purple-md ring-4 ring-brand/12 animate-pulse",
-                    isLocked &&
-                      "border-2 border-dashed border-strong bg-card text-ink-muted",
-                    isExpanded && !isCompleted &&
-                      "ring-4 ring-brand/20",
+                <span className="relative">
+                  {isActive && (
+                    <span className="pointer-events-none absolute -inset-1 rounded-[14px] border-2 border-brand/60 ring-4 ring-brand/20 animate-pulse" />
                   )}
-                >
-                  {isCompleted ? (
-                    <Check className="h-5 w-5" strokeWidth={2.5} />
-                  ) : isLocked ? (
-                    <Lock className="h-4 w-4" strokeWidth={2} />
-                  ) : (
-                    <Rocket className="h-5 w-5" strokeWidth={2} />
-                  )}
+                  <span
+                    className={cn(
+                      "flex h-11 w-11 items-center justify-center rounded-xl transition-all",
+                      isCompleted &&
+                        "bg-brand text-brand-foreground shadow-sm group-hover:bg-brand-hover",
+                      isActive &&
+                        "border-2 border-brand bg-card text-ink-brand shadow-purple-md ring-4 ring-brand/12",
+                      isLocked &&
+                        "border-2 border-dashed border-strong bg-card text-ink-muted",
+                      isExpanded && !isCompleted &&
+                        "ring-4 ring-brand/20",
+                    )}
+                  >
+                    {isCompleted ? (
+                      <Check className="h-5 w-5" strokeWidth={2.5} />
+                    ) : isLocked ? (
+                      <Lock className="h-4 w-4" strokeWidth={2} />
+                    ) : (
+                      <Rocket className="h-5 w-5" strokeWidth={2} />
+                    )}
+                  </span>
                 </span>
                 <span className="font-mono text-[10px] font-semibold leading-none text-ink-muted">
                   {stage.short}
