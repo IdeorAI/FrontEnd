@@ -37,7 +37,7 @@ export function RocketLoading({
             strokeWidth={2}
           />
           {/* Rastro do foguete */}
-          <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-2 h-8 bg-gradient-to-t from-[#8c7dff]/60 to-transparent blur-sm animate-pulse" />
+          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-2 h-8 bg-gradient-to-b from-[#8c7dff]/60 to-transparent blur-sm animate-pulse" />
         </div>
       </div>
 

@@ -42,7 +42,7 @@ export function LlmLoadingOverlay({
             className="h-16 w-16 text-[#8c7dff] drop-shadow-2xl"
             strokeWidth={2}
           />
-          <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-2 h-8 bg-gradient-to-t from-[#8c7dff]/60 to-transparent blur-sm animate-pulse" />
+          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-2 h-8 bg-gradient-to-b from-[#8c7dff]/60 to-transparent blur-sm animate-pulse" />
         </div>
       </div>
 
