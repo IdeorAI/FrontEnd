@@ -40,7 +40,7 @@ import { IvoCard } from "@/components/projeto/ivo-card";
 import { ScoreCard } from "@/components/projeto/score-card";
 import { KeywordsBlock } from "@/components/projeto/keywords-block";
 import { MilestoneStrip, DEFAULT_MILESTONES } from "@/components/projeto/milestone-strip";
-import { Folder, ShieldCheck, Flag, ChevronRight as ChevronRightLucide } from "lucide-react";
+import { Folder, ShieldCheck, Flag, ChevronRight as ChevronRightLucide, Pencil, FileText, Rocket as RocketIcon, ChevronDown as ChevronDownIcon } from "lucide-react";
 import dynamic from "next/dynamic";
 
 const IvoMiniChart = dynamic(
@@ -79,6 +79,7 @@ function DashPageContent() {
   const [projectKeywords, setProjectKeywords] = useState<string[]>([]);
   const [stageSummaries, setStageSummaries] = useState<Partial<Record<string, string>>>({});
   const [railTab, setRailTab] = useState<'ivo' | 'score'>('ivo');
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
 
   const handleKeywordsChange = async (next: string[]) => {
     setProjectKeywords(next);
@@ -901,16 +902,65 @@ function DashPageContent() {
               const isCompleted = completedStages.includes(num);
               const isLocked = isEtapaBloqueada(s.id);
               const status = isCompleted ? 'completed' : isLocked ? 'locked' : 'in-progress';
+              const isExpanded = expandedCardId === s.id;
+              const summary = stageSummaries[s.id];
               return (
-                <StageDetailCard
-                  key={s.id}
-                  short={s.short}
-                  label={s.label}
-                  description={s.description}
-                  icon={s.icon}
-                  status={status}
-                  onClick={() => projectId && router.push(`/projeto/${projectId}/fase2/etapa${num}`)}
-                />
+                <div key={s.id}>
+                  <StageDetailCard
+                    short={s.short}
+                    label={s.label}
+                    description={s.description}
+                    icon={s.icon}
+                    status={status}
+                    onClick={isLocked ? undefined : () => setExpandedCardId(prev => prev === s.id ? null : s.id)}
+                  />
+                  {isExpanded && (
+                    <div className="mt-1 rounded-xl border border-brand/30 bg-brand-subtle/40 p-4">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-xs font-bold text-ink-primary">{s.label}</span>
+                        <button onClick={() => setExpandedCardId(null)} className="text-ink-muted hover:text-ink-primary">
+                          <ChevronDownIcon className="h-4 w-4 rotate-180" strokeWidth={2} />
+                        </button>
+                      </div>
+                      {summary ? (
+                        <>
+                          <p className="text-xs leading-relaxed text-ink-secondary line-clamp-4">{summary}</p>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <button
+                              onClick={() => projectId && router.push(`/projeto/${projectId}/fase2/etapa${num}`)}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-ink-primary hover:border-strong"
+                            >
+                              <Pencil className="h-3 w-3" strokeWidth={2} />
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => {/* spec 014 */}}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-brand/40 bg-brand/10 px-3 py-1.5 text-xs font-semibold text-ink-brand hover:bg-brand/20"
+                            >
+                              <FileText className="h-3 w-3" strokeWidth={2} />
+                              Gerar Relatório
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-xs leading-relaxed text-ink-tertiary">
+                            Esta etapa ainda não foi realizada. Clique em &quot;Desenvolver&quot; para iniciar com o apoio da IA.
+                          </p>
+                          <div className="mt-3">
+                            <button
+                              onClick={() => projectId && router.push(`/projeto/${projectId}/fase2/etapa${num}`)}
+                              className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-xs font-bold text-brand-foreground hover:bg-brand-hover"
+                            >
+                              <RocketIcon className="h-3 w-3" strokeWidth={2} />
+                              Desenvolver Etapa
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
               );
             });
           })()}
