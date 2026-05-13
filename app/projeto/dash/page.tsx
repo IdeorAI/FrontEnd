@@ -25,7 +25,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useReducer, Suspense } from "react";
 import { cn } from "@/lib/utils";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -53,41 +53,114 @@ const IvoFullChart = dynamic(
   { ssr: false, loading: () => <div className="h-52 w-full bg-muted/30 rounded animate-pulse" /> }
 );
 
+// ─── Dash State Types & Reducer ───────────────────────────────────────────────
+
+type DashUser = { id?: string; email?: string; user_metadata?: Record<string, unknown> } | null;
+
+type DashProject = {
+  name?: string;
+  valuation?: number;
+  description?: string;
+  created_at?: string;
+  score?: number;
+  category?: string;
+  ivo_index?: number;
+  ivo_o?: number;
+  ivo_m?: number;
+  ivo_v?: number;
+  ivo_e?: number;
+  ivo_t?: number;
+  ivo_d?: number;
+  ivo_score_10?: number;
+  keywords?: string[] | null;
+} | null;
+
+type IvoPoint = { date: string; value: number; label: string };
+
+interface DashState {
+  user: DashUser;
+  project: DashProject;
+  activeDialog: string | null;
+  anunciarOpen: boolean;
+  stageStatuses: StageStatus[];
+  peerProjects: { score: number }[];
+  projectKeywords: string[];
+  stageSummaries: Partial<Record<string, string>>;
+  railTab: 'ivo' | 'score';
+  expandedCardId: string | null;
+  ivoHistory: IvoPoint[];
+}
+
+const initialDashState: DashState = {
+  user: null,
+  project: null,
+  activeDialog: null,
+  anunciarOpen: false,
+  stageStatuses: [],
+  peerProjects: [],
+  projectKeywords: [],
+  stageSummaries: {},
+  railTab: 'ivo',
+  expandedCardId: null,
+  ivoHistory: [],
+};
+
+type DashAction =
+  | { type: 'SET_USER'; payload: DashUser }
+  | { type: 'SET_PROJECT'; payload: DashProject }
+  | { type: 'UPDATE_PROJECT'; payload: Partial<NonNullable<DashProject>> }
+  | { type: 'SET_ACTIVE_DIALOG'; payload: string | null }
+  | { type: 'SET_ANUNCIAR_OPEN'; payload: boolean }
+  | { type: 'SET_STAGE_STATUSES'; payload: StageStatus[] }
+  | { type: 'SET_PEER_PROJECTS'; payload: { score: number }[] }
+  | { type: 'SET_PROJECT_KEYWORDS'; payload: string[] }
+  | { type: 'SET_STAGE_SUMMARIES'; payload: Partial<Record<string, string>> }
+  | { type: 'SET_RAIL_TAB'; payload: 'ivo' | 'score' }
+  | { type: 'SET_EXPANDED_CARD_ID'; payload: string | null }
+  | { type: 'SET_IVO_HISTORY'; payload: IvoPoint[] };
+
+function dashReducer(state: DashState, action: DashAction): DashState {
+  switch (action.type) {
+    case 'SET_USER':           return { ...state, user: action.payload };
+    case 'SET_PROJECT':        return { ...state, project: action.payload };
+    case 'UPDATE_PROJECT':     return { ...state, project: state.project ? { ...state.project, ...action.payload } : state.project };
+    case 'SET_ACTIVE_DIALOG':  return { ...state, activeDialog: action.payload };
+    case 'SET_ANUNCIAR_OPEN':  return { ...state, anunciarOpen: action.payload };
+    case 'SET_STAGE_STATUSES': return { ...state, stageStatuses: action.payload };
+    case 'SET_PEER_PROJECTS':  return { ...state, peerProjects: action.payload };
+    case 'SET_PROJECT_KEYWORDS': return { ...state, projectKeywords: action.payload };
+    case 'SET_STAGE_SUMMARIES': return { ...state, stageSummaries: action.payload };
+    case 'SET_RAIL_TAB':       return { ...state, railTab: action.payload };
+    case 'SET_EXPANDED_CARD_ID': return { ...state, expandedCardId: action.payload };
+    case 'SET_IVO_HISTORY':    return { ...state, ivoHistory: action.payload };
+    default:                   return state;
+  }
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 function DashPageContent() {
-  const [user, setUser] = useState<{ id?: string; email?: string; user_metadata?: Record<string, unknown> } | null>(null);
-  const [project, setProject] = useState<{
-    name?: string;
-    valuation?: number;
-    description?: string;
-    created_at?: string;
-    score?: number;
-    category?: string;
-    ivo_index?: number;
-    ivo_o?: number;
-    ivo_m?: number;
-    ivo_v?: number;
-    ivo_e?: number;
-    ivo_t?: number;
-    ivo_d?: number;
-    ivo_score_10?: number;
-    keywords?: string[] | null;
-  } | null>(null);
-  const [activeDialog, setActiveDialog] = useState<string | null>(null);
-  const [anunciarOpen, setAnunciarOpen] = useState(false);
-  const [stageStatuses, setStageStatuses] = useState<StageStatus[]>([]);
-  const [peerProjects, setPeerProjects] = useState<{ score: number }[]>([]);
-  const [projectKeywords, setProjectKeywords] = useState<string[]>([]);
-  const [stageSummaries, setStageSummaries] = useState<Partial<Record<string, string>>>({});
-  const [railTab, setRailTab] = useState<'ivo' | 'score'>('ivo');
-  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(dashReducer, initialDashState);
+  const {
+    user,
+    project,
+    activeDialog,
+    anunciarOpen,
+    stageStatuses,
+    peerProjects,
+    projectKeywords,
+    stageSummaries,
+    railTab,
+    expandedCardId,
+    ivoHistory,
+  } = state;
 
   const handleKeywordsChange = async (next: string[]) => {
-    setProjectKeywords(next);
+    dispatch({ type: 'SET_PROJECT_KEYWORDS', payload: next });
     if (!projectId) return;
     const supabase = createClient();
     await supabase.from("projects").update({ keywords: next }).eq("id", projectId);
   };
-  const [ivoHistory, setIvoHistory] = useState<{ date: string; value: number; label: string }[]>([]);
   const searchParams = useSearchParams();
   const router = useRouter();
   const projectId = searchParams.get("project_id");
@@ -120,7 +193,7 @@ function DashPageContent() {
           const completedFromSummaries = summaries.map((s: { stageNumber: number }) => s.stageNumber);
           const summaryMap: Partial<Record<string, string>> = {};
           for (const s of summaries) { summaryMap[`etapa${s.stageNumber}`] = s.summary; }
-          setStageSummaries(summaryMap);
+          dispatch({ type: 'SET_STAGE_SUMMARIES', payload: summaryMap });
 
           // Fallback: também verificar tasks diretamente (independe de NEXT_PUBLIC_API_URL)
           const { data: tasks } = await supabase
@@ -138,7 +211,7 @@ function DashPageContent() {
 
           // Calcular statuses baseado nos resumos reais
           const statuses = calculateStageStatus(allCompleted, completedFromSummaries);
-          setStageStatuses(statuses);
+          dispatch({ type: 'SET_STAGE_STATUSES', payload: statuses });
         }
       } catch (error) {
         console.error("[DashPage] Erro ao carregar status das etapas:", error);
@@ -233,7 +306,7 @@ function DashPageContent() {
         return;
       }
 
-      setUser(currentUser);
+      dispatch({ type: 'SET_USER', payload: currentUser });
 
       // Buscar dados do projeto se tiver project_id
       if (projectId) {
@@ -244,14 +317,14 @@ function DashPageContent() {
           .single();
 
         if (projectData) {
-          setProject(projectData);
+          dispatch({ type: 'SET_PROJECT', payload: projectData });
 
           // Inicializar keywords — DB tem prioridade, fallback para label da categoria
           if (projectData.keywords && projectData.keywords.length > 0) {
-            setProjectKeywords(projectData.keywords);
+            dispatch({ type: 'SET_PROJECT_KEYWORDS', payload: projectData.keywords });
           } else if (projectData.category) {
             const catLabel = (categories.find((c) => c.value === projectData.category) || { label: projectData.category }).label;
-            setProjectKeywords([catLabel]);
+            dispatch({ type: 'SET_PROJECT_KEYWORDS', payload: [catLabel] });
           }
 
           // Benchmark: buscar projetos públicos da mesma categoria (não-bloqueante)
@@ -265,7 +338,7 @@ function DashPageContent() {
               .neq("id", projectId)
               .limit(50)
               .then(({ data: peers }) => {
-                if (peers) setPeerProjects(peers);
+                if (peers) dispatch({ type: 'SET_PEER_PROJECTS', payload: peers });
               });
           }
         }
@@ -318,7 +391,7 @@ function DashPageContent() {
             const realScore = Math.min(Math.max(localScore, dbScore), 100);
 
             if (realScore !== dbScore) {
-              setProject(prev => prev ? { ...prev, score: realScore } : prev);
+              dispatch({ type: 'UPDATE_PROJECT', payload: { score: realScore } });
               supabase.from("projects").update({ score: realScore }).eq("id", projectId).then(() => {});
             }
           }
@@ -371,7 +444,7 @@ function DashPageContent() {
               }
             }
 
-            if (points.length >= 2) setIvoHistory(points);
+            if (points.length >= 2) dispatch({ type: 'SET_IVO_HISTORY', payload: points });
           });
       }
     };
@@ -384,7 +457,7 @@ function DashPageContent() {
     // Listen for custom event from sidebar
     const handleOpenCard = (event: Event) => {
       const customEvent = event as CustomEvent<{ cardId: string }>;
-      setActiveDialog(customEvent.detail.cardId);
+      dispatch({ type: 'SET_ACTIVE_DIALOG', payload: customEvent.detail.cardId });
     };
 
     window.addEventListener("openCard", handleOpenCard);
@@ -576,8 +649,8 @@ function DashPageContent() {
           nextStageId="etapa2"
           nextStageTitle="Pesquisa de Mercado"
           onGoToNextStage={() => {
-            setActiveDialog(null);
-            setTimeout(() => setActiveDialog('etapa2'), 300);
+            dispatch({ type: 'SET_ACTIVE_DIALOG', payload: null });
+            setTimeout(() => dispatch({ type: 'SET_ACTIVE_DIALOG', payload: 'etapa2' }), 300);
           }}
         />
       ),
@@ -601,8 +674,8 @@ function DashPageContent() {
           nextStageId="etapa3"
           nextStageTitle="Proposta de Valor"
           onGoToNextStage={() => {
-            setActiveDialog(null);
-            setTimeout(() => setActiveDialog('etapa3'), 300);
+            dispatch({ type: 'SET_ACTIVE_DIALOG', payload: null });
+            setTimeout(() => dispatch({ type: 'SET_ACTIVE_DIALOG', payload: 'etapa3' }), 300);
           }}
         />
       ),
@@ -626,8 +699,8 @@ function DashPageContent() {
           nextStageId="etapa4"
           nextStageTitle="Modelo de Negócio"
           onGoToNextStage={() => {
-            setActiveDialog(null);
-            setTimeout(() => setActiveDialog('etapa4'), 300);
+            dispatch({ type: 'SET_ACTIVE_DIALOG', payload: null });
+            setTimeout(() => dispatch({ type: 'SET_ACTIVE_DIALOG', payload: 'etapa4' }), 300);
           }}
         />
       ),
@@ -651,8 +724,8 @@ function DashPageContent() {
           nextStageId="etapa5"
           nextStageTitle="MVP"
           onGoToNextStage={() => {
-            setActiveDialog(null);
-            setTimeout(() => setActiveDialog('etapa5'), 300);
+            dispatch({ type: 'SET_ACTIVE_DIALOG', payload: null });
+            setTimeout(() => dispatch({ type: 'SET_ACTIVE_DIALOG', payload: 'etapa5' }), 300);
           }}
         />
       ),
@@ -835,7 +908,7 @@ function DashPageContent() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    onClick={() => setAnunciarOpen(true)}
+                    onClick={() => dispatch({ type: 'SET_ANUNCIAR_OPEN', payload: true })}
                     className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-md bg-brand-subtle text-ink-brand text-sm font-semibold hover:bg-brand-muted transition-colors"
                   >
                     <Rocket className="h-4 w-4" strokeWidth={2} />
@@ -912,13 +985,13 @@ function DashPageContent() {
                     description={s.description}
                     icon={s.icon}
                     status={status}
-                    onClick={isLocked ? undefined : () => setExpandedCardId(prev => prev === s.id ? null : s.id)}
+                    onClick={isLocked ? undefined : () => dispatch({ type: 'SET_EXPANDED_CARD_ID', payload: expandedCardId === s.id ? null : s.id })}
                   />
                   {isExpanded && (
                     <div className="mt-1 rounded-xl border border-brand/30 bg-brand-subtle/40 p-4">
                       <div className="mb-2 flex items-center justify-between">
                         <span className="text-xs font-bold text-ink-primary">{s.label}</span>
-                        <button onClick={() => setExpandedCardId(null)} className="text-ink-muted hover:text-ink-primary">
+                        <button onClick={() => dispatch({ type: 'SET_EXPANDED_CARD_ID', payload: null })} className="text-ink-muted hover:text-ink-primary">
                           <ChevronDownIcon className="h-4 w-4 rotate-180" strokeWidth={2} />
                         </button>
                       </div>
@@ -975,7 +1048,7 @@ function DashPageContent() {
                 {(['ivo', 'score'] as const).map(tab => (
                   <button
                     key={tab}
-                    onClick={() => setRailTab(tab)}
+                    onClick={() => dispatch({ type: 'SET_RAIL_TAB', payload: tab })}
                     className={cn(
                       "flex-1 rounded-md py-1.5 text-[11px] font-semibold transition-colors",
                       railTab === tab
@@ -993,12 +1066,12 @@ function DashPageContent() {
                   prevValue={ivoHistory.length >= 2 ? ivoHistory[ivoHistory.length - 2].value : undefined}
                   history={ivoHistory}
                   partial={(!project.ivo_o || project.ivo_o === 5) && (!project.ivo_m || project.ivo_m === 5)}
-                  onClick={() => setActiveDialog('ivo-evolution')}
+                  onClick={() => dispatch({ type: 'SET_ACTIVE_DIALOG', payload: 'ivo-evolution' })}
                 />
               ) : (
                 <ScoreCard
                   score={Number(project.score ?? 0)}
-                  onClick={() => setActiveDialog('benchmark')}
+                  onClick={() => dispatch({ type: 'SET_ACTIVE_DIALOG', payload: 'benchmark' })}
                 />
               )}
             </div>
@@ -1023,7 +1096,7 @@ function DashPageContent() {
 
           {/* Equipe */}
           <button
-            onClick={() => setActiveDialog('equipe')}
+            onClick={() => dispatch({ type: 'SET_ACTIVE_DIALOG', payload: 'equipe' })}
             className="rounded-xl border border-border bg-card p-5 text-left transition-all hover:border-strong hover:shadow-md"
           >
             <div className="flex items-center justify-between">
@@ -1066,14 +1139,14 @@ function DashPageContent() {
           title={card.dialogTitle}
           content={card.dialogContent}
           isOpen={activeDialog === card.id}
-          onClose={() => setActiveDialog(null)}
+          onClose={() => dispatch({ type: 'SET_ACTIVE_DIALOG', payload: null })}
         />
       ))}
 
       {/* Modal de anunciar no Marketplace */}
       <AnunciarModal
         open={anunciarOpen}
-        onClose={() => setAnunciarOpen(false)}
+        onClose={() => dispatch({ type: 'SET_ANUNCIAR_OPEN', payload: false })}
       />
       </div>
     </TooltipProvider>
