@@ -1,8 +1,9 @@
 import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/database.types";
 
 // Singleton instance - criar apenas uma vez
-let supabaseInstance: SupabaseClient | null = null;
+let supabaseInstance: SupabaseClient<Database> | null = null;
 
 export function createClient() {
   // IMPORTANTE: Não usar singleton no browser client para garantir que cookies sejam lidos sempre
@@ -303,7 +304,7 @@ export function createClient() {
     }
 
     // Criar cliente usando @supabase/ssr que gerencia cookies automaticamente
-    supabaseInstance = createBrowserClient(cleanUrl, cleanAnon, {
+    supabaseInstance = createBrowserClient<Database>(cleanUrl, cleanAnon, {
       cookies: {
         get(name: string) {
           // Ler cookie do document.cookie

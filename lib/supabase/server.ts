@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import type { Database } from "@/lib/database.types";
 
 // Função para sanitizar JWTs corrompidos pelo Vercel
 function sanitizeEnvVar(value: string | undefined): string {
@@ -27,7 +28,7 @@ export async function createClient() {
     throw new Error('Missing Supabase environment variables');
   }
 
-  return createServerClient(url, anon, {
+  return createServerClient<Database>(url, anon, {
       cookies: {
         getAll() {
           return cookieStore.getAll();
