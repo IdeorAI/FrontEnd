@@ -1,6 +1,7 @@
 // app/dashboard/page.tsx
 import type { Metadata } from 'next'
 import { redirect } from "next/navigation";
+import { Suspense } from 'react';
 
 export const metadata: Metadata = {
   title: 'Meus Projetos — IdeorAI',
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
 }
 import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/components/logout-button";
+import { PaginationControls } from "@/components/pagination-controls";
 
 // Marcar como dinâmico para Next.js 15+
 export const dynamic = 'force-dynamic';
@@ -35,6 +37,7 @@ type PageProps = {
     val?: string; // lte_1k | gt_1k | gt_5k | ...
     status?: string; // dev | done
     sort?: string; // created_asc, created_desc, updated_desc, score_desc, valuation_desc, name_asc
+    page?: string;
   }>;
 };
 
@@ -46,11 +49,17 @@ export default async function Page(props: PageProps) {
   } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
+  const PAGE_SIZE = 12;
+  const page = Math.max(1, Number(searchParams?.page ?? '1'));
+  const from = (page - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
+
   // ----- montar query dinamicamente -----
   let query = supabase
     .from("projects")
     .select(
-      "id, name, description, score, valuation, ivo_index, ivo_o, ivo_m, ivo_v, ivo_e, ivo_t, ivo_d, updated_at, created_at, category, current_phase, tasks(id, phase, status, content)"
+      "id, name, description, score, valuation, ivo_index, ivo_o, ivo_m, ivo_v, ivo_e, ivo_t, ivo_d, updated_at, created_at, category, current_phase, tasks(id, phase, status, content)",
+      { count: 'exact' }
     )
     .eq("owner_id", user.id);
 
@@ -131,7 +140,7 @@ export default async function Page(props: PageProps) {
       break;
   }
 
-  const { data: projects, error: loadErr } = await query;
+  const { data: projects, count, error: loadErr } = await query.range(from, to);
   if (loadErr) console.error(loadErr);
 
   // Score local — preview rápido do score; backend recalcula com marcos (Opção B).
@@ -344,6 +353,10 @@ export default async function Page(props: PageProps) {
         )}
       </div>
       </TooltipProvider>
+
+      <Suspense fallback={null}>
+        <PaginationControls page={page} total={count ?? 0} pageSize={PAGE_SIZE} />
+      </Suspense>
 
       {/* ── Compartilhados comigo ──────────────────────────────────────── */}
       {sharedProjects.length > 0 && (
