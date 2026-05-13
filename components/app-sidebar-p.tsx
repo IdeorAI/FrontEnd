@@ -182,6 +182,7 @@ export function AppSidebar({ user, onCardOpen }: AppSidebarProps) {
         size="icon"
         className="lg:hidden fixed top-4 left-4 z-50 bg-background border"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
+        aria-label="Abrir menu"
       >
         <Menu className="h-5 w-5" />
       </Button>

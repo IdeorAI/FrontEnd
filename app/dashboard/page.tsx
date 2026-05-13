@@ -1,5 +1,11 @@
 // app/dashboard/page.tsx
+import type { Metadata } from 'next'
 import { redirect } from "next/navigation";
+
+export const metadata: Metadata = {
+  title: 'Meus Projetos — IdeorAI',
+  description: 'Gerencie e acompanhe suas ideias de startup.',
+}
 import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/components/logout-button";
 

@@ -1,4 +1,10 @@
+import type { Metadata } from 'next'
 import { Check, Zap, Star, Building } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: 'Planos — IdeorAI',
+  description: 'Escolha o plano ideal para acelerar suas ideias de startup.',
+}
 import { Button } from "@/components/ui/button";
 import type { ComponentType } from "react";
 

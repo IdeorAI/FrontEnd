@@ -1,3 +1,10 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Ranking — IdeorAI',
+  description: 'Veja os projetos mais bem avaliados da comunidade IdeorAI.',
+}
+
 import { getAuthUser } from "@/lib/auth/get-auth-user"
 import { Trophy } from "lucide-react"
 

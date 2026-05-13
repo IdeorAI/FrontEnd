@@ -1,3 +1,10 @@
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Contato — IdeorAI',
+  description: 'Entre em contato com a equipe IdeorAI.',
+}
+
 import { ContactForm } from "@/components/contact-form"
 import { Mail, MessageCircle, Clock } from "lucide-react"
 
