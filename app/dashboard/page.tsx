@@ -2,12 +2,16 @@
 import type { Metadata } from 'next'
 import { redirect } from "next/navigation";
 import { Suspense } from 'react';
+import { cache } from 'react';
 
 export const metadata: Metadata = {
   title: 'Meus Projetos — IdeorAI',
   description: 'Gerencie e acompanhe suas ideias de startup.',
 }
 import { createClient } from "@/lib/supabase/server";
+
+// Deduplicate Supabase client creation within the same render pass
+const getSupabaseClient = cache(async () => createClient());
 import { LogoutButton } from "@/components/logout-button";
 import { PaginationControls } from "@/components/pagination-controls";
 
@@ -43,7 +47,7 @@ type PageProps = {
 
 export default async function Page(props: PageProps) {
   const searchParams = await props.searchParams;
-  const supabase = await createClient();
+  const supabase = await getSupabaseClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
