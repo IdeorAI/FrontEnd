@@ -7,6 +7,7 @@ import { LogoutButton } from "@/components/logout-button";
 export const dynamic = 'force-dynamic';
 
 import { DashboardFilters } from "@/components/dashboard-filters";
+import { updateProjectScore } from './actions';
 import categories from "@/lib/data/categories.json";
 import { RoadmapBar } from "@/components/roadmap-bar";
 import { ProjectCardLink } from "@/components/project-card-link";
@@ -154,7 +155,7 @@ export default async function Page(props: PageProps) {
     const tasks = Array.isArray(p.tasks) ? p.tasks : [];
     const realScore = computeScore(tasks, p as { ivo_o?: number; ivo_m?: number; ivo_v?: number; ivo_e?: number; ivo_t?: number }, Number(p.score ?? 0));
     if (realScore !== Number(p.score ?? 0)) {
-      supabase.from("projects").update({ score: realScore }).eq("id", p.id).then(() => {});
+      updateProjectScore(p.id, realScore).catch(() => {});
       p.score = realScore;
     }
   }
