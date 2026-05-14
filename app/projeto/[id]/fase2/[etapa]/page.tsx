@@ -28,7 +28,7 @@ export default function EtapaPage() {
           .eq("id", user.id)
           .single();
 
-        setSeenTooltips(profile?.seen_tooltips ?? {});
+        setSeenTooltips((profile?.seen_tooltips ?? {}) as unknown as Record<string, boolean>);
       } catch (error) {
         console.error("[EtapaPage] Error loading data:", error);
       } finally {

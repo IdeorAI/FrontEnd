@@ -3,6 +3,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import type { Json } from "@/lib/database.types";
 
 export interface OnboardingAnswers {
   has_idea: "sim_especifica" | "algumas_ideias" | "descobrindo";
@@ -22,7 +23,7 @@ export async function completeOnboarding(answers: OnboardingAnswers) {
     .from("profiles")
     .update({
       onboarding_completed: true,
-      onboarding_answers: answers,
+      onboarding_answers: answers as unknown as Json,
     })
     .eq("id", user.id);
 

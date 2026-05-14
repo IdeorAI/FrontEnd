@@ -304,7 +304,7 @@ export function createClient(): SupabaseClient<Database> {
     }
 
     // Criar cliente usando @supabase/ssr que gerencia cookies automaticamente
-    supabaseInstance = createBrowserClient<Database>(cleanUrl, cleanAnon, {
+    supabaseInstance = (createBrowserClient(cleanUrl, cleanAnon, {
       cookies: {
         get(name: string) {
           // Ler cookie do document.cookie
@@ -354,7 +354,7 @@ export function createClient(): SupabaseClient<Database> {
       global: {
         fetch: customFetch,
       },
-    });
+    }) as unknown as SupabaseClient<Database>);
 
     console.log('[Supabase Client] Created NEW browser client', {
       authUrl: `${cleanUrl}/auth/v1`,

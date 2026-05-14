@@ -155,6 +155,10 @@ function DashPageContent() {
     ivoHistory,
   } = state;
 
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const projectId = searchParams.get("project_id");
+
   const handleKeywordsChange = async (next: string[]) => {
     dispatch({ type: 'SET_PROJECT_KEYWORDS', payload: next });
     if (!projectId) return;
@@ -171,11 +175,8 @@ function DashPageContent() {
       .select("ivo_index, ivo_o, ivo_m, ivo_v, ivo_e, ivo_t, ivo_d, ivo_score_10")
       .eq("id", projectId)
       .single();
-    if (data) dispatch({ type: 'UPDATE_PROJECT', payload: data });
+    if (data) dispatch({ type: 'UPDATE_PROJECT', payload: data as unknown as Partial<NonNullable<DashProject>> });
   }, [projectId]);
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const projectId = searchParams.get("project_id");
 
   const {
     etapaContent,
@@ -329,7 +330,7 @@ function DashPageContent() {
           .single();
 
         if (projectData) {
-          dispatch({ type: 'SET_PROJECT', payload: projectData });
+          dispatch({ type: 'SET_PROJECT', payload: projectData as unknown as DashProject });
 
           // Inicializar keywords — DB tem prioridade, fallback para label da categoria
           if (projectData.keywords && projectData.keywords.length > 0) {
@@ -433,7 +434,7 @@ function DashPageContent() {
             }
 
             // 2. Adicionar todos os snapshots históricos
-            (histData ?? []).forEach((row: { recorded_at: string; ivo_index: number }) => {
+            ((histData ?? []).filter(r => r.recorded_at !== null && r.ivo_index !== null) as { recorded_at: string; ivo_index: number }[]).forEach((row) => {
               const d = new Date(row.recorded_at);
               points.push({
                 date: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),

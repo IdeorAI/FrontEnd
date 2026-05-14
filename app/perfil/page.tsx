@@ -46,13 +46,13 @@ export default function PerfilPage() {
 
       const { data: p } = await supabase
         .from("profiles")
-        .select("id, name, bio")
+        .select("id, username, bio")
         .eq("id", user.id)
         .single();
 
       setProfile({
         id: user.id,
-        name: p?.name || user.user_metadata?.name || user.email?.split("@")[0] || "Usuário",
+        name: p?.username || user.user_metadata?.name as string || user.email?.split("@")[0] || "Usuário",
         bio: p?.bio ?? null,
         email: user.email || "",
       });
@@ -79,7 +79,7 @@ export default function PerfilPage() {
 
       await supabase
         .from("profiles")
-        .update({ name: editName.trim(), bio: editBio.trim() || null })
+        .update({ username: editName.trim(), bio: editBio.trim() || null })
         .eq("id", profile.id);
 
       await supabase.auth.updateUser({ data: { name: editName.trim() } });

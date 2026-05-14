@@ -127,7 +127,7 @@ export async function saveGeneratedDocument(
 export async function getExistingDocument(
   projectId: string,
   stage: string
-): Promise<{ id: string; content: string } | null> {
+): Promise<{ id: string; content: string | null } | null> {
   const supabase = createClient();
 
   console.log('[supabase-tasks] Buscando documento existente:', { projectId, stage });
