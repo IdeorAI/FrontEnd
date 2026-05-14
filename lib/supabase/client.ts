@@ -5,7 +5,7 @@ import type { Database } from "@/lib/database.types";
 // Singleton instance - criar apenas uma vez
 let supabaseInstance: SupabaseClient<Database> | null = null;
 
-export function createClient() {
+export function createClient(): SupabaseClient<Database> {
   // IMPORTANTE: Não usar singleton no browser client para garantir que cookies sejam lidos sempre
   // if (supabaseInstance) {
   //   console.log('[Supabase Client] Reusing existing instance');
