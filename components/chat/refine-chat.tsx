@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useState, KeyboardEvent } from "react";
-import { Sparkles, Send, CheckCheck, RotateCcw, Check, X } from "lucide-react";
+import { useState } from "react";
+import { Check, X, Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { streamChat, type ChatMessage, type ChatContext, type DiffEvent, type Error422Event } from "@/lib/api/chat";
+import { refineDocument, RefineError } from "@/lib/api/refine";
+import type { ChatContext } from "@/lib/api/chat";
 
 interface RefineChatProps {
   stageContent: string;
@@ -16,269 +17,181 @@ interface RefineChatProps {
 function humanizeKey(key: string): string {
   return key
     .split("_")
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
 }
 
 function getOriginalValue(stageContent: string, key: string): string {
   try {
     const parsed = JSON.parse(stageContent);
-    return typeof parsed[key] === "string" ? parsed[key] : JSON.stringify(parsed[key] ?? "");
+    return typeof parsed[key] === "string"
+      ? parsed[key]
+      : JSON.stringify(parsed[key] ?? "");
   } catch {
-    return stageContent;
+    return "";
   }
 }
 
-export function RefineChat({ stageContent, stageName, ctx, onApply, className }: RefineChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState("");
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [lastAiContent, setLastAiContent] = useState<string | null>(null);
-
-  // Diff state
-  const [diffSections, setDiffSections] = useState<Record<string, string> | null>(null);
+export function RefineChat({
+  stageContent,
+  stageName,
+  ctx,
+  onApply,
+  className,
+}: RefineChatProps) {
+  const [feedback, setFeedback] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [diffSections, setDiffSections] = useState<Record<
+    string,
+    string
+  > | null>(null);
   const [diffError, setDiffError] = useState<string | null>(null);
   const [acceptedKeys, setAcceptedKeys] = useState<Set<string>>(new Set());
   const [rejectedKeys, setRejectedKeys] = useState<Set<string>>(new Set());
 
-  const abortRef = useRef<AbortController | null>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
-
-  const sendMessage = async (text: string) => {
-    if (!text.trim() || isStreaming) return;
-    setError(null);
-    setDiffError(null);
+  async function handleSubmit() {
+    if (!feedback.trim() || isLoading) return;
+    setIsLoading(true);
     setDiffSections(null);
-    setAcceptedKeys(new Set());
-    setRejectedKeys(new Set());
-
-    const userMsg: ChatMessage = { role: "user", content: text.trim() };
-    const updated = [...messages, userMsg];
-    setMessages(updated);
-
-    setIsStreaming(true);
-    abortRef.current = new AbortController();
-
-    const assistantMsg: ChatMessage = { role: "assistant", content: "" };
-    setMessages(prev => [...prev, assistantMsg]);
+    setDiffError(null);
 
     try {
-      let full = "";
-      let pendingDiff: DiffEvent | null = null;
-      let pendingError422: Error422Event | null = null;
+      const sections = await refineDocument({
+        projectId: ctx.projectId ?? "",
+        stageContent,
+        userFeedback: feedback,
+        stageName: stageName ?? ctx.stageName ?? "",
+      });
 
-      for await (const event of streamChat(
-        text.trim(),
-        messages,
-        { ...ctx, mode: "refine", stageContent, stageName } as ChatContext & { mode: string; stageContent: string; stageName: string },
-        abortRef.current.signal,
-      )) {
-        if (typeof event === "string") {
-          full += event;
-          setMessages(prev => {
-            const copy = [...prev];
-            copy[copy.length - 1] = { role: "assistant", content: full };
-            return copy;
-          });
-          bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-        } else if ((event as DiffEvent).isDiff) {
-          pendingDiff = event as DiffEvent;
-        } else if ((event as Error422Event).error422) {
-          pendingError422 = event as Error422Event;
-        }
+      if (Object.keys(sections).length === 0) {
+        setDiffError(
+          "A IA não identificou seções para refinar. Tente ser mais específico na instrução."
+        );
+        return;
       }
 
-      setLastAiContent(full);
-
-      if (pendingDiff) {
-        setDiffSections(pendingDiff.diff.changed_sections);
-      } else if (pendingError422) {
-        setDiffError(pendingError422.error422);
-      }
+      setDiffSections(sections);
+      setAcceptedKeys(new Set(Object.keys(sections)));
+      setRejectedKeys(new Set());
     } catch (err) {
-      if ((err as Error).name === "AbortError") return;
-      setError(err instanceof Error ? err.message : "Erro ao refinar");
-      setMessages(prev => prev.slice(0, -1));
+      if (err instanceof RefineError) {
+        setDiffError(err.serverError);
+      } else {
+        setDiffError("Erro inesperado ao refinar. Tente novamente.");
+      }
     } finally {
-      setIsStreaming(false);
+      setIsLoading(false);
     }
-  };
+  }
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage(input);
-      setInput("");
+  function toggleKey(key: string, action: "accept" | "reject") {
+    if (action === "accept") {
+      setAcceptedKeys((prev) => new Set([...prev, key]));
+      setRejectedKeys((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    } else {
+      setRejectedKeys((prev) => new Set([...prev, key]));
+      setAcceptedKeys((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
     }
-  };
+  }
 
-  const handleSend = () => {
-    sendMessage(input);
-    setInput("");
-  };
-
-  // Fallback apply (no diff)
-  const handleApplyFallback = () => {
-    if (!lastAiContent) return;
-    onApply(lastAiContent);
-  };
-
-  const handleReset = () => {
-    abortRef.current?.abort();
-    setMessages([]);
-    setLastAiContent(null);
-    setError(null);
-    setDiffSections(null);
-    setDiffError(null);
-    setAcceptedKeys(new Set());
-    setRejectedKeys(new Set());
-  };
-
-  const toggleAccept = (key: string) => {
-    setAcceptedKeys(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) { next.delete(key); } else { next.add(key); }
-      return next;
-    });
-    setRejectedKeys(prev => {
-      const next = new Set(prev);
-      next.delete(key);
-      return next;
-    });
-  };
-
-  const toggleReject = (key: string) => {
-    setRejectedKeys(prev => {
-      const next = new Set(prev);
-      if (next.has(key)) { next.delete(key); } else { next.add(key); }
-      return next;
-    });
-    setAcceptedKeys(prev => {
-      const next = new Set(prev);
-      next.delete(key);
-      return next;
-    });
-  };
-
-  const handleAcceptAll = () => {
+  function acceptAll() {
     if (!diffSections) return;
     setAcceptedKeys(new Set(Object.keys(diffSections)));
     setRejectedKeys(new Set());
-  };
+  }
 
-  const handleApplyAccepted = () => {
+  function applyAccepted() {
     if (!diffSections || acceptedKeys.size === 0) return;
+
     let original: Record<string, unknown> = {};
-    try { original = JSON.parse(stageContent); } catch { /* raw */ }
+    try {
+      original = JSON.parse(stageContent);
+    } catch {
+      // stageContent não é JSON — improvável mas protege
+    }
+
     const accepted: Record<string, string> = {};
-    acceptedKeys.forEach(k => { accepted[k] = diffSections[k]; });
+    for (const key of acceptedKeys) {
+      accepted[key] = diffSections[key];
+    }
+
     const merged = { ...original, ...accepted };
     onApply(JSON.stringify(merged));
-  };
+
+    // Reset após aplicar
+    setDiffSections(null);
+    setFeedback("");
+    setAcceptedKeys(new Set());
+    setRejectedKeys(new Set());
+  }
 
   return (
-    <div className={cn("rounded-2xl border border-brand/30 bg-brand-subtle/20 overflow-hidden", className)}>
-      {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-brand/20">
-        <Sparkles className="h-4 w-4 text-ink-brand" strokeWidth={2} />
-        <span className="text-sm font-bold text-ink-brand">Refinar com IA</span>
-        <span className="ml-1 text-xs text-ink-tertiary">— refinamento iterativo da etapa</span>
-        {messages.length > 0 && (
-          <button
-            onClick={handleReset}
-            className="ml-auto flex items-center gap-1 text-xs text-ink-muted hover:text-ink-primary transition-colors"
-          >
-            <RotateCcw className="h-3 w-3" />
-            Limpar
-          </button>
-        )}
+    <div className={cn("space-y-4", className)}>
+      {/* Input de feedback */}
+      <div className="space-y-2">
+        <textarea
+          placeholder={`Ex: "Detalhe mais o problema de dor" ou "Torne o mercado-alvo mais específico"`}
+          value={feedback}
+          onChange={(e) => setFeedback(e.target.value)}
+          rows={3}
+          disabled={isLoading}
+          className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) handleSubmit();
+          }}
+        />
+        <button
+          onClick={handleSubmit}
+          disabled={!feedback.trim() || isLoading}
+          className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Refinando…
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-4 w-4" />
+              Refinar com IA
+            </>
+          )}
+        </button>
       </div>
 
-      {/* Messages */}
-      {messages.length > 0 && (
-        <div className="max-h-80 overflow-y-auto px-4 py-3 space-y-3">
-          {messages.map((msg, i) => {
-            const isUser = msg.role === "user";
-            const isLast = i === messages.length - 1;
-            const isLastAi = isLast && !isUser;
-
-            return (
-              <div key={i} className={cn("flex gap-2", isUser ? "justify-end" : "justify-start")}>
-                {!isUser && (
-                  <div className="flex-shrink-0 h-6 w-6 rounded-full bg-brand flex items-center justify-center text-[9px] font-bold text-brand-foreground">
-                    IA
-                  </div>
-                )}
-                <div className="flex flex-col gap-1 max-w-[85%]">
-                  <div
-                    className={cn(
-                      "rounded-xl px-3 py-2 text-xs leading-relaxed",
-                      isUser
-                        ? "bg-brand text-brand-foreground rounded-br-sm"
-                        : "bg-surface-raised text-ink-primary border border-border rounded-bl-sm",
-                    )}
-                  >
-                    <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
-                    {isStreaming && isLast && !isUser && (
-                      <span className="inline-flex gap-0.5 ml-1 align-middle">
-                        {[0, 1, 2].map(j => (
-                          <span key={j} className="h-1 w-1 rounded-full bg-ink-muted animate-bounce"
-                            style={{ animationDelay: `${j * 150}ms` }} />
-                        ))}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Fallback apply button — only when no diff sections and streaming done */}
-                  {isLastAi && !isStreaming && msg.content && !diffSections && (
-                    <button
-                      onClick={handleApplyFallback}
-                      className="self-start flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-bold text-brand-foreground hover:bg-brand-hover transition-colors"
-                    >
-                      <CheckCheck className="h-3 w-3" strokeWidth={2.5} />
-                      Aplicar esta versão
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-          {error && <p className="text-xs text-red-500 text-center">{error}</p>}
-          <div ref={bottomRef} />
-        </div>
-      )}
-
-      {/* Hint inicial */}
-      {messages.length === 0 && (
-        <div className="px-4 py-3">
-          <p className="text-xs text-ink-tertiary">
-            Descreva o que deseja melhorar e a IA vai reescrever o conteúdo com as melhorias. Clique em &ldquo;Aplicar&rdquo; para substituir.
-          </p>
-        </div>
-      )}
-
-      {/* Diff error */}
+      {/* Erro */}
       {diffError && (
-        <div className="mx-4 mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+        <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
           {diffError}
         </div>
       )}
 
       {/* Diff cards */}
-      {diffSections && (
-        <div className="px-4 pb-4 space-y-3">
+      {diffSections && Object.keys(diffSections).length > 0 && (
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-bold text-ink-primary">Alterações sugeridas</span>
+            <p className="text-sm font-medium text-muted-foreground">
+              {Object.keys(diffSections).length} seção
+              {Object.keys(diffSections).length > 1 ? "ões" : ""} modificada
+              {Object.keys(diffSections).length > 1 ? "s" : ""}
+            </p>
             <button
-              onClick={handleAcceptAll}
-              className="text-xs text-green-700 hover:text-green-800 font-medium transition-colors"
+              onClick={acceptAll}
+              className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted"
             >
               Aceitar tudo
             </button>
           </div>
 
-          {Object.entries(diffSections).map(([key, newContent]) => {
+          {Object.entries(diffSections).map(([key, refined]) => {
             const isAccepted = acceptedKeys.has(key);
             const isRejected = rejectedKeys.has(key);
             const original = getOriginalValue(stageContent, key);
@@ -287,93 +200,76 @@ export function RefineChat({ stageContent, stageName, ctx, onApply, className }:
               <div
                 key={key}
                 className={cn(
-                  "rounded-lg border p-4 space-y-3 transition-colors",
-                  isAccepted && "border-green-400 bg-green-50/30",
-                  isRejected && "border-border bg-muted/30 opacity-60",
-                  !isAccepted && !isRejected && "border-border bg-surface-raised",
+                  "overflow-hidden rounded-lg border transition-colors",
+                  isAccepted && "border-green-500/60",
+                  isRejected && "border-red-400/50 opacity-60",
+                  !isAccepted && !isRejected && "border-border"
                 )}
               >
-                <span className="text-xs font-semibold text-ink-primary">{humanizeKey(key)}</span>
+                {/* Header */}
+                <div className="border-b bg-muted/50 px-3 py-2 text-sm font-semibold">
+                  {humanizeKey(key)}
+                </div>
 
-                <div className="space-y-2">
-                  <div className="rounded-md bg-gray-100 px-3 py-2">
-                    <p className="text-[10px] font-semibold text-ink-muted mb-1 uppercase tracking-wide">Original</p>
-                    <p className="text-xs text-ink-secondary whitespace-pre-wrap">{original}</p>
+                {/* Colunas Original / Refinado */}
+                <div className="grid grid-cols-2 divide-x text-sm">
+                  <div className="p-3">
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Original
+                    </p>
+                    <p className="whitespace-pre-wrap text-muted-foreground">
+                      {original || "—"}
+                    </p>
                   </div>
-                  <div className="rounded-md bg-green-50 px-3 py-2">
-                    <p className="text-[10px] font-semibold text-green-700 mb-1 uppercase tracking-wide">Refinado</p>
-                    <p className="text-xs text-ink-primary whitespace-pre-wrap">{newContent}</p>
+                  <div className="bg-green-50 p-3 dark:bg-green-950/20">
+                    <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-green-700 dark:text-green-400">
+                      Refinado
+                    </p>
+                    <p className="whitespace-pre-wrap">{refined}</p>
                   </div>
                 </div>
 
-                <div className="flex gap-2">
+                {/* Botões */}
+                <div className="flex gap-2 border-t bg-muted/20 p-2">
                   <button
-                    onClick={() => toggleAccept(key)}
+                    onClick={() => toggleKey(key, "accept")}
                     className={cn(
-                      "flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors",
+                      "flex items-center gap-1 rounded-md px-3 py-1 text-xs font-medium transition-colors",
                       isAccepted
-                        ? "bg-green-600 text-white"
-                        : "bg-green-100 text-green-800 hover:bg-green-200",
+                        ? "bg-green-600 text-white hover:bg-green-700"
+                        : "border hover:bg-muted"
                     )}
                   >
-                    <Check className="h-3 w-3" strokeWidth={2.5} />
-                    Aceitar
+                    <Check className="h-3 w-3" /> Aceitar
                   </button>
                   <button
-                    onClick={() => toggleReject(key)}
+                    onClick={() => toggleKey(key, "reject")}
                     className={cn(
-                      "flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors",
+                      "flex items-center gap-1 rounded-md px-3 py-1 text-xs font-medium transition-colors",
                       isRejected
-                        ? "bg-gray-500 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200",
+                        ? "bg-red-500 text-white hover:bg-red-600"
+                        : "border hover:bg-muted"
                     )}
                   >
-                    <X className="h-3 w-3" strokeWidth={2.5} />
-                    Rejeitar
+                    <X className="h-3 w-3" /> Rejeitar
                   </button>
                 </div>
               </div>
             );
           })}
 
+          {/* Botão aplicar */}
           <button
-            onClick={handleApplyAccepted}
+            onClick={applyAccepted}
             disabled={acceptedKeys.size === 0}
-            className={cn(
-              "w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-xs font-bold transition-colors",
-              acceptedKeys.size > 0
-                ? "bg-brand text-brand-foreground hover:bg-brand-hover"
-                : "bg-muted text-ink-muted cursor-not-allowed opacity-50",
-            )}
+            className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
           >
-            <CheckCheck className="h-3.5 w-3.5" strokeWidth={2.5} />
-            Aplicar alterações aceitas ({acceptedKeys.size})
+            Aplicar {acceptedKeys.size} alteração
+            {acceptedKeys.size !== 1 ? "ões" : ""} aceita
+            {acceptedKeys.size !== 1 ? "s" : ""}
           </button>
         </div>
       )}
-
-      {/* Input */}
-      <div className="border-t border-brand/20 px-3 py-2.5 flex items-end gap-2">
-        <textarea
-          value={input}
-          onChange={e => setInput(e.target.value.slice(0, 500))}
-          onKeyDown={handleKeyDown}
-          placeholder="Ex: Detalhe mais o problema de dor com dados quantitativos..."
-          rows={2}
-          disabled={isStreaming}
-          className={cn(
-            "flex-1 resize-none rounded-xl border border-border bg-background px-3 py-2 text-xs text-ink-primary placeholder:text-ink-muted",
-            "focus:outline-none focus:ring-1 focus:ring-brand disabled:opacity-50",
-          )}
-        />
-        <button
-          onClick={handleSend}
-          disabled={!input.trim() || isStreaming}
-          className="flex-shrink-0 h-8 w-8 rounded-xl bg-brand flex items-center justify-center text-brand-foreground disabled:opacity-40 hover:bg-brand-hover transition-colors"
-        >
-          <Send className="h-3.5 w-3.5" />
-        </button>
-      </div>
     </div>
   );
 }
