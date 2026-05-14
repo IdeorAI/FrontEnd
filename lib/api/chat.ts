@@ -31,12 +31,23 @@ async function authHeaders(): Promise<Record<string, string>> {
   return headers;
 }
 
+export interface DiffEvent {
+  isDiff: true;
+  diff: { changed_sections: Record<string, string> };
+}
+
+export interface Error422Event {
+  error422: string;
+}
+
+export type StreamEvent = string | DiffEvent | Error422Event;
+
 export async function* streamChat(
   message: string,
   history: ChatMessage[],
   ctx: ChatContext,
   signal?: AbortSignal,
-): AsyncGenerator<string> {
+): AsyncGenerator<StreamEvent> {
   const headers = await authHeaders();
 
   const res = await fetch(`${API_BASE}/api/chat`, {
@@ -81,7 +92,9 @@ export async function* streamChat(
         const parsed = JSON.parse(data);
         if (parsed.done) return;
         if (parsed.error) throw new Error(parsed.error);
-        if (parsed.delta) yield parsed.delta;
+        if (parsed.isDiff) yield parsed as DiffEvent;
+        else if (parsed.error422) yield parsed as Error422Event;
+        else if (parsed.delta) yield parsed.delta as string;
       } catch {
         // skip malformed chunk
       }
