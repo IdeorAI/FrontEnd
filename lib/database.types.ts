@@ -766,11 +766,4 @@ export const Constants = {
   },
 } as const
 
-// Convenience type aliases
 export type ProjectRow = Database['public']['Tables']['projects']['Row']
-export type TaskRow = Database['public']['Tables']['tasks']['Row']
-export type ProfileRow = Database['public']['Tables']['profiles']['Row']
-export type ProjectMemberRow = Database['public']['Tables']['project_members']['Row']
-export type IvoHistoryRow = Database['public']['Tables']['ivo_history']['Row']
-export type GoPivotEvaluationRow = Database['public']['Tables']['go_pivot_evaluations']['Row']
-export type ProjectStageSummaryRow = Database['public']['Tables']['project_stage_summaries']['Row']
