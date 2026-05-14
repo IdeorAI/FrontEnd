@@ -4,22 +4,18 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { RefreshCw, Sparkles, ChevronDown, ChevronRight } from "lucide-react";
+import { Sparkles, ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DocumentViewerProps {
   content: string; // JSON string
-  onRegenerate?: () => void;
   onRefine?: (feedback: string) => void;
-  isRegenerating?: boolean;
   isRefining?: boolean;
 }
 
 export function DocumentViewer({
   content,
-  onRegenerate,
   onRefine,
-  isRegenerating = false,
   isRefining = false,
 }: DocumentViewerProps) {
   const [feedback, setFeedback] = useState("");
@@ -127,24 +123,6 @@ export function DocumentViewer({
 
   return (
     <div className="space-y-6">
-      {/* Ações */}
-      <div className="flex items-center gap-3">
-        {onRegenerate && (
-          <Button
-            onClick={onRegenerate}
-            disabled={isRegenerating}
-            variant="outline"
-            size="sm"
-            className="gap-2"
-          >
-            <RefreshCw
-              className={cn("w-4 h-4", isRegenerating && "animate-spin")}
-            />
-            {isRegenerating ? "Gerando..." : "Regenerar"}
-          </Button>
-        )}
-      </div>
-
       {/* Conteúdo */}
       <Card className="p-6 space-y-4">
         <h3 className="text-lg font-semibold text-[#8c7dff]">

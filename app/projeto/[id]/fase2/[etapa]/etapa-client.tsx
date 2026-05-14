@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { StageForm, FormField } from "@/components/stage-form";
 import { StageContextPanel } from "@/components/StageContextPanel";
-import { regenerateDocument, generateDocument } from "@/lib/api/documents";
+import { generateDocument } from "@/lib/api/documents";
 import { getStageSummaries, StageSummary } from "@/lib/api/stage-summaries";
 import { RocketLoading } from "@/components/rocket-loading";
 import { STAGE_CONFIGS } from "@/lib/stage-configs";
@@ -12,7 +12,7 @@ import { useUser } from "@/lib/supabase/use-user";
 import { FirstTimeTooltip } from "@/components/first-time-tooltip";
 import { toast } from "sonner";
 import { StageStatusBadge } from "@/components/stage-status-badge";
-import { AlertCircle, RefreshCw, Edit2, Save, X, ArrowLeft } from "lucide-react";
+import { AlertCircle, Edit2, Save, X, ArrowLeft } from "lucide-react";
 import { MvpPromptPanel } from "@/components/projeto/mvp-prompt-panel";
 import { LlmLoadingOverlay } from "@/components/ui/llm-loading-overlay";
 import { RefineChat } from "@/components/chat/refine-chat";
@@ -109,7 +109,6 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
   const [projectName, setProjectName] = useState<string>("");
   const [projectCategory, setProjectCategory] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isRegenerating, setIsRegenerating] = useState(false);
   const [taskId, setTaskId] = useState<string | null>(null);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -270,23 +269,6 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
     }
   };
 
-  const handleRegenerate = async () => {
-    if (!taskId || !userId) return;
-    setIsRegenerating(true);
-    try {
-      const response = await regenerateDocument(taskId, {}, userId);
-      setGeneratedContent(response.generatedContent);
-      toast.success("Documento regenerado com sucesso!");
-      router.refresh();
-    } catch (error) {
-      console.error("Error regenerating document:", error);
-      toast.error("Erro ao regenerar documento. Tente novamente.");
-    } finally {
-      setIsRegenerating(false);
-    }
-  };
-
-
   const handleStartEdit = () => {
     if (!generatedContent) return;
     setEditText(contentToDisplayText(generatedContent));
@@ -371,7 +353,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
 
   return (
     <div className="relative space-y-6">
-      <LlmLoadingOverlay isVisible={isGenerating || isRegenerating} />
+      <LlmLoadingOverlay isVisible={isGenerating} />
 
       {/* Botão voltar para o projeto */}
       <button
@@ -422,19 +404,6 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         <div className="space-y-4">
           {/* Ações principais */}
           <div className="flex items-center gap-2 flex-wrap">
-            <Button
-              onClick={handleRegenerate}
-              disabled={isRegenerating || isEditing}
-              variant="outline"
-              size="sm"
-              className="gap-2"
-            >
-              <RefreshCw
-                className={`w-4 h-4 ${isRegenerating ? "animate-spin" : ""}`}
-              />
-              {isRegenerating ? "Gerando..." : "Regenerar"}
-            </Button>
-
             {!isEditing ? (
               <Button
                 onClick={handleStartEdit}
@@ -495,7 +464,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
           {/* Refinamento com IA — chat iterativo */}
           {!isEditing && (
             <RefineChat
-              stageContent={contentToDisplayText(generatedContent)}
+              stageContent={generatedContent}
               stageName={stageConfig.title}
               ctx={{ projectId, projectName, currentStageIndex: currentStageNumber - 1 }}
               onApply={async (newContent) => {
