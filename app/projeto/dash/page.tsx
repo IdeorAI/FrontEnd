@@ -25,7 +25,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useEffect, useReducer, Suspense } from "react";
+import { useEffect, useReducer, useCallback, Suspense } from "react";
 import { cn } from "@/lib/utils";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -161,6 +161,18 @@ function DashPageContent() {
     const supabase = createClient();
     await supabase.from("projects").update({ keywords: next }).eq("id", projectId);
   };
+
+  // Re-busca campos IVO do projeto após background task do backend completar
+  const refreshIvoData = useCallback(async () => {
+    if (!projectId) return;
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("projects")
+      .select("ivo_index, ivo_o, ivo_m, ivo_v, ivo_e, ivo_t, ivo_d, ivo_score_10")
+      .eq("id", projectId)
+      .single();
+    if (data) dispatch({ type: 'UPDATE_PROJECT', payload: data });
+  }, [projectId]);
   const searchParams = useSearchParams();
   const router = useRouter();
   const projectId = searchParams.get("project_id");
@@ -642,7 +654,7 @@ function DashPageContent() {
           description="Identifique o problema que sua solução resolve, as personas afetadas e a oportunidade de mercado existente."
           placeholder="Descreva o problema que você quer resolver. Ex: Pequenas empresas têm dificuldade em encontrar fornecedores confiáveis e comparar preços de forma eficiente..."
           onGenerate={(idea) => generateStage('etapa1', idea)}
-          onSave={(content) => saveStage('etapa1', content)}
+          onSave={async (content) => { await saveStage('etapa1', content); setTimeout(refreshIvoData, 4000); }}
           existingContent={etapaContent['etapa1']}
           initialIdea={project?.description || ""}
           storageKey={projectId ? `${projectId}_etapa1` : undefined}
@@ -667,7 +679,7 @@ function DashPageContent() {
           description="Realize uma análise do mercado-alvo, incluindo TAM/SAM/SOM, principais players e oportunidades."
           placeholder="Descreva sua ideia de negócio. Ex: Plataforma SaaS para gestão de clínicas médicas..."
           onGenerate={(idea) => generateStage('etapa2', idea)}
-          onSave={(content) => saveStage('etapa2', content)}
+          onSave={async (content) => { await saveStage('etapa2', content); setTimeout(refreshIvoData, 4000); }}
           existingContent={etapaContent['etapa2']}
           initialIdea={project?.description || ""}
           storageKey={projectId ? `${projectId}_etapa2` : undefined}
@@ -692,7 +704,7 @@ function DashPageContent() {
           description="Articule o valor único que sua solução oferece, os jobs-to-be-done e diferenciais vs alternativas."
           placeholder="Descreva sua ideia de negócio. Ex: App mobile para conectar freelancers a empresas..."
           onGenerate={(idea) => generateStage('etapa3', idea)}
-          onSave={(content) => saveStage('etapa3', content)}
+          onSave={async (content) => { await saveStage('etapa3', content); setTimeout(refreshIvoData, 4000); }}
           existingContent={etapaContent['etapa3']}
           initialIdea={project?.description || ""}
           storageKey={projectId ? `${projectId}_etapa3` : undefined}
@@ -717,7 +729,7 @@ function DashPageContent() {
           description="Desenvolva seu Business Model Canvas com proposta de valor, segmentos, receitas e canais."
           placeholder="Descreva sua ideia de negócio. Ex: Marketplace B2B para fornecedores industriais..."
           onGenerate={(idea) => generateStage('etapa4', idea)}
-          onSave={(content) => saveStage('etapa4', content)}
+          onSave={async (content) => { await saveStage('etapa4', content); setTimeout(refreshIvoData, 4000); }}
           existingContent={etapaContent['etapa4']}
           initialIdea={project?.description || ""}
           storageKey={projectId ? `${projectId}_etapa4` : undefined}
@@ -742,7 +754,7 @@ function DashPageContent() {
           description="Defina as funcionalidades essenciais do seu MVP, o stack tecnológico e as métricas de sucesso iniciais."
           placeholder="Descreva sua ideia de negócio. Ex: App de delivery para pet shops, com rastreamento em tempo real e agendamento de coleta..."
           onGenerate={(idea) => generateStage('etapa5', idea)}
-          onSave={(content) => saveStage('etapa5', content)}
+          onSave={async (content) => { await saveStage('etapa5', content); setTimeout(refreshIvoData, 4000); }}
           existingContent={etapaContent['etapa5']}
           initialIdea={project?.description || ""}
           storageKey={projectId ? `${projectId}_etapa5` : undefined}
