@@ -372,7 +372,6 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
 
             <DocumentViewer
               content={generatedContent}
-              stageName={stageConfig.title}
               onSectionSave={async (key, newValue) => {
                 if (!taskId || !generatedContent) return;
 
