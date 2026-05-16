@@ -472,16 +472,15 @@ export function DocumentViewer({
                       <Markdown>{section.body}</Markdown>
                     </div>
                     {canEdit && (
-                      <div className="flex justify-end pt-1">
+                      <div className="flex justify-end pt-2">
                         <Button
                           size="sm"
-                          variant="ghost"
-                          className="h-8 text-muted-foreground hover:text-foreground"
+                          className="h-9 gap-2 bg-primary/10 text-primary border border-primary/30 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors font-medium shadow-sm"
                           onClick={() => enterEdit(section)}
                           disabled={editingKey !== null}
                         >
-                          <Edit2 className="w-3.5 h-3.5 mr-1.5" />
-                          Editar
+                          <Edit2 className="w-4 h-4" />
+                          Editar esta seção
                         </Button>
                       </div>
                     )}
