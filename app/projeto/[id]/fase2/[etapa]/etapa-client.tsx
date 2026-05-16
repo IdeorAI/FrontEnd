@@ -12,14 +12,14 @@ import { useUser } from "@/lib/supabase/use-user";
 import { FirstTimeTooltip } from "@/components/first-time-tooltip";
 import { toast } from "sonner";
 import { StageStatusBadge } from "@/components/stage-status-badge";
-import { AlertCircle, Edit2, Save, X, ArrowLeft } from "lucide-react";
+import { AlertCircle, ArrowLeft } from "lucide-react";
 import { MvpPromptPanel } from "@/components/projeto/mvp-prompt-panel";
 import { LlmLoadingOverlay } from "@/components/ui/llm-loading-overlay";
-import { RefineChat } from "@/components/chat/refine-chat";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import { DocumentViewer } from "@/components/document-viewer";
+import { refineSectionAuthHeaders } from "@/lib/api/refine-section";
 
 interface EtapaClientProps {
   seenTooltips: Record<string, boolean>;
@@ -117,11 +117,6 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
   const [stageSummaries, setStageSummaries] = useState<StageSummary[]>([]);
   const [currentStageSaved, setCurrentStageSaved] = useState<boolean | null>(null);
   const [previousStageSummary, setPreviousStageSummary] = useState<string | null>(null);
-
-  // Estado para edição inline do conteúdo gerado
-  const [isEditing, setIsEditing] = useState(false);
-  const [editText, setEditText] = useState<string>("");
-  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Carrega dados diretamente do Supabase (confiável, independente do backend)
   useEffect(() => {
@@ -269,38 +264,6 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
     }
   };
 
-  const handleStartEdit = () => {
-    if (!generatedContent) return;
-    setEditText(generatedContent ?? "");
-    setIsEditing(true);
-  };
-
-  const handleSaveEdit = async () => {
-    if (!taskId || !editText.trim()) return;
-    setIsSavingEdit(true);
-    try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from("tasks")
-        .update({
-          content: editText,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", taskId);
-
-      if (error) throw error;
-
-      setGeneratedContent(editText);
-      setIsEditing(false);
-      toast.success("Conteúdo salvo com sucesso!");
-    } catch (error) {
-      console.error("Error saving edit:", error);
-      toast.error("Erro ao salvar edições.");
-    } finally {
-      setIsSavingEdit(false);
-    }
-  };
-
   const getNextEtapa = () => {
     if (currentStageNumber < 5) return `etapa${currentStageNumber + 1}`;
     return null;
@@ -399,77 +362,69 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         </FirstTimeTooltip>
       )}
 
-      {/* Conteúdo Gerado — visualização e edição */}
+      {/* Conteúdo Gerado — visualização e edição por seção */}
       {generatedContent && (
         <div className="space-y-4">
-          {/* Ações principais */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {!isEditing ? (
-              <Button
-                onClick={handleStartEdit}
-                variant="outline"
-                size="sm"
-                className="gap-2"
-              >
-                <Edit2 className="w-4 h-4" />
-                Editar
-              </Button>
-            ) : (
-              <>
-                <Button
-                  onClick={handleSaveEdit}
-                  disabled={isSavingEdit}
-                  size="sm"
-                  className="gap-2 bg-green-600 hover:bg-green-700 text-white"
-                >
-                  <Save className="w-4 h-4" />
-                  {isSavingEdit ? "Salvando..." : "Salvar edições"}
-                </Button>
-                <Button
-                  onClick={() => setIsEditing(false)}
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                >
-                  <X className="w-4 h-4" />
-                  Cancelar
-                </Button>
-              </>
-            )}
-          </div>
-
-          {/* Área de conteúdo */}
           <Card className="p-6">
             <h3 className="text-lg font-semibold text-[#8c7dff] mb-4">
               {stageConfig.title}
             </h3>
 
             <DocumentViewer
-              content={isEditing ? editText : generatedContent}
-              editable={isEditing}
-              onChange={isEditing ? setEditText : undefined}
-            />
-          </Card>
-
-          {/* Refinamento com IA — chat iterativo */}
-          {isEditing && (
-            <RefineChat
-              stageContent={generatedContent}
+              content={generatedContent}
               stageName={stageConfig.title}
-              ctx={{ projectId, projectName, currentStageIndex: currentStageNumber - 1 }}
-              onApply={async (newContent) => {
-                if (!taskId) return;
+              onSectionSave={async (key, newValue) => {
+                if (!taskId || !generatedContent) return;
+
+                let parsed: Record<string, unknown>;
                 try {
-                  const supabase = createClient();
-                  await supabase.from("tasks").update({ content: newContent, updated_at: new Date().toISOString() }).eq("id", taskId);
-                  setGeneratedContent(newContent);
-                  toast.success("Conteúdo refinado aplicado!");
+                  parsed = JSON.parse(generatedContent);
                 } catch {
-                  toast.error("Erro ao salvar conteúdo refinado.");
+                  parsed = {};
                 }
+                parsed[key] = newValue;
+                const updated = JSON.stringify(parsed, null, 2);
+
+                const supabase = createClient();
+                const { error } = await supabase
+                  .from("tasks")
+                  .update({ content: updated, updated_at: new Date().toISOString() })
+                  .eq("id", taskId);
+
+                if (error) throw new Error("Falha ao salvar no banco de dados");
+
+                setGeneratedContent(updated);
+                toast.success("Seção salva com sucesso");
+              }}
+              onSectionRefine={async (key, sectionTitle, currentValue, feedback) => {
+                const headers = await refineSectionAuthHeaders();
+                const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "";
+
+                const res = await fetch(`${API_BASE}/api/chat/refine-section`, {
+                  method: "POST",
+                  headers,
+                  body: JSON.stringify({
+                    projectId,
+                    stageName: stageConfig.title,
+                    sectionKey: key,
+                    sectionTitle,
+                    sectionContent: currentValue,
+                    userFeedback: feedback,
+                  }),
+                });
+
+                if (res.status === 429) throw new Error("Limite de mensagens por hora atingido");
+                if (res.status === 422) {
+                  const body = await res.json().catch(() => ({ error: "Erro ao refinar" }));
+                  throw new Error(body.error ?? "Erro ao refinar");
+                }
+                if (!res.ok) throw new Error(`Erro ${res.status} ao refinar seção`);
+
+                const data = await res.json();
+                return (data.refinedContent ?? data.RefinedContent) as string;
               }}
             />
-          )}
+          </Card>
         </div>
       )}
 

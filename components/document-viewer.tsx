@@ -2,15 +2,31 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Markdown from "react-markdown";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Edit2,
+  Save,
+  X,
+  Sparkles,
+  Loader2,
+} from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface DocumentViewerProps {
   content: string;
-  /** Quando true, cada seção do accordion vira um textarea editável. */
-  editable?: boolean;
-  /** Chamado sempre que o usuário edita uma seção (no modo editable). */
-  onChange?: (newContent: string) => void;
+  stageName?: string;
+  /** Chamado quando usuário clica Salvar numa seção específica. */
+  onSectionSave?: (key: string, newValue: string) => Promise<void>;
+  /** Chamado quando usuário pede para refinar uma seção via IA. */
+  onSectionRefine?: (
+    key: string,
+    sectionTitle: string,
+    currentValue: string,
+    feedback: string
+  ) => Promise<string>;
 }
 
 interface Section {
@@ -148,43 +164,14 @@ function buildSections(shape: ParsedShape): Section[] {
   ];
 }
 
-/** Reconstrói a string completa a partir das seções editadas. */
-function reconstruct(
-  shape: ParsedShape,
-  sections: Section[],
-  edits: Record<string, string>
-): string {
-  if (shape.kind === "json") {
-    const next: Record<string, unknown> = { ...shape.raw };
-    for (const s of sections) {
-      next[s.key] = edits[s.id] ?? s.body;
-    }
-    return JSON.stringify(next, null, 2);
-  }
-
-  // markdown (wrapped ou plain): rebuild como ## Header\n\nbody
-  const md = sections
-    .map((s) => {
-      const body = edits[s.id] ?? s.body;
-      if (s.title === "Visão Geral" && sections.indexOf(s) === 0) {
-        return body;
-      }
-      return `## ${s.title}\n\n${body}`;
-    })
-    .join("\n\n");
-
-  if (shape.kind === "wrapped-markdown") {
-    return JSON.stringify({ content: md }, null, 2);
-  }
-  return md;
-}
-
 function AutoGrowTextarea({
   value,
   onChange,
+  readOnly,
 }: {
   value: string;
   onChange: (v: string) => void;
+  readOnly?: boolean;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
 
@@ -199,8 +186,12 @@ function AutoGrowTextarea({
     <textarea
       ref={ref}
       value={value}
+      readOnly={readOnly}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className={cn(
+        "w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        readOnly && "opacity-70 cursor-not-allowed"
+      )}
       rows={4}
     />
   );
@@ -208,21 +199,34 @@ function AutoGrowTextarea({
 
 export function DocumentViewer({
   content,
-  editable = false,
-  onChange,
+  stageName: _stageName,
+  onSectionSave,
+  onSectionRefine,
 }: DocumentViewerProps) {
   const shape = useMemo(() => detectShape(content), [content]);
   const sections = useMemo(() => buildSections(shape), [shape]);
 
-  const [edits, setEdits] = useState<Record<string, string>>({});
-  // Reset edits quando o content de origem muda externamente
-  useEffect(() => {
-    setEdits({});
-  }, [content]);
-
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     () => new Set(sections.map((s) => s.id))
   );
+
+  // Estado de edição por seção (1 por vez)
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState<string>("");
+  const [saving, setSaving] = useState(false);
+
+  // Estado de refine
+  const [showRefineInput, setShowRefineInput] = useState(false);
+  const [refineFeedback, setRefineFeedback] = useState("");
+  const [refining, setRefining] = useState(false);
+
+  // Reset ao trocar content externamente
+  useEffect(() => {
+    setEditingKey(null);
+    setEditValue("");
+    setShowRefineInput(false);
+    setRefineFeedback("");
+  }, [content]);
 
   const toggleSection = (id: string) => {
     setExpandedSections((prev) => {
@@ -241,10 +245,61 @@ export function DocumentViewer({
     }
   };
 
-  const handleSectionEdit = (id: string, newBody: string) => {
-    const nextEdits = { ...edits, [id]: newBody };
-    setEdits(nextEdits);
-    onChange?.(reconstruct(shape, sections, nextEdits));
+  const enterEdit = (section: Section) => {
+    setEditingKey(section.key);
+    setEditValue(section.body);
+    setShowRefineInput(false);
+    setRefineFeedback("");
+  };
+
+  const cancelEdit = () => {
+    setEditingKey(null);
+    setEditValue("");
+    setShowRefineInput(false);
+    setRefineFeedback("");
+  };
+
+  const handleSave = async (section: Section) => {
+    if (!onSectionSave) return;
+    setSaving(true);
+    try {
+      await onSectionSave(section.key, editValue);
+      setEditingKey(null);
+      setEditValue("");
+      setShowRefineInput(false);
+      setRefineFeedback("");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao salvar seção";
+      toast.error(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRefine = async (section: Section) => {
+    if (!onSectionRefine) return;
+    if (!refineFeedback.trim()) {
+      toast.error("Descreva o que deseja refinar");
+      return;
+    }
+    setRefining(true);
+    try {
+      const refined = await onSectionRefine(
+        section.key,
+        section.title,
+        editValue,
+        refineFeedback
+      );
+      setEditValue(refined);
+      setShowRefineInput(false);
+      setRefineFeedback("");
+      toast.success("Seção refinada. Revise e clique em Salvar.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao refinar seção";
+      toast.error(msg);
+    } finally {
+      setRefining(false);
+    }
   };
 
   if (sections.length === 0) {
@@ -256,13 +311,15 @@ export function DocumentViewer({
   }
 
   const allExpanded = expandedSections.size === sections.length;
+  const canEdit = !!onSectionSave;
+  const canRefine = !!onSectionRefine;
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between mb-3">
         <span className="text-xs text-muted-foreground">
           {sections.length} {sections.length === 1 ? "seção" : "seções"}
-          {editable && " · editando"}
+          {editingKey && " · editando"}
         </span>
         <button
           onClick={toggleAll}
@@ -274,7 +331,8 @@ export function DocumentViewer({
 
       {sections.map((section, index) => {
         const isOpen = expandedSections.has(section.id);
-        const currentBody = edits[section.id] ?? section.body;
+        const isEditing = editingKey === section.key;
+        const busy = saving || refining;
 
         return (
           <div
@@ -319,16 +377,117 @@ export function DocumentViewer({
             </button>
 
             {isOpen && (
-              <div className="px-4 pb-4 pt-2 border-t border-border/50">
-                {editable ? (
-                  <AutoGrowTextarea
-                    value={currentBody}
-                    onChange={(v) => handleSectionEdit(section.id, v)}
-                  />
+              <div className="px-4 pb-4 pt-2 border-t border-border/50 space-y-3">
+                {isEditing ? (
+                  <>
+                    <AutoGrowTextarea
+                      value={editValue}
+                      onChange={setEditValue}
+                      readOnly={busy}
+                    />
+
+                    {showRefineInput && canRefine && (
+                      <div className="flex flex-col gap-2 rounded-md border border-border/60 bg-muted/30 p-3">
+                        <label className="text-xs font-medium text-muted-foreground">
+                          O que deseja ajustar nesta seção?
+                        </label>
+                        <textarea
+                          value={refineFeedback}
+                          onChange={(e) => setRefineFeedback(e.target.value)}
+                          disabled={refining}
+                          rows={2}
+                          placeholder="Ex: tornar mais conciso, adicionar exemplo prático..."
+                          className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+                        />
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8"
+                            onClick={() => handleRefine(section)}
+                            disabled={refining || !refineFeedback.trim()}
+                          >
+                            {refining ? (
+                              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                            ) : (
+                              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                            )}
+                            Aplicar refinamento
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8"
+                            onClick={() => {
+                              setShowRefineInput(false);
+                              setRefineFeedback("");
+                            }}
+                            disabled={refining}
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <Button
+                        size="sm"
+                        className="h-8 bg-green-600 hover:bg-green-700 text-white"
+                        onClick={() => handleSave(section)}
+                        disabled={busy}
+                      >
+                        {saving ? (
+                          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                        ) : (
+                          <Save className="w-3.5 h-3.5 mr-1.5" />
+                        )}
+                        Salvar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8"
+                        onClick={cancelEdit}
+                        disabled={busy}
+                      >
+                        <X className="w-3.5 h-3.5 mr-1.5" />
+                        Cancelar
+                      </Button>
+                      {canRefine && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8"
+                          onClick={() => setShowRefineInput((v) => !v)}
+                          disabled={busy}
+                        >
+                          <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                          Refinar com IA
+                        </Button>
+                      )}
+                    </div>
+                  </>
                 ) : (
-                  <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-p:my-1.5 prose-li:my-0.5 prose-headings:mt-3 prose-headings:mb-1 prose-strong:text-foreground">
-                    <Markdown>{currentBody}</Markdown>
-                  </div>
+                  <>
+                    <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-p:my-1.5 prose-li:my-0.5 prose-headings:mt-3 prose-headings:mb-1 prose-strong:text-foreground">
+                      <Markdown>{section.body}</Markdown>
+                    </div>
+                    {canEdit && (
+                      <div className="flex justify-end pt-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 text-muted-foreground hover:text-foreground"
+                          onClick={() => enterEdit(section)}
+                          disabled={editingKey !== null}
+                        >
+                          <Edit2 className="w-3.5 h-3.5 mr-1.5" />
+                          Editar
+                        </Button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             )}
