@@ -9,9 +9,15 @@ interface DocumentViewerProps {
   content: string; // JSON string or plain text
 }
 
+interface Section {
+  id: string;
+  title: string;
+  body: string;
+}
+
 function humanizeKey(key: string): string {
   return key
-    .split("_")
+    .split(/[_\-\s]+/)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 }
@@ -60,33 +66,100 @@ function parseContent(content: string): Record<string, unknown> | null {
   return null;
 }
 
+/**
+ * Quebra um texto markdown em seções por headers (#, ##, ###).
+ * Texto antes do primeiro header vira a primeira seção "Visão Geral".
+ */
+function splitMarkdownIntoSections(markdown: string): Section[] {
+  const lines = markdown.split("\n");
+  const sections: Section[] = [];
+  let currentTitle: string | null = null;
+  let currentBody: string[] = [];
+  const headerRegex = /^(#{1,4})\s+(.+?)\s*$/;
+
+  const pushSection = () => {
+    const body = currentBody.join("\n").trim();
+    if (currentTitle || body) {
+      sections.push({
+        id: `${sections.length}-${(currentTitle ?? "intro").slice(0, 30)}`,
+        title: currentTitle ?? "Visão Geral",
+        body,
+      });
+    }
+  };
+
+  for (const line of lines) {
+    const match = headerRegex.exec(line);
+    if (match) {
+      pushSection();
+      currentTitle = match[2].trim();
+      currentBody = [];
+    } else {
+      currentBody.push(line);
+    }
+  }
+  pushSection();
+
+  return sections;
+}
+
+/**
+ * Converte o JSON parseado em uma lista de seções para exibir.
+ */
+function buildSections(parsed: Record<string, unknown>): Section[] {
+  const keys = Object.keys(parsed);
+
+  // Caso especial: backend embrulha texto não-JSON como { content: "..." }
+  // Nesse caso, parseamos o markdown interno em seções.
+  if (
+    keys.length === 1 &&
+    keys[0].toLowerCase() === "content" &&
+    typeof parsed.content === "string"
+  ) {
+    const md = parsed.content as string;
+    const split = splitMarkdownIntoSections(md);
+    if (split.length > 1) return split;
+    return [{ id: "0-content", title: "Conteúdo", body: md }];
+  }
+
+  // Caso normal: cada chave top-level vira uma seção
+  return keys.map((key, idx) => ({
+    id: `${idx}-${key}`,
+    title: humanizeKey(key),
+    body: valueToMarkdown(parsed[key]),
+  }));
+}
+
 export function DocumentViewer({ content }: DocumentViewerProps) {
   const parsed = parseContent(content);
-  const topLevelKeys = parsed ? Object.keys(parsed) : [];
+
+  // Se não for JSON, tenta tratar como markdown puro
+  const sections: Section[] = parsed
+    ? buildSections(parsed)
+    : splitMarkdownIntoSections(content);
 
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    () => new Set(topLevelKeys)
+    () => new Set(sections.map((s) => s.id))
   );
 
-  const toggleSection = (key: string) => {
+  const toggleSection = (id: string) => {
     setExpandedSections((prev) => {
       const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
 
   const toggleAll = () => {
-    if (expandedSections.size === topLevelKeys.length) {
+    if (expandedSections.size === sections.length) {
       setExpandedSections(new Set());
     } else {
-      setExpandedSections(new Set(topLevelKeys));
+      setExpandedSections(new Set(sections.map((s) => s.id)));
     }
   };
 
-  // Fallback: not valid JSON
-  if (!parsed || topLevelKeys.length === 0) {
+  if (sections.length === 0) {
     return (
       <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans text-foreground">
         {content}
@@ -94,14 +167,22 @@ export function DocumentViewer({ content }: DocumentViewerProps) {
     );
   }
 
-  const allExpanded = expandedSections.size === topLevelKeys.length;
+  // Se só tem 1 seção e ela não tem título distinto, mostra direto (sem accordion)
+  if (sections.length === 1) {
+    return (
+      <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed">
+        <Markdown>{sections[0].body}</Markdown>
+      </div>
+    );
+  }
+
+  const allExpanded = expandedSections.size === sections.length;
 
   return (
     <div className="space-y-2">
-      {/* Controls row */}
       <div className="flex items-center justify-between mb-3">
         <span className="text-xs text-muted-foreground">
-          {topLevelKeys.length} seções
+          {sections.length} seções
         </span>
         <button
           onClick={toggleAll}
@@ -111,31 +192,24 @@ export function DocumentViewer({ content }: DocumentViewerProps) {
         </button>
       </div>
 
-      {topLevelKeys.map((key, index) => {
-        const isOpen = expandedSections.has(key);
-        const markdownBody = valueToMarkdown(parsed[key]);
+      {sections.map((section, index) => {
+        const isOpen = expandedSections.has(section.id);
 
         return (
           <div
-            key={key}
+            key={section.id}
             className={cn(
               "rounded-lg border transition-all duration-200",
-              isOpen
-                ? "border-border shadow-sm"
-                : "border-border/50"
+              isOpen ? "border-border shadow-sm" : "border-border/50"
             )}
           >
-            {/* Header */}
             <button
-              onClick={() => toggleSection(key)}
+              onClick={() => toggleSection(section.id)}
               className={cn(
                 "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors rounded-lg",
-                isOpen
-                  ? "bg-primary/5 rounded-b-none"
-                  : "hover:bg-muted/60"
+                isOpen ? "bg-primary/5 rounded-b-none" : "hover:bg-muted/60"
               )}
             >
-              {/* Number badge */}
               <span
                 className={cn(
                   "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors",
@@ -153,7 +227,7 @@ export function DocumentViewer({ content }: DocumentViewerProps) {
                   isOpen ? "text-primary" : "text-foreground"
                 )}
               >
-                {humanizeKey(key)}
+                {section.title}
               </span>
 
               {isOpen ? (
@@ -163,11 +237,10 @@ export function DocumentViewer({ content }: DocumentViewerProps) {
               )}
             </button>
 
-            {/* Body */}
             {isOpen && (
               <div className="px-4 pb-4 pt-2 border-t border-border/50">
-                <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-p:my-1.5 prose-li:my-0.5 prose-headings:mt-3 prose-headings:mb-1">
-                  <Markdown>{markdownBody}</Markdown>
+                <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-p:my-1.5 prose-li:my-0.5 prose-headings:mt-3 prose-headings:mb-1 prose-strong:text-foreground">
+                  <Markdown>{section.body}</Markdown>
                 </div>
               </div>
             )}
