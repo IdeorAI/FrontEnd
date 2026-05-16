@@ -50,7 +50,7 @@ export default function TitlePage() {
         setCategory(data.category ?? "");
       }
     })().catch(console.error);
-  }, [user, projectId, supabase]);
+  }, [user, projectId, supabase, suggestedNameParam]);
 
   const handleBack = () =>
     projectId && router.replace(`/idea/choice?project_id=${projectId}`);

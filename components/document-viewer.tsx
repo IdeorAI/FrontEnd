@@ -112,7 +112,7 @@ export function DocumentViewer({ content }: DocumentViewerProps) {
             {isOpen && (
               <div className="px-4 py-3">
                 <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <Markdown children={markdownBody} />
+                  <Markdown>{markdownBody}</Markdown>
                 </div>
               </div>
             )}
