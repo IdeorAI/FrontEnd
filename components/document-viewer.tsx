@@ -17,7 +17,6 @@ import { cn } from "@/lib/utils";
 
 interface DocumentViewerProps {
   content: string;
-  stageName?: string;
   /** Chamado quando usuário clica Salvar numa seção específica. */
   onSectionSave?: (key: string, newValue: string) => Promise<void>;
   /** Chamado quando usuário pede para refinar uma seção via IA. */
@@ -199,7 +198,6 @@ function AutoGrowTextarea({
 
 export function DocumentViewer({
   content,
-  stageName: _stageName,
   onSectionSave,
   onSectionRefine,
 }: DocumentViewerProps) {
