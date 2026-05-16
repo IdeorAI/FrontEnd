@@ -271,7 +271,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
 
   const handleStartEdit = () => {
     if (!generatedContent) return;
-    setEditText(contentToDisplayText(generatedContent));
+    setEditText(generatedContent ?? "");
     setIsEditing(true);
   };
 
