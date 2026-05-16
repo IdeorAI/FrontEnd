@@ -17,7 +17,6 @@ import { MvpPromptPanel } from "@/components/projeto/mvp-prompt-panel";
 import { LlmLoadingOverlay } from "@/components/ui/llm-loading-overlay";
 import { RefineChat } from "@/components/chat/refine-chat";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import { DocumentViewer } from "@/components/document-viewer";
@@ -445,17 +444,11 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
               {stageConfig.title}
             </h3>
 
-            {isEditing ? (
-              <Textarea
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-                rows={20}
-                className="font-mono text-sm resize-y"
-                placeholder="Edite o conteúdo aqui..."
-              />
-            ) : (
-              <DocumentViewer content={generatedContent} />
-            )}
+            <DocumentViewer
+              content={isEditing ? editText : generatedContent}
+              editable={isEditing}
+              onChange={isEditing ? setEditText : undefined}
+            />
           </Card>
 
           {/* Refinamento com IA — chat iterativo */}
