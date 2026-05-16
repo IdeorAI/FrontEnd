@@ -1017,14 +1017,14 @@ function DashPageContent() {
                               className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-ink-primary hover:border-strong"
                             >
                               <Pencil className="h-3 w-3" strokeWidth={2} />
-                              Editar
+                              Ver mais
                             </button>
                             <button
                               onClick={() => {/* spec 014 */}}
                               className="inline-flex items-center gap-1.5 rounded-lg border border-brand/40 bg-brand/10 px-3 py-1.5 text-xs font-semibold text-ink-brand hover:bg-brand/20"
                             >
                               <FileText className="h-3 w-3" strokeWidth={2} />
-                              Gerar Relatório
+                              Baixar Relatório
                             </button>
                           </div>
                         </>

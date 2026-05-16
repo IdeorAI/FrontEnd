@@ -90,7 +90,7 @@ export function ProjectHeroBanner({ projectName, category, createdAt }: ProjectH
           )}
           {createdAt && (
             <span className="ml-auto text-white/60 text-xs">
-              {new Date(createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+              Criada em: {new Date(createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
             </span>
           )}
         </div>

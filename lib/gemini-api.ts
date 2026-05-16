@@ -21,6 +21,7 @@ export interface SuggestAndSaveRequest {
 export interface GenerateIdeasResponse {
   ideas: string[];
   requestId?: string;
+  suggestedName?: string;
 }
 
 export async function suggestAndSaveIdeas(

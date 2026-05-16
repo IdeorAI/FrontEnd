@@ -23,6 +23,7 @@ export default function TitlePage() {
   const router = useRouter();
   const sp = useSearchParams();
   const projectId = sp.get("project_id");
+  const suggestedNameParam = sp.get("suggested_name");
   const { user } = useUser();
   const supabase = useMemo(() => createClient(), []);
 
@@ -43,7 +44,8 @@ export default function TitlePage() {
         .maybeSingle();
 
       if (!error && data) {
-        setName(data.name ?? "");
+        // Pre-fill name: prefer URL suggested_name (from LLM), fallback to saved name
+        setName(suggestedNameParam || data.name || "");
         setDescription(data.description ?? "");
         setCategory(data.category ?? "");
       }

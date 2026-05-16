@@ -283,7 +283,7 @@ export default async function Page(props: PageProps) {
                         <div className="flex items-center gap-1.5 bg-primary/10 rounded-lg px-2.5 py-1.5 shrink-0">
                           <TrendingUp className="h-3.5 w-3.5 text-primary" />
                           <span className="text-sm font-bold text-primary leading-tight">
-                            {Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact', maximumFractionDigits: 1 }).format(
+                            {Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact', maximumFractionDigits: 0 }).format(
                               Number((p as { ivo_index?: number }).ivo_index ?? 0)
                             )}
                           </span>
@@ -419,7 +419,7 @@ export default async function Page(props: PageProps) {
                             <div className="flex items-center gap-1.5 bg-primary/10 rounded-lg px-2.5 py-1.5 shrink-0">
                               <TrendingUp className="h-3.5 w-3.5 text-primary" />
                               <span className="text-sm font-bold text-primary leading-tight">
-                                {Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", notation: "compact", maximumFractionDigits: 1 }).format(
+                                {Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", notation: "compact", maximumFractionDigits: 0 }).format(
                                   Number(p.ivo_index ?? 0)
                                 )}
                               </span>

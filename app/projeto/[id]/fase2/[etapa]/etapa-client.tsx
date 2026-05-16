@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
+import { DocumentViewer } from "@/components/document-viewer";
 
 interface EtapaClientProps {
   seenTooltips: Record<string, boolean>;
@@ -453,16 +454,12 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
                 placeholder="Edite o conteúdo aqui..."
               />
             ) : (
-              <div className="prose prose-sm max-w-none dark:prose-invert">
-                <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans text-foreground bg-transparent border-0 p-0 m-0">
-                  {contentToDisplayText(generatedContent)}
-                </pre>
-              </div>
+              <DocumentViewer content={generatedContent} />
             )}
           </Card>
 
           {/* Refinamento com IA — chat iterativo */}
-          {!isEditing && (
+          {isEditing && (
             <RefineChat
               stageContent={generatedContent}
               stageName={stageConfig.title}

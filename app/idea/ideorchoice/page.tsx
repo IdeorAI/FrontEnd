@@ -13,6 +13,7 @@ export default function IdeorChoicePage() {
   const router = useRouter();
   const sp = useSearchParams();
   const projectId = sp.get("project_id");
+  const suggestedName = sp.get("suggested_name");
   const { user, loading: userLoading } = useUser();
   const supabase = createClient();
 
@@ -51,7 +52,10 @@ export default function IdeorChoicePage() {
       .eq("id", projectId);
     setSaving(false);
     if (error) return alert("Não foi possível salvar.");
-    router.replace(`/idea/title?project_id=${projectId}`);
+    const nameParam = suggestedName
+      ? `&suggested_name=${encodeURIComponent(suggestedName)}`
+      : "";
+    router.replace(`/idea/title?project_id=${projectId}${nameParam}`);
   };
 
   // Helper para dividir título e descrição
@@ -106,7 +110,7 @@ export default function IdeorChoicePage() {
   if (displayed.length === 0 && !loading) {
     return (
       <div className="mx-auto w-full max-w-5xl px-4 py-6 space-y-4">
-        <Card className="rounded-3xl border-white/10 p-5 shadow-2xl sm:p-8">
+        <Card className="rounded-3xl p-5 shadow-2xl sm:p-8">
           <CardContent className="text-center py-8">
             <p className="text-muted-foreground mb-4">
               Não foi possível carregar as ideias. Tente voltar e gerar novamente.
@@ -132,7 +136,7 @@ export default function IdeorChoicePage() {
       </div>
 
       {/* Main Card */}
-      <Card className="rounded-3xl border-white/10 bg-[#202a31] text-white p-5 shadow-2xl sm:p-8">
+      <Card className="rounded-3xl p-5 shadow-2xl sm:p-8">
         <CardHeader className="pb-4">
           <CardTitle className="text-base font-semibold sm:text-lg">
             Escolha uma das ideias abaixo:
@@ -140,7 +144,7 @@ export default function IdeorChoicePage() {
           {categoryLabel && (
             <CardDescription className="text-sm">
               Categoria:{" "}
-              <span className="font-medium text-teal-300">{categoryLabel}</span>
+              <span className="font-medium text-teal-600 dark:text-teal-300">{categoryLabel}</span>
             </CardDescription>
           )}
         </CardHeader>
@@ -163,18 +167,18 @@ export default function IdeorChoicePage() {
                 >
                   <div
                     className={[
-                      "relative flex h-full flex-col rounded-2xl border bg-slate-900/70 p-4 transition-all sm:p-5",
+                      "relative flex h-full flex-col rounded-2xl border bg-muted/40 p-4 transition-all sm:p-5",
                       isActive
-                        ? "border-teal-300 ring-2 ring-teal-300/40"
-                        : "border-white/10 hover:border-white/30",
+                        ? "border-teal-500 ring-2 ring-teal-500/30"
+                        : "border-border hover:border-muted-foreground/40",
                     ].join(" ")}
                   >
                     <div
                       className={[
                         "absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border",
                         isActive
-                          ? "border-teal-300 bg-teal-300/20"
-                          : "border-white/20 bg-white/5",
+                          ? "border-teal-500 bg-teal-500/20"
+                          : "border-border bg-muted",
                       ].join(" ")}
                     >
                       {isActive ? (
@@ -187,13 +191,13 @@ export default function IdeorChoicePage() {
                     <h3
                       className={[
                         "pr-8 text-sm font-semibold leading-snug",
-                        isActive ? "text-teal-200" : "text-white",
+                        isActive ? "text-teal-600 dark:text-teal-300" : "text-foreground",
                       ].join(" ")}
                     >
                       {title}
                     </h3>
                     {desc && (
-                      <p className="mt-2 flex-grow text-sm leading-relaxed text-white/80">
+                      <p className="mt-2 flex-grow text-sm leading-relaxed text-muted-foreground">
                         {desc}
                       </p>
                     )}

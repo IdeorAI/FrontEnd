@@ -209,14 +209,14 @@ export function JourneyStepper({
                   className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-ink-primary transition-colors hover:border-strong hover:bg-surface-raised"
                 >
                   <Pencil className="h-3 w-3" strokeWidth={2} />
-                  Editar
+                  Ver mais
                 </button>
                 <button
                   onClick={() => onReportClick?.(expandedStage)}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-brand/40 bg-brand/10 px-3 py-1.5 text-xs font-semibold text-ink-brand transition-colors hover:bg-brand/20"
                 >
                   <FileText className="h-3 w-3" strokeWidth={2} />
-                  Gerar Relatório
+                  Baixar Relatório
                 </button>
               </div>
             </>
