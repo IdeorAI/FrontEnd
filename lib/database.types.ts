@@ -7,8 +7,46 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "13.0.4"
+  }
   public: {
     Tables: {
+      beta_feedback: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          status: string
+          title: string
+          url_origem: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          id?: string
+          status?: string
+          title: string
+          url_origem?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          status?: string
+          title?: string
+          url_origem?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           content: string | null
@@ -601,7 +639,9 @@ export type Database = {
         ]
       }
     }
-    Views: Record<string, never>
+    Views: {
+      [_ in never]: never
+    }
     Functions: {
       create_project_with_owner: {
         Args: {
@@ -758,5 +798,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-
-export type ProjectRow = Database['public']['Tables']['projects']['Row']

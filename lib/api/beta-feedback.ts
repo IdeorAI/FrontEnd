@@ -13,7 +13,6 @@ export async function submitBetaFeedback(input: BetaFeedbackInput): Promise<void
   const url_origem = typeof window !== "undefined" ? window.location.pathname : null;
   const user_agent = typeof navigator !== "undefined" ? navigator.userAgent : null;
 
-  // @ts-expect-error — tabela beta_feedback ainda não está nos tipos gerados (regerar após migração)
   const { error } = await supabase.from("beta_feedback").insert({
     user_id: user.id,
     title: input.title.trim(),
