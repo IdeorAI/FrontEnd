@@ -3,6 +3,7 @@ import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import "@/lib/fetch-debug"; // Debug fetch antes de qualquer coisa
+import { BetaFeedbackFab } from "@/components/beta-feedback/beta-feedback-fab";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -56,6 +57,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
+          <BetaFeedbackFab />
         </ThemeProvider>
       </body>
     </html>
