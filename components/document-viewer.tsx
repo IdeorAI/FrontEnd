@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Markdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
 import {
   ChevronDown,
   ChevronUp,
@@ -197,6 +198,227 @@ function AutoGrowTextarea({
   );
 }
 
+interface SectionCardProps {
+  section: Section;
+  index: number;
+  isOpen: boolean;
+  onToggle: (id: string) => void;
+  isEditing: boolean;
+  isOtherSectionEditing: boolean;
+  editValue: string;
+  setEditValue: (v: string) => void;
+  showRefineInput: boolean;
+  setShowRefineInput: React.Dispatch<React.SetStateAction<boolean>>;
+  refineFeedback: string;
+  setRefineFeedback: (v: string) => void;
+  saving: boolean;
+  refining: boolean;
+  onEnterEdit: (section: Section) => void;
+  onCancelEdit: () => void;
+  onSave: (section: Section) => void;
+  onRefine: (section: Section) => void;
+  canEdit: boolean;
+  canRefine: boolean;
+}
+
+function SectionCard({
+  section,
+  index,
+  isOpen,
+  onToggle,
+  isEditing,
+  isOtherSectionEditing,
+  editValue,
+  setEditValue,
+  showRefineInput,
+  setShowRefineInput,
+  refineFeedback,
+  setRefineFeedback,
+  saving,
+  refining,
+  onEnterEdit,
+  onCancelEdit,
+  onSave,
+  onRefine,
+  canEdit,
+  canRefine,
+}: SectionCardProps) {
+  const busy = saving || refining;
+  const headerId = `accordion-header-${section.id}`;
+  const panelId = `accordion-panel-${section.id}`;
+
+  return (
+    <div
+      className={cn(
+        "rounded-lg border transition-all duration-200",
+        isOpen ? "border-border shadow-sm" : "border-border/50"
+      )}
+    >
+      <h3 className="m-0">
+        <button
+          type="button"
+          id={headerId}
+          aria-expanded={isOpen}
+          aria-controls={panelId}
+          onClick={() => onToggle(section.id)}
+          className={cn(
+            "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            isOpen ? "bg-primary/5 rounded-b-none" : "hover:bg-muted/60"
+          )}
+        >
+          <span
+            className={cn(
+              "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors",
+              isOpen
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground"
+            )}
+          >
+            {index + 1}
+          </span>
+
+          <span
+            className={cn(
+              "flex-1 text-sm font-semibold transition-colors",
+              isOpen ? "text-primary" : "text-foreground"
+            )}
+          >
+            {section.title}
+          </span>
+
+          {isOpen ? (
+            <ChevronUp aria-hidden="true" className="w-4 h-4 shrink-0 text-muted-foreground" />
+          ) : (
+            <ChevronDown aria-hidden="true" className="w-4 h-4 shrink-0 text-muted-foreground" />
+          )}
+        </button>
+      </h3>
+
+      {isOpen && (
+        <div
+          id={panelId}
+          role="region"
+          aria-labelledby={headerId}
+          aria-busy={busy || undefined}
+          className="px-4 pb-4 pt-2 border-t border-border/50 space-y-3"
+        >
+          {isEditing ? (
+            <>
+              <AutoGrowTextarea
+                value={editValue}
+                onChange={setEditValue}
+                readOnly={busy}
+              />
+
+              {showRefineInput && canRefine && (
+                <div className="flex flex-col gap-2 rounded-md border border-border/60 bg-muted/30 p-3">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    O que deseja ajustar nesta seção?
+                  </label>
+                  <textarea
+                    value={refineFeedback}
+                    onChange={(e) => setRefineFeedback(e.target.value)}
+                    disabled={refining}
+                    rows={2}
+                    placeholder="Ex: tornar mais conciso, adicionar exemplo prático..."
+                    className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8"
+                      onClick={() => onRefine(section)}
+                      disabled={refining || !refineFeedback.trim()}
+                    >
+                      {refining ? (
+                        <Loader2 aria-hidden="true" className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <Sparkles aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
+                      )}
+                      Aplicar refinamento
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8"
+                      onClick={() => {
+                        setShowRefineInput(false);
+                        setRefineFeedback("");
+                      }}
+                      disabled={refining}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 pt-1">
+                <Button
+                  size="sm"
+                  className="h-8 bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => onSave(section)}
+                  disabled={busy}
+                >
+                  {saving ? (
+                    <Loader2 aria-hidden="true" className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  ) : (
+                    <Save aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
+                  )}
+                  Salvar
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8"
+                  onClick={onCancelEdit}
+                  disabled={busy}
+                >
+                  <X aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
+                  Cancelar
+                </Button>
+                {canRefine && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8"
+                    onClick={() => setShowRefineInput((v) => !v)}
+                    disabled={busy}
+                    aria-expanded={showRefineInput}
+                  >
+                    <Sparkles aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
+                    Refinar com IA
+                  </Button>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-p:my-1.5 prose-li:my-0.5 prose-headings:mt-3 prose-headings:mb-1 prose-strong:text-foreground">
+                <Markdown rehypePlugins={[rehypeSanitize]}>{section.body}</Markdown>
+              </div>
+              {canEdit && (
+                <div className="flex justify-end pt-2">
+                  <Button
+                    size="sm"
+                    className="h-9 gap-2 bg-primary/10 text-primary border border-primary/30 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors font-medium shadow-sm"
+                    onClick={() => onEnterEdit(section)}
+                    disabled={isOtherSectionEditing}
+                  >
+                    <Edit2 aria-hidden="true" className="w-4 h-4" />
+                    Editar esta seção
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function DocumentViewer({
   content,
   onSectionSave,
@@ -227,14 +449,14 @@ export function DocumentViewer({
     setRefineFeedback("");
   }, [content]);
 
-  const toggleSection = (id: string) => {
+  const toggleSection = useCallback((id: string) => {
     setExpandedSections((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
-  };
+  }, []);
 
   const toggleAll = () => {
     if (expandedSections.size === sections.length) {
@@ -244,21 +466,21 @@ export function DocumentViewer({
     }
   };
 
-  const enterEdit = (section: Section) => {
+  const enterEdit = useCallback((section: Section) => {
     setEditingKey(section.key);
     setEditValue(section.body);
     setShowRefineInput(false);
     setRefineFeedback("");
-  };
+  }, []);
 
-  const cancelEdit = () => {
+  const cancelEdit = useCallback(() => {
     setEditingKey(null);
     setEditValue("");
     setShowRefineInput(false);
     setRefineFeedback("");
-  };
+  }, []);
 
-  const handleSave = async (section: Section) => {
+  const handleSave = useCallback(async (section: Section) => {
     if (!onSectionSave) return;
     setSaving(true);
     try {
@@ -273,9 +495,9 @@ export function DocumentViewer({
     } finally {
       setSaving(false);
     }
-  };
+  }, [onSectionSave, editValue]);
 
-  const handleRefine = async (section: Section) => {
+  const handleRefine = useCallback(async (section: Section) => {
     if (!onSectionRefine) return;
     if (!refineFeedback.trim()) {
       toast.error("Descreva o que deseja refinar");
@@ -313,7 +535,7 @@ export function DocumentViewer({
       clearTimeout(timeoutId);
       setRefining(false);
     }
-  };
+  }, [onSectionRefine, refineFeedback, editValue, editingKey]);
 
   if (sections.length === 0) {
     return (
@@ -347,182 +569,33 @@ export function DocumentViewer({
       {sections.map((section, index) => {
         const isOpen = expandedSections.has(section.id);
         const isEditing = editingKey === section.key;
-        const busy = saving || refining;
-        const headerId = `accordion-header-${section.id}`;
-        const panelId = `accordion-panel-${section.id}`;
-
         return (
-          <div
+          <SectionCard
             key={section.id}
-            className={cn(
-              "rounded-lg border transition-all duration-200",
-              isOpen ? "border-border shadow-sm" : "border-border/50"
-            )}
-          >
-            <h3 className="m-0">
-            <button
-              type="button"
-              id={headerId}
-              aria-expanded={isOpen}
-              aria-controls={panelId}
-              onClick={() => toggleSection(section.id)}
-              className={cn(
-                "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                isOpen ? "bg-primary/5 rounded-b-none" : "hover:bg-muted/60"
-              )}
-            >
-              <span
-                className={cn(
-                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold transition-colors",
-                  isOpen
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                )}
-              >
-                {index + 1}
-              </span>
-
-              <span
-                className={cn(
-                  "flex-1 text-sm font-semibold transition-colors",
-                  isOpen ? "text-primary" : "text-foreground"
-                )}
-              >
-                {section.title}
-              </span>
-
-              {isOpen ? (
-                <ChevronUp aria-hidden="true" className="w-4 h-4 shrink-0 text-muted-foreground" />
-              ) : (
-                <ChevronDown aria-hidden="true" className="w-4 h-4 shrink-0 text-muted-foreground" />
-              )}
-            </button>
-            </h3>
-
-            {isOpen && (
-              <div
-                id={panelId}
-                role="region"
-                aria-labelledby={headerId}
-                aria-busy={busy || undefined}
-                className="px-4 pb-4 pt-2 border-t border-border/50 space-y-3"
-              >
-                {isEditing ? (
-                  <>
-                    <AutoGrowTextarea
-                      value={editValue}
-                      onChange={setEditValue}
-                      readOnly={busy}
-                    />
-
-                    {showRefineInput && canRefine && (
-                      <div className="flex flex-col gap-2 rounded-md border border-border/60 bg-muted/30 p-3">
-                        <label className="text-xs font-medium text-muted-foreground">
-                          O que deseja ajustar nesta seção?
-                        </label>
-                        <textarea
-                          value={refineFeedback}
-                          onChange={(e) => setRefineFeedback(e.target.value)}
-                          disabled={refining}
-                          rows={2}
-                          placeholder="Ex: tornar mais conciso, adicionar exemplo prático..."
-                          className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
-                        />
-                        <div className="flex items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-8"
-                            onClick={() => handleRefine(section)}
-                            disabled={refining || !refineFeedback.trim()}
-                          >
-                            {refining ? (
-                              <Loader2 aria-hidden="true" className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                            ) : (
-                              <Sparkles aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
-                            )}
-                            Aplicar refinamento
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8"
-                            onClick={() => {
-                              setShowRefineInput(false);
-                              setRefineFeedback("");
-                            }}
-                            disabled={refining}
-                          >
-                            Cancelar
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-2 pt-1">
-                      <Button
-                        size="sm"
-                        className="h-8 bg-green-600 hover:bg-green-700 text-white"
-                        onClick={() => handleSave(section)}
-                        disabled={busy}
-                      >
-                        {saving ? (
-                          <Loader2 aria-hidden="true" className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                        ) : (
-                          <Save aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
-                        )}
-                        Salvar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8"
-                        onClick={cancelEdit}
-                        disabled={busy}
-                      >
-                        <X aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
-                        Cancelar
-                      </Button>
-                      {canRefine && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8"
-                          onClick={() => setShowRefineInput((v) => !v)}
-                          disabled={busy}
-                          aria-expanded={showRefineInput}
-                        >
-                          <Sparkles aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
-                          Refinar com IA
-                        </Button>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-p:my-1.5 prose-li:my-0.5 prose-headings:mt-3 prose-headings:mb-1 prose-strong:text-foreground">
-                      <Markdown>{section.body}</Markdown>
-                    </div>
-                    {canEdit && (
-                      <div className="flex justify-end pt-2">
-                        <Button
-                          size="sm"
-                          className="h-9 gap-2 bg-primary/10 text-primary border border-primary/30 hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors font-medium shadow-sm"
-                          onClick={() => enterEdit(section)}
-                          disabled={editingKey !== null}
-                        >
-                          <Edit2 aria-hidden="true" className="w-4 h-4" />
-                          Editar esta seção
-                        </Button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
+            section={section}
+            index={index}
+            isOpen={isOpen}
+            onToggle={toggleSection}
+            isEditing={isEditing}
+            isOtherSectionEditing={editingKey !== null && !isEditing}
+            editValue={editValue}
+            setEditValue={setEditValue}
+            showRefineInput={showRefineInput}
+            setShowRefineInput={setShowRefineInput}
+            refineFeedback={refineFeedback}
+            setRefineFeedback={setRefineFeedback}
+            saving={saving}
+            refining={refining}
+            onEnterEdit={enterEdit}
+            onCancelEdit={cancelEdit}
+            onSave={handleSave}
+            onRefine={handleRefine}
+            canEdit={canEdit}
+            canRefine={canRefine}
+          />
         );
       })}
     </div>
   );
 }
+

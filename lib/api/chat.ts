@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/client';
+import { authHeaders } from '@/lib/api/auth-headers';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -17,18 +17,6 @@ export interface ChatContext {
   mode?: 'guide' | 'refine';
   stageContent?: string;
   stageName?: string;
-}
-
-async function authHeaders(): Promise<Record<string, string>> {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  const headers: Record<string, string> = {};
-  if (user) {
-    headers['x-user-id'] = user.id;
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
-  }
-  return headers;
 }
 
 export interface DiffEvent {

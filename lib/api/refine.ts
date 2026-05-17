@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/client'
+import { authHeaders } from '@/lib/api/auth-headers'
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? process.env.NEXT_PUBLIC_API_URL ?? ''
 
@@ -12,25 +12,13 @@ export class RefineError extends Error {
   }
 }
 
-async function refineAuthHeaders(): Promise<Record<string, string>> {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (user) {
-    headers['x-user-id'] = user.id
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
-  }
-  return headers
-}
-
 export async function refineDocument(params: {
   projectId: string
   stageContent: string
   userFeedback: string
   stageName: string
 }): Promise<Record<string, string>> {
-  const headers = await refineAuthHeaders()
+  const headers = await authHeaders()
 
   const res = await fetch(`${BACKEND_URL}/api/chat/refine`, {
     method: 'POST',
