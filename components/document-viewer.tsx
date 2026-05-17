@@ -335,8 +335,10 @@ export function DocumentViewer({
           {editingKey && " · editando"}
         </span>
         <button
+          type="button"
           onClick={toggleAll}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline"
+          aria-label={allExpanded ? "Recolher todas as seções" : "Expandir todas as seções"}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
         >
           {allExpanded ? "Recolher tudo" : "Expandir tudo"}
         </button>
@@ -346,6 +348,8 @@ export function DocumentViewer({
         const isOpen = expandedSections.has(section.id);
         const isEditing = editingKey === section.key;
         const busy = saving || refining;
+        const headerId = `accordion-header-${section.id}`;
+        const panelId = `accordion-panel-${section.id}`;
 
         return (
           <div
@@ -355,10 +359,15 @@ export function DocumentViewer({
               isOpen ? "border-border shadow-sm" : "border-border/50"
             )}
           >
+            <h3 className="m-0">
             <button
+              type="button"
+              id={headerId}
+              aria-expanded={isOpen}
+              aria-controls={panelId}
               onClick={() => toggleSection(section.id)}
               className={cn(
-                "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors rounded-lg",
+                "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 isOpen ? "bg-primary/5 rounded-b-none" : "hover:bg-muted/60"
               )}
             >
@@ -383,14 +392,21 @@ export function DocumentViewer({
               </span>
 
               {isOpen ? (
-                <ChevronUp className="w-4 h-4 shrink-0 text-muted-foreground" />
+                <ChevronUp aria-hidden="true" className="w-4 h-4 shrink-0 text-muted-foreground" />
               ) : (
-                <ChevronDown className="w-4 h-4 shrink-0 text-muted-foreground" />
+                <ChevronDown aria-hidden="true" className="w-4 h-4 shrink-0 text-muted-foreground" />
               )}
             </button>
+            </h3>
 
             {isOpen && (
-              <div className="px-4 pb-4 pt-2 border-t border-border/50 space-y-3">
+              <div
+                id={panelId}
+                role="region"
+                aria-labelledby={headerId}
+                aria-busy={busy || undefined}
+                className="px-4 pb-4 pt-2 border-t border-border/50 space-y-3"
+              >
                 {isEditing ? (
                   <>
                     <AutoGrowTextarea
@@ -421,9 +437,9 @@ export function DocumentViewer({
                             disabled={refining || !refineFeedback.trim()}
                           >
                             {refining ? (
-                              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                              <Loader2 aria-hidden="true" className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                             ) : (
-                              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                              <Sparkles aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
                             )}
                             Aplicar refinamento
                           </Button>
@@ -451,9 +467,9 @@ export function DocumentViewer({
                         disabled={busy}
                       >
                         {saving ? (
-                          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                          <Loader2 aria-hidden="true" className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                         ) : (
-                          <Save className="w-3.5 h-3.5 mr-1.5" />
+                          <Save aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
                         )}
                         Salvar
                       </Button>
@@ -464,7 +480,7 @@ export function DocumentViewer({
                         onClick={cancelEdit}
                         disabled={busy}
                       >
-                        <X className="w-3.5 h-3.5 mr-1.5" />
+                        <X aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
                         Cancelar
                       </Button>
                       {canRefine && (
@@ -474,8 +490,9 @@ export function DocumentViewer({
                           className="h-8"
                           onClick={() => setShowRefineInput((v) => !v)}
                           disabled={busy}
+                          aria-expanded={showRefineInput}
                         >
-                          <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                          <Sparkles aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
                           Refinar com IA
                         </Button>
                       )}
@@ -494,7 +511,7 @@ export function DocumentViewer({
                           onClick={() => enterEdit(section)}
                           disabled={editingKey !== null}
                         >
-                          <Edit2 className="w-4 h-4" />
+                          <Edit2 aria-hidden="true" className="w-4 h-4" />
                           Editar esta seção
                         </Button>
                       </div>
