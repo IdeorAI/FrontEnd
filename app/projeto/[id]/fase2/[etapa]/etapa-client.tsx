@@ -395,7 +395,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
                 setGeneratedContent(updated);
                 toast.success("Seção salva com sucesso");
               }}
-              onSectionRefine={async (key, sectionTitle, currentValue, feedback) => {
+              onSectionRefine={async (key, sectionTitle, currentValue, feedback, signal) => {
                 const headers = await refineSectionAuthHeaders();
                 const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "";
 
@@ -410,6 +410,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
                     sectionContent: currentValue,
                     userFeedback: feedback,
                   }),
+                  signal,
                 });
 
                 if (res.status === 429) throw new Error("Limite de mensagens por hora atingido");

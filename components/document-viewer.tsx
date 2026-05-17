@@ -24,7 +24,8 @@ interface DocumentViewerProps {
     key: string,
     sectionTitle: string,
     currentValue: string,
-    feedback: string
+    feedback: string,
+    signal?: AbortSignal
   ) => Promise<string>;
 }
 
@@ -280,22 +281,36 @@ export function DocumentViewer({
       toast.error("Descreva o que deseja refinar");
       return;
     }
+    const keyAtStart = section.key;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60_000);
     setRefining(true);
     try {
       const refined = await onSectionRefine(
         section.key,
         section.title,
         editValue,
-        refineFeedback
+        refineFeedback,
+        controller.signal
       );
+      // Guard: usuário trocou de seção durante a chamada
+      if (editingKey !== keyAtStart) {
+        toast.info("Refinamento descartado (seção foi trocada)");
+        return;
+      }
       setEditValue(refined);
       setShowRefineInput(false);
       setRefineFeedback("");
       toast.success("Seção refinada. Revise e clique em Salvar.");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro ao refinar seção";
-      toast.error(msg);
+      if (err instanceof Error && (err.name === "AbortError" || controller.signal.aborted)) {
+        toast.error("Tempo esgotado (60s). Tente reformular a instrução.");
+      } else {
+        const msg = err instanceof Error ? err.message : "Erro ao refinar seção";
+        toast.error(msg);
+      }
     } finally {
+      clearTimeout(timeoutId);
       setRefining(false);
     }
   };
