@@ -74,7 +74,7 @@ export default async function RankingPage() {
                   <div className="text-lg font-bold text-primary">
                     {project.ivo_index !== null
                       ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", notation: "compact", maximumFractionDigits: 0 }).format(project.ivo_index)
-                      : "R$ 250"}
+                      : "R$ 100k"}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     Score: {project.score !== null ? (project.score / 10).toFixed(1) : "—"}/10
