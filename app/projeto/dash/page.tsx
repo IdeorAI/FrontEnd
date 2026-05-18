@@ -40,7 +40,8 @@ import { IvoCard } from "@/components/projeto/ivo-card";
 import { ScoreCard } from "@/components/projeto/score-card";
 import { KeywordsBlock } from "@/components/projeto/keywords-block";
 import { MilestoneStrip, DEFAULT_MILESTONES } from "@/components/projeto/milestone-strip";
-import { Folder, ShieldCheck, Flag, ChevronRight as ChevronRightLucide, Pencil, FileText, Rocket as RocketIcon, ChevronDown as ChevronDownIcon } from "lucide-react";
+import { Folder, ShieldCheck, Flag, ChevronRight as ChevronRightLucide, Pencil, FileText, Rocket as RocketIcon, ChevronDown as ChevronDownIcon, FileDown, Loader2 } from "lucide-react";
+import { downloadStagePdf } from "@/lib/api/pdf";
 import dynamic from "next/dynamic";
 
 const IvoMiniChart = dynamic(
@@ -89,6 +90,8 @@ interface DashState {
   railTab: 'ivo' | 'score';
   expandedCardId: string | null;
   ivoHistory: IvoPoint[];
+  stageTaskIds: Partial<Record<string, string>>;
+  downloadingPdfTask: string | null;
 }
 
 const initialDashState: DashState = {
@@ -103,6 +106,8 @@ const initialDashState: DashState = {
   railTab: 'ivo',
   expandedCardId: null,
   ivoHistory: [],
+  stageTaskIds: {},
+  downloadingPdfTask: null,
 };
 
 type DashAction =
@@ -117,7 +122,9 @@ type DashAction =
   | { type: 'SET_STAGE_SUMMARIES'; payload: Partial<Record<string, string>> }
   | { type: 'SET_RAIL_TAB'; payload: 'ivo' | 'score' }
   | { type: 'SET_EXPANDED_CARD_ID'; payload: string | null }
-  | { type: 'SET_IVO_HISTORY'; payload: IvoPoint[] };
+  | { type: 'SET_IVO_HISTORY'; payload: IvoPoint[] }
+  | { type: 'SET_STAGE_TASK_IDS'; payload: Partial<Record<string, string>> }
+  | { type: 'SET_DOWNLOADING_PDF_TASK'; payload: string | null };
 
 function dashReducer(state: DashState, action: DashAction): DashState {
   switch (action.type) {
@@ -133,6 +140,8 @@ function dashReducer(state: DashState, action: DashAction): DashState {
     case 'SET_RAIL_TAB':       return { ...state, railTab: action.payload };
     case 'SET_EXPANDED_CARD_ID': return { ...state, expandedCardId: action.payload };
     case 'SET_IVO_HISTORY':    return { ...state, ivoHistory: action.payload };
+    case 'SET_STAGE_TASK_IDS': return { ...state, stageTaskIds: action.payload };
+    case 'SET_DOWNLOADING_PDF_TASK': return { ...state, downloadingPdfTask: action.payload };
     default:                   return state;
   }
 }
@@ -153,6 +162,8 @@ function DashPageContent() {
     railTab,
     expandedCardId,
     ivoHistory,
+    stageTaskIds,
+    downloadingPdfTask,
   } = state;
 
   const searchParams = useSearchParams();
@@ -177,6 +188,23 @@ function DashPageContent() {
       .single();
     if (data) dispatch({ type: 'UPDATE_PROJECT', payload: data as unknown as Partial<NonNullable<DashProject>> });
   }, [projectId]);
+
+  const handleDownloadStagePdf = useCallback(async (taskId: string, stageLabel: string) => {
+    dispatch({ type: 'SET_DOWNLOADING_PDF_TASK', payload: taskId });
+    try {
+      const projectName = state.project?.name ?? "Projeto";
+      const slugProject = projectName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+      const slugStage = stageLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      if (!projectId) throw new Error("Projeto não encontrado");
+      await downloadStagePdf(projectId, taskId, `IdeorAI-${slugProject}-${slugStage}.pdf`);
+      toast.success("PDF gerado");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erro ao gerar PDF";
+      toast.error(msg);
+    } finally {
+      dispatch({ type: 'SET_DOWNLOADING_PDF_TASK', payload: null });
+    }
+  }, [projectId, state.project?.name]);
 
   const {
     etapaContent,
@@ -359,7 +387,7 @@ function DashPageContent() {
         // Buscar conteúdo existente das etapas
         const { data: tasksData, error: tasksError } = await supabase
           .from("tasks")
-          .select("phase, content, status")
+          .select("id, phase, content, status")
           .eq("project_id", projectId)
           .in("phase", ["etapa1", "etapa2", "etapa3", "etapa4", "etapa5"]);
 
@@ -368,8 +396,10 @@ function DashPageContent() {
         } else if (tasksData) {
           const contentMap: Record<string, string> = {};
           const completed: number[] = [0]; // Início sempre completo
+          const taskIdsMap: Record<string, string> = {};
 
-          tasksData.forEach((task: { phase: string; content: string | null; status?: string }) => {
+          tasksData.forEach((task: { id: string; phase: string; content: string | null; status?: string }) => {
+            taskIdsMap[task.phase] = task.id;
             if (task.content) {
               contentMap[task.phase] = task.content;
 
@@ -383,6 +413,7 @@ function DashPageContent() {
 
           setEtapaContent(contentMap);
           setCompletedStages(completed);
+          dispatch({ type: 'SET_STAGE_TASK_IDS', payload: taskIdsMap });
 
           // Definir etapa atual como a próxima após a última completa (máx 5 etapas)
           const maxCompleted = Math.max(...completed);
@@ -1028,6 +1059,25 @@ function DashPageContent() {
                               <FileText className="h-3 w-3" strokeWidth={2} />
                               Baixar Relatório
                             </button>
+                            {stageTaskIds[s.id] && (
+                              <button
+                                onClick={() => handleDownloadStagePdf(stageTaskIds[s.id]!, s.label)}
+                                disabled={downloadingPdfTask !== null}
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-ink-primary hover:border-strong disabled:opacity-60 disabled:cursor-not-allowed"
+                              >
+                                {downloadingPdfTask === stageTaskIds[s.id] ? (
+                                  <>
+                                    <Loader2 className="h-3 w-3 animate-spin" strokeWidth={2} />
+                                    Gerando PDF...
+                                  </>
+                                ) : (
+                                  <>
+                                    <FileDown className="h-3 w-3" strokeWidth={2} />
+                                    Baixar PDF
+                                  </>
+                                )}
+                              </button>
+                            )}
                           </div>
                         </>
                       ) : (
