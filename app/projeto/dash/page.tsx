@@ -419,7 +419,7 @@ function DashPageContent() {
           .limit(30)
           .then(({ data: histData }) => {
             // Trajetória completa: baseline (criação) → snapshots históricos → valor atual
-            const BASELINE_IVO = 100; // ivo_index default na criação do projeto (ProjectModel.IvoIndex = 100)
+            const BASELINE_IVO = 250; // ivo_index default na criação do projeto (ProjectModel.IvoIndex = 250 — projeto vazio = R$ 250; bom = R$ 5M; cap em R$ 10M)
             type Point = { date: string; label: string; value: number };
             const points: Point[] = [];
 
@@ -565,8 +565,9 @@ function DashPageContent() {
             {new Intl.NumberFormat("pt-BR", {
               style: "currency",
               currency: "BRL",
+              notation: "compact",
               maximumFractionDigits: 0,
-            }).format(Number(project.ivo_index ?? project.valuation ?? 100))}
+            }).format(Number(project.ivo_index ?? project.valuation ?? 250))}
           </div>
           <IvoMiniChart data={ivoHistory} />
         </div>
@@ -583,8 +584,9 @@ function DashPageContent() {
                   {new Intl.NumberFormat("pt-BR", {
                     style: "currency",
                     currency: "BRL",
+                    notation: "compact",
                     maximumFractionDigits: 0,
-                  }).format(Number(project?.ivo_index ?? project?.valuation ?? 100))}
+                  }).format(Number(project?.ivo_index ?? project?.valuation ?? 250))}
                 </div>
               </div>
               {ivoHistory.length >= 2 && (() => {
@@ -1075,7 +1077,7 @@ function DashPageContent() {
               </div>
               {railTab === 'ivo' ? (
                 <IvoCard
-                  value={Number(project.ivo_index ?? project.valuation ?? 100)}
+                  value={Number(project.ivo_index ?? project.valuation ?? 250)}
                   prevValue={ivoHistory.length >= 2 ? ivoHistory[ivoHistory.length - 2].value : undefined}
                   history={ivoHistory}
                   partial={(!project.ivo_o || project.ivo_o === 5) && (!project.ivo_m || project.ivo_m === 5)}
