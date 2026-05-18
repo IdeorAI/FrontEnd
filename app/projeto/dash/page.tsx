@@ -986,6 +986,14 @@ function DashPageContent() {
                 router.push(`/projeto/${projectId}/fase2/etapa${num}`);
               }
             }}
+            onReportClick={(stage) => {
+              const taskId = stageTaskIds[stage.id];
+              if (taskId) {
+                handleDownloadStagePdf(taskId, stage.label);
+              } else {
+                toast.error("Etapa ainda não foi salva — gere o conteúdo primeiro.");
+              }
+            }}
           />
         );
       })()}
@@ -1052,28 +1060,21 @@ function DashPageContent() {
                               <Pencil className="h-3 w-3" strokeWidth={2} />
                               Ver mais
                             </button>
-                            <button
-                              onClick={() => {/* spec 014 */}}
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-brand/40 bg-brand/10 px-3 py-1.5 text-xs font-semibold text-ink-brand hover:bg-brand/20"
-                            >
-                              <FileText className="h-3 w-3" strokeWidth={2} />
-                              Baixar Relatório
-                            </button>
                             {stageTaskIds[s.id] && (
                               <button
                                 onClick={() => handleDownloadStagePdf(stageTaskIds[s.id]!, s.label)}
                                 disabled={downloadingPdfTask !== null}
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-ink-primary hover:border-strong disabled:opacity-60 disabled:cursor-not-allowed"
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-brand/40 bg-brand/10 px-3 py-1.5 text-xs font-semibold text-ink-brand hover:bg-brand/20 disabled:opacity-60 disabled:cursor-not-allowed"
                               >
                                 {downloadingPdfTask === stageTaskIds[s.id] ? (
                                   <>
                                     <Loader2 className="h-3 w-3 animate-spin" strokeWidth={2} />
-                                    Gerando PDF...
+                                    Gerando...
                                   </>
                                 ) : (
                                   <>
                                     <FileDown className="h-3 w-3" strokeWidth={2} />
-                                    Baixar PDF
+                                    Baixar Relatório
                                   </>
                                 )}
                               </button>

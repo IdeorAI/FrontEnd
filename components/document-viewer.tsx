@@ -358,9 +358,10 @@ function SectionCard({
                   </div>
 
                   {refineSuggestion && (
-                    <div className="mt-1 rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
+                    <div className="mt-1 rounded-2xl rounded-tl-sm border border-primary/20 bg-primary/5 p-3 space-y-2 shadow-sm">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-semibold text-primary">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary">
+                          <Sparkles aria-hidden="true" className="w-3.5 h-3.5" />
                           Sugestão da IA
                         </span>
                         <div className="flex items-center gap-1">
@@ -573,11 +574,10 @@ export function DocumentViewer({
         return;
       }
       setRefineSuggestion(refined);
-      // Mantém o input de refine aberto para mostrar a sugestão.
+      // Mantém o input de refine aberto para mostrar a sugestão dentro da caixa de chat.
       setShowRefineInput(true);
-      setShowRefineInput(false);
       setRefineFeedback("");
-      toast.success("Seção refinada. Revise e clique em Salvar.");
+      toast.success("Sugestão gerada. Revise e copie o que quiser para o documento.");
     } catch (err) {
       if (err instanceof Error && (err.name === "AbortError" || controller.signal.aborted)) {
         toast.error("Tempo esgotado (60s). Tente reformular a instrução.");
