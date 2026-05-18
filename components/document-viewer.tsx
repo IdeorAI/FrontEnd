@@ -211,6 +211,8 @@ interface SectionCardProps {
   setShowRefineInput: React.Dispatch<React.SetStateAction<boolean>>;
   refineFeedback: string;
   setRefineFeedback: (v: string) => void;
+  refineSuggestion: string | null;
+  setRefineSuggestion: (v: string | null) => void;
   saving: boolean;
   refining: boolean;
   onEnterEdit: (section: Section) => void;
@@ -234,6 +236,8 @@ function SectionCard({
   setShowRefineInput,
   refineFeedback,
   setRefineFeedback,
+  refineSuggestion,
+  setRefineSuggestion,
   saving,
   refining,
   onEnterEdit,
@@ -311,7 +315,7 @@ function SectionCard({
               />
 
               {showRefineInput && canRefine && (
-                <div className="flex flex-col gap-2 rounded-md border border-border/60 bg-muted/30 p-3">
+                <div className="flex flex-col gap-3 rounded-md border border-border/60 bg-muted/30 p-3">
                   <label className="text-xs font-medium text-muted-foreground">
                     O que deseja ajustar nesta seção?
                   </label>
@@ -336,7 +340,7 @@ function SectionCard({
                       ) : (
                         <Sparkles aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
                       )}
-                      Aplicar refinamento
+                      Gerar sugestão
                     </Button>
                     <Button
                       size="sm"
@@ -345,12 +349,54 @@ function SectionCard({
                       onClick={() => {
                         setShowRefineInput(false);
                         setRefineFeedback("");
+                        setRefineSuggestion(null);
                       }}
                       disabled={refining}
                     >
-                      Cancelar
+                      Fechar
                     </Button>
                   </div>
+
+                  {refineSuggestion && (
+                    <div className="mt-1 rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold text-primary">
+                          Sugestão da IA
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-xs"
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(refineSuggestion);
+                                toast.success("Sugestão copiada para a área de transferência");
+                              } catch {
+                                toast.error("Não foi possível copiar. Selecione o texto manualmente.");
+                              }
+                            }}
+                          >
+                            Copiar
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => setRefineSuggestion(null)}
+                          >
+                            <X aria-hidden="true" className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                        {refineSuggestion}
+                      </div>
+                      <p className="italic text-xs text-muted-foreground border-t border-border/40 pt-2">
+                        Se gostou desta sugestão, copie o trecho desejado acima e cole no documento original (textarea acima), substituindo a parte que quiser melhorar. O documento <strong>não foi alterado automaticamente</strong>.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -440,6 +486,8 @@ export function DocumentViewer({
   const [showRefineInput, setShowRefineInput] = useState(false);
   const [refineFeedback, setRefineFeedback] = useState("");
   const [refining, setRefining] = useState(false);
+  // Sugestão da IA — NÃO sobrescreve o documento. Usuário copia manualmente.
+  const [refineSuggestion, setRefineSuggestion] = useState<string | null>(null);
 
   // Reset ao trocar content externamente
   useEffect(() => {
@@ -447,6 +495,7 @@ export function DocumentViewer({
     setEditValue("");
     setShowRefineInput(false);
     setRefineFeedback("");
+    setRefineSuggestion(null);
   }, [content]);
 
   const toggleSection = useCallback((id: string) => {
@@ -471,6 +520,7 @@ export function DocumentViewer({
     setEditValue(section.body);
     setShowRefineInput(false);
     setRefineFeedback("");
+    setRefineSuggestion(null);
   }, []);
 
   const cancelEdit = useCallback(() => {
@@ -478,6 +528,7 @@ export function DocumentViewer({
     setEditValue("");
     setShowRefineInput(false);
     setRefineFeedback("");
+    setRefineSuggestion(null);
   }, []);
 
   const handleSave = useCallback(async (section: Section) => {
@@ -489,6 +540,7 @@ export function DocumentViewer({
       setEditValue("");
       setShowRefineInput(false);
       setRefineFeedback("");
+      setRefineSuggestion(null);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Erro ao salvar seção";
       toast.error(msg);
@@ -520,7 +572,9 @@ export function DocumentViewer({
         toast.info("Refinamento descartado (seção foi trocada)");
         return;
       }
-      setEditValue(refined);
+      setRefineSuggestion(refined);
+      // Mantém o input de refine aberto para mostrar a sugestão.
+      setShowRefineInput(true);
       setShowRefineInput(false);
       setRefineFeedback("");
       toast.success("Seção refinada. Revise e clique em Salvar.");
@@ -584,6 +638,8 @@ export function DocumentViewer({
             setShowRefineInput={setShowRefineInput}
             refineFeedback={refineFeedback}
             setRefineFeedback={setRefineFeedback}
+            refineSuggestion={refineSuggestion}
+            setRefineSuggestion={setRefineSuggestion}
             saving={saving}
             refining={refining}
             onEnterEdit={enterEdit}

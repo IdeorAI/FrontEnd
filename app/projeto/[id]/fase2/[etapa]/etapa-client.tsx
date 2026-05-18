@@ -440,22 +440,22 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
       {/* Navegação entre etapas */}
       {generatedContent && (
         <div className="flex justify-between">
-          {getPreviousEtapa() && (
+          {getPreviousEtapa() ? (
             <button
               onClick={() =>
                 router.push(
                   `/projeto/${projectId}/fase2/${getPreviousEtapa()}`
                 )
               }
-              className="px-6 py-3 border border-[#8c7dff] text-[#8c7dff] hover:bg-[#8c7dff] hover:text-white rounded-lg font-medium transition-colors"
+              className="px-6 py-3 border border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-lg font-medium transition-colors"
             >
               ← Etapa Anterior
             </button>
-          )}
+          ) : <span />}
           {getNextEtapa() && (
             <button
               onClick={() => router.push(`/projeto/${projectId}/fase2/${getNextEtapa()}`)}
-              className="ml-auto px-6 py-3 bg-[#8c7dff] hover:bg-[#7a6de6] text-white rounded-lg font-medium transition-colors"
+              className="px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-medium transition-colors"
             >
               Próxima Etapa →
             </button>
