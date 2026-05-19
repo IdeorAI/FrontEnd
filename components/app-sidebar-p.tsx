@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react"
-import { Home, Settings, User, Menu, X, Trash2, ChevronDown, Rocket, Users, FileText, ShieldCheck, LogOut } from "lucide-react"
+import { Home, Settings, User, Menu, X, Trash2, ChevronDown, Rocket, FileText, ShieldCheck, LogOut } from "lucide-react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
