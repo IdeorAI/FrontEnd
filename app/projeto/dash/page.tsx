@@ -40,7 +40,7 @@ import { IvoCard } from "@/components/projeto/ivo-card";
 import { ScoreCard } from "@/components/projeto/score-card";
 import { KeywordsBlock } from "@/components/projeto/keywords-block";
 import { MilestoneStrip, DEFAULT_MILESTONES } from "@/components/projeto/milestone-strip";
-import { Folder, ShieldCheck, Flag, ChevronRight as ChevronRightLucide, Pencil, FileText, Rocket as RocketIcon, ChevronDown as ChevronDownIcon, FileDown, Loader2 } from "lucide-react";
+import { Folder, ShieldCheck, Flag, ChevronRight as ChevronRightLucide, Pencil, FileText, Rocket as RocketIcon, ChevronDown as ChevronDownIcon, FileDown, Loader2, Lock } from "lucide-react";
 import { downloadStagePdf } from "@/lib/api/pdf";
 import dynamic from "next/dynamic";
 
@@ -1160,22 +1160,53 @@ function DashPageContent() {
             onKeywordsChange={handleKeywordsChange}
           />
 
-          {/* Equipe */}
-          <button
-            onClick={() => dispatch({ type: 'SET_ACTIVE_DIALOG', payload: 'equipe' })}
-            className="rounded-xl border border-border bg-card p-5 text-left transition-all hover:border-strong hover:shadow-md"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Users className="h-3.5 w-3.5 text-ink-brand" strokeWidth={2} />
-                <span className="text-[13px] font-bold text-ink-primary">Equipe</span>
-              </div>
-              <ChevronRightLucide className="h-3.5 w-3.5 text-ink-muted" strokeWidth={2} />
-            </div>
-            <p className="mt-1 text-xs leading-relaxed text-ink-tertiary">
-              Convide co-fundadores e colaboradores para o projeto.
-            </p>
-          </button>
+          {/* Documentação */}
+          {(() => {
+            const evaluatedStages = completedStages.filter(s => s > 0).length;
+            const unlocked = evaluatedStages >= 5;
+            const cardEl = (
+              <button
+                type="button"
+                onClick={() => {
+                  if (!unlocked || !projectId) return;
+                  router.push(`/projeto/${projectId}/documentacao`);
+                }}
+                disabled={!unlocked}
+                className={cn(
+                  "w-full rounded-xl border border-border bg-card p-5 text-left transition-all",
+                  unlocked
+                    ? "hover:border-strong hover:shadow-md cursor-pointer"
+                    : "opacity-60 cursor-not-allowed"
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {unlocked ? (
+                      <FileText className="h-3.5 w-3.5 text-ink-brand" strokeWidth={2} />
+                    ) : (
+                      <Lock className="h-3.5 w-3.5 text-ink-muted" strokeWidth={2} />
+                    )}
+                    <span className="text-[13px] font-bold text-ink-primary">Documentação</span>
+                  </div>
+                  <ChevronRightLucide className="h-3.5 w-3.5 text-ink-muted" strokeWidth={2} />
+                </div>
+                <p className="mt-1 text-xs leading-relaxed text-ink-tertiary">
+                  Pitch · Plano · Resumo
+                </p>
+              </button>
+            );
+            if (unlocked) return cardEl;
+            return (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>{cardEl}</div>
+                  </TooltipTrigger>
+                  <TooltipContent>Disponível após concluir as 5 etapas</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            );
+          })()}
         </div>
       </div>
 

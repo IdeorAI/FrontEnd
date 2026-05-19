@@ -141,9 +141,9 @@ export function AppSidebar({ user, onCardOpen }: AppSidebarProps) {
           cardId: "etapa5",
         },
         {
-          title: "Equipe",
-          icon: Users,
-          cardId: "equipe",
+          title: "Documentação",
+          icon: FileText,
+          cardId: "documentacao",
         },
         {
           title: "Relatórios",
@@ -302,6 +302,14 @@ export function AppSidebar({ user, onCardOpen }: AppSidebarProps) {
                     <button
                       key={itemIndex}
                       onClick={() => {
+                        if (item.cardId === "documentacao") {
+                          const pid = searchParams.get("project_id");
+                          if (pid) {
+                            router.push(`/projeto/${pid}/documentacao`);
+                            setIsMobileOpen(false);
+                          }
+                          return;
+                        }
                         if (item.cardId && onCardOpen) {
                           onCardOpen(item.cardId);
                           setIsMobileOpen(false);

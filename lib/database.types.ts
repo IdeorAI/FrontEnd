@@ -7,8 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
   }
@@ -67,6 +65,41 @@ export type Database = {
           metadata?: Json | null
         }
         Relationships: []
+      }
+      generated_documents: {
+        Row: {
+          content_md: string
+          doc_type: string
+          generated_at: string
+          id: string
+          model_used: string | null
+          project_id: string
+        }
+        Insert: {
+          content_md: string
+          doc_type: string
+          generated_at?: string
+          id?: string
+          model_used?: string | null
+          project_id: string
+        }
+        Update: {
+          content_md?: string
+          doc_type?: string
+          generated_at?: string
+          id?: string
+          model_used?: string | null
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       go_pivot_evaluations: {
         Row: {
