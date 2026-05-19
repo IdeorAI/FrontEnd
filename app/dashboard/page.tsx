@@ -20,18 +20,10 @@ export const dynamic = 'force-dynamic';
 
 import { DashboardFilters } from "@/components/dashboard-filters";
 import { updateProjectScore } from './actions';
-import categories from "@/lib/data/categories.json";
-import { RoadmapBar } from "@/components/roadmap-bar";
-import { ProjectCardLink } from "@/components/project-card-link";
 import { CreateProjectButton } from "@/components/create-project-button";
-import { TrendingUp, Star, Award, Users } from "lucide-react";
-import { ProjectAvatar } from "@/components/project-hero-banner";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Users } from "lucide-react";
+import { ProjectCard } from "@/components/project-card";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 type PageProps = {
   searchParams?: Promise<{
@@ -204,16 +196,6 @@ export default async function Page(props: PageProps) {
     .filter((m) => m.project != null)
     .map((m) => ({ role: m.role, project: m.project! }));
 
-  // Função auxiliar para calcular medalha baseada no progresso
-  const getMedalha = (tasksCount: number) => {
-    if (tasksCount === 0) return { nome: "Iniciante", color: "text-gray-500" };
-    if (tasksCount >= 1 && tasksCount < 3) return { nome: "Visionário", color: "text-blue-500" };
-    if (tasksCount >= 3 && tasksCount < 5) return { nome: "Explorador", color: "text-purple-500" };
-    if (tasksCount >= 5 && tasksCount < 7) return { nome: "Construtor", color: "text-orange-500" };
-    if (tasksCount >= 7) return { nome: "Escalador", color: "text-green-500" };
-    return { nome: "Iniciante", color: "text-gray-500" };
-  };
-
   return (
     <div className="space-y-6">
       {/* Cabeçalho superior */}
@@ -242,109 +224,9 @@ export default async function Page(props: PageProps) {
       {/* Cards */}
       <TooltipProvider>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {(projects ?? []).map((p) => {
-          // Calcular etapas completas (tasks com status 'evaluated')
-          const completedTasks = Array.isArray(p.tasks)
-            ? p.tasks.filter((t: { status?: string }) => t.status === 'evaluated').length
-            : 0;
-
-          // Gerar nome padrão se não houver nome
-          const projectName = p.name && p.name.trim() && !p.name.startsWith('NovoProjeto')
-            ? p.name
-            : `Startup${p.id.substring(0, 6)}`;
-
-          // Calcular medalha
-          const medalha = getMedalha(completedTasks);
-
-          return (
-            <div key={p.id} className="relative group/proj">
-              <ProjectCardLink projectId={p.id}>
-                <article className="bg-card border rounded-xl p-5 flex flex-col gap-4 relative hover:shadow-md transition-shadow duration-200 cursor-pointer overflow-hidden">
-                  {/* Barra de acento inferior */}
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary/60" />
-
-                  {/* TOP: avatar retangular + nome */}
-                  <div className="flex items-center gap-3">
-                    <ProjectAvatar projectName={projectName} category={p.category} size={48} />
-                    <h3 className="font-semibold text-base leading-snug line-clamp-2 flex-1">{projectName}</h3>
-                  </div>
-
-                  {/* MEIO: categoria + IVO */}
-                  <div className="flex items-center justify-between gap-2">
-                    {p.category ? (
-                      <span className="inline-block text-xs text-primary/80 bg-primary/10 px-2 py-0.5 rounded-full">
-                        {(categories.find((c) => c.value === p.category) || { label: p.category }).label}
-                      </span>
-                    ) : (
-                      <span />
-                    )}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center gap-1.5 bg-primary/10 rounded-lg px-2.5 py-1.5 shrink-0">
-                          <TrendingUp className="h-3.5 w-3.5 text-primary" />
-                          <span className="text-sm font-bold text-primary leading-tight">
-                            {Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact', maximumFractionDigits: 0 }).format(
-                              Number((p as { ivo_index?: number }).ivo_index ?? 0)
-                            )}
-                          </span>
-                          <span className="text-[10px] text-muted-foreground">IVO</span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>IVO Index</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-
-                  {/* Score + Badge */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-yellow-500/10 rounded-full">
-                          <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
-                          <span className="text-xs font-semibold text-yellow-600 dark:text-yellow-400">
-                            {(Number(p.score) / 10).toFixed(1)}
-                          </span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Score IdeorAI: {(Number(p.score) / 10).toFixed(1)} / 10</p>
-                      </TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
-                          medalha.color === 'text-gray-500' ? 'bg-gray-500/10' :
-                          medalha.color === 'text-blue-500' ? 'bg-blue-500/10' :
-                          medalha.color === 'text-purple-500' ? 'bg-purple-500/10' :
-                          medalha.color === 'text-orange-500' ? 'bg-orange-500/10' :
-                          'bg-green-500/10'
-                        }`}>
-                          <Award className={`h-3 w-3 ${medalha.color}`} />
-                          <span className={`text-xs font-semibold ${medalha.color}`}>{medalha.nome}</span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Badge de Progresso</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-
-                  {/* Barra de progresso */}
-                  <RoadmapBar completed={completedTasks} total={5} />
-                </article>
-              </ProjectCardLink>
-
-              {/* Hover: resumo do projeto após delay */}
-              {p.description && (
-                <div className="absolute left-0 right-0 top-full z-30 mt-1 pointer-events-none opacity-0 transition-opacity duration-200 delay-700 group-hover/proj:opacity-100 bg-popover border rounded-xl p-4 shadow-xl">
-                  <p className="text-xs font-semibold text-foreground mb-1">Resumo</p>
-                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">{p.description}</p>
-                </div>
-              )}
-            </div>
-          );
-        })}
+        {(projects ?? []).map((p) => (
+          <ProjectCard key={p.id} project={p} />
+        ))}
 
         {projects?.length === 0 && (
           <div className="bg-card border rounded-lg p-6">
@@ -371,109 +253,13 @@ export default async function Page(props: PageProps) {
           </div>
           <TooltipProvider>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sharedProjects.map(({ role, project: p }) => {
-              const completedTasks = Array.isArray(p.tasks)
-                ? p.tasks.filter((t) => t.status === "evaluated").length
-                : 0;
-              const projectName =
-                p.name && p.name.trim() && !p.name.startsWith("NovoProjeto")
-                  ? p.name
-                  : `Startup${p.id.substring(0, 6)}`;
-              const medalha = getMedalha(completedTasks);
-              const isEditor = role === "editor";
-
-              return (
-                <div key={p.id} className="relative group/proj">
-                  <ProjectCardLink projectId={p.id}>
-                    <article className="bg-card border rounded-xl p-5 flex flex-col gap-4 relative hover:shadow-md transition-shadow duration-200 cursor-pointer overflow-hidden">
-                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500/60" />
-
-                      {/* Badge de role */}
-                      <div className="absolute top-3 right-3">
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                          isEditor
-                            ? "bg-blue-500/15 text-blue-500"
-                            : "bg-gray-500/15 text-gray-400"
-                        }`}>
-                          {isEditor ? "Editor" : "Visualizador"}
-                        </span>
-                      </div>
-
-                      {/* TOP: avatar retangular + nome */}
-                      <div className="flex items-center gap-3 pr-20">
-                        <ProjectAvatar projectName={projectName} category={p.category} size={48} />
-                        <h3 className="font-semibold text-base leading-snug line-clamp-2 flex-1">{projectName}</h3>
-                      </div>
-
-                      {/* MEIO: categoria + IVO */}
-                      <div className="flex items-center justify-between gap-2">
-                        {p.category ? (
-                          <span className="inline-block text-xs text-primary/80 bg-primary/10 px-2 py-0.5 rounded-full">
-                            {(categories.find((c) => c.value === p.category) || { label: p.category }).label}
-                          </span>
-                        ) : (
-                          <span />
-                        )}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="flex items-center gap-1.5 bg-primary/10 rounded-lg px-2.5 py-1.5 shrink-0">
-                              <TrendingUp className="h-3.5 w-3.5 text-primary" />
-                              <span className="text-sm font-bold text-primary leading-tight">
-                                {Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", notation: "compact", maximumFractionDigits: 0 }).format(
-                                  Number(p.ivo_index ?? 0)
-                                )}
-                              </span>
-                              <span className="text-[10px] text-muted-foreground">IVO</span>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent><p>IVO Index</p></TooltipContent>
-                        </Tooltip>
-                      </div>
-
-                      {/* Score + Badge */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-yellow-500/10 rounded-full">
-                              <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
-                              <span className="text-xs font-semibold text-yellow-600 dark:text-yellow-400">
-                                {(Number(p.score) / 10).toFixed(1)}
-                              </span>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent><p>Score IdeorAI: {(Number(p.score) / 10).toFixed(1)} / 10</p></TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full ${
-                              medalha.color === "text-gray-500" ? "bg-gray-500/10" :
-                              medalha.color === "text-blue-500" ? "bg-blue-500/10" :
-                              medalha.color === "text-purple-500" ? "bg-purple-500/10" :
-                              medalha.color === "text-orange-500" ? "bg-orange-500/10" :
-                              "bg-green-500/10"
-                            }`}>
-                              <Award className={`h-3 w-3 ${medalha.color}`} />
-                              <span className={`text-xs font-semibold ${medalha.color}`}>{medalha.nome}</span>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent><p>Badge de Progresso</p></TooltipContent>
-                        </Tooltip>
-                      </div>
-
-                      <RoadmapBar completed={completedTasks} total={5} />
-                    </article>
-                  </ProjectCardLink>
-
-                  {/* Hover: resumo do projeto após delay */}
-                  {p.description && (
-                    <div className="absolute left-0 right-0 top-full z-30 mt-1 pointer-events-none opacity-0 transition-opacity duration-200 delay-700 group-hover/proj:opacity-100 bg-popover border rounded-xl p-4 shadow-xl">
-                      <p className="text-xs font-semibold text-foreground mb-1">Resumo</p>
-                      <p className="text-sm text-muted-foreground leading-relaxed line-clamp-4">{p.description}</p>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {sharedProjects.map(({ role, project: p }) => (
+              <ProjectCard
+                key={p.id}
+                project={p}
+                role={role === "editor" ? "editor" : "viewer"}
+              />
+            ))}
           </div>
           </TooltipProvider>
         </div>
