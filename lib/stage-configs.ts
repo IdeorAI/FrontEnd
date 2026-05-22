@@ -36,13 +36,6 @@ export const STAGE_CONFIGS: Record<string, StageConfig> = {
         defaultValue: "Brasil",
         required: true,
       },
-      {
-        name: "recursos",
-        label: "Restrições e Recursos",
-        type: "textarea",
-        placeholder: "Ex: orçamento limitado, equipe de 2 pessoas...",
-        required: false,
-      },
     ],
   },
 
@@ -52,14 +45,6 @@ export const STAGE_CONFIGS: Record<string, StageConfig> = {
     description:
       "Dimensionamento de mercado (TAM/SAM/SOM), análise competitiva e validação de preço.",
     fields: [
-      {
-        name: "regiao",
-        label: "Região de Atuação do MVP",
-        type: "text",
-        placeholder: "Ex: Brasil, São Paulo",
-        defaultValue: "Brasil",
-        required: true,
-      },
       {
         name: "segmento",
         label: "Segmento de Mercado",
@@ -113,13 +98,6 @@ export const STAGE_CONFIGS: Record<string, StageConfig> = {
         placeholder: "Sua proposta de valor validada...",
         required: true,
       },
-      {
-        name: "segmento",
-        label: "Segmento de Clientes",
-        type: "text",
-        placeholder: "Quem são seus clientes?",
-        required: true,
-      },
     ],
   },
 
@@ -134,14 +112,6 @@ export const STAGE_CONFIGS: Record<string, StageConfig> = {
         label: "Proposta de Valor",
         type: "textarea",
         placeholder: "Sua proposta de valor...",
-        required: true,
-      },
-      {
-        name: "recursos",
-        label: "Recursos Disponíveis",
-        type: "text",
-        placeholder: "Ex: limitados, médios, abundantes",
-        defaultValue: "limitados",
         required: true,
       },
     ],

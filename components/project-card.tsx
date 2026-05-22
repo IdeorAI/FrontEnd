@@ -62,7 +62,7 @@ export function ProjectCard({ project: p, role }: ProjectCardProps) {
     <div className="relative group/proj">
       <ProjectCardLink projectId={p.id}>
         <article className="bg-card border rounded-xl p-5 flex flex-col gap-4 relative hover:border-foreground/20 hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden">
-          <div className={`absolute bottom-0 left-0 right-0 h-0.5 ${accentClass}`} />
+          <div className={`absolute bottom-0 left-0 right-0 h-px ${accentClass}`} />
 
           {role && (
             <div className="absolute top-3 right-3 flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted/60 text-muted-foreground border">

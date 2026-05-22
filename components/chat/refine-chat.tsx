@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Check, X, Loader2, Sparkles } from "lucide-react";
+import { Check, X, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { refineDocument, RefineError } from "@/lib/api/refine";
 import type { ChatContext } from "@/lib/api/chat";
+import { LlmLoadingOverlay } from "@/components/ui/llm-loading-overlay";
 
 interface RefineChatProps {
   stageContent: string;
@@ -134,7 +135,8 @@ export function RefineChat({
   }
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("relative space-y-4", className)}>
+      <LlmLoadingOverlay isVisible={isLoading} />
       {/* Input de feedback */}
       <div className="space-y-2">
         <textarea
@@ -153,17 +155,10 @@ export function RefineChat({
           disabled={!feedback.trim() || isLoading}
           className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
         >
-          {isLoading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Refinando…
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4" />
-              Refinar com IA
-            </>
-          )}
+          <>
+            <Sparkles className="h-4 w-4" />
+            Refinar com IA
+          </>
         </button>
       </div>
 
