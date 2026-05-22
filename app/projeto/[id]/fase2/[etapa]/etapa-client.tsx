@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { StageForm, FormField } from "@/components/stage-form";
-import { StageContextPanel } from "@/components/StageContextPanel";
 import { generateDocument } from "@/lib/api/documents";
 import { getStageSummaries, StageSummary } from "@/lib/api/stage-summaries";
 import { RocketLoading } from "@/components/rocket-loading";
@@ -332,14 +331,6 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         <StageStatusBadge
           status="pending"
           message="Contexto não salvo - precisa ser regerado"
-        />
-      )}
-
-      {/* Painel de Contexto Acumulado */}
-      {!generatedContent && stageSummaries.length > 0 && (
-        <StageContextPanel
-          stages={stageSummaries}
-          currentStage={currentStageNumber}
         />
       )}
 
