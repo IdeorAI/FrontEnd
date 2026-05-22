@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { StageForm, FormField } from "@/components/stage-form";
 import { generateDocument } from "@/lib/api/documents";
-import { getStageSummaries, StageSummary } from "@/lib/api/stage-summaries";
+import { getStageSummaries } from "@/lib/api/stage-summaries";
 import { RocketLoading } from "@/components/rocket-loading";
 import { STAGE_CONFIGS } from "@/lib/stage-configs";
 import { useUser } from "@/lib/supabase/use-user";
@@ -113,7 +113,6 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const [stageSummaries, setStageSummaries] = useState<StageSummary[]>([]);
   const [currentStageSaved, setCurrentStageSaved] = useState<boolean | null>(null);
   const [previousStageSummary, setPreviousStageSummary] = useState<string | null>(null);
 
@@ -165,7 +164,6 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         // 3. Buscar resumos das etapas (contexto acumulado) — não-bloqueante
         try {
           const summaries = await getStageSummaries(projectId, realUserId);
-          setStageSummaries(summaries);
 
           // Resumo da etapa ANTERIOR como sugestão de preenchimento
           if (currentStageNumber > 1) {
@@ -243,13 +241,6 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         toast.success("Documento gerado e contexto salvo com sucesso!");
       }
 
-      // Atualizar resumos após geração
-      try {
-        const summaries = await getStageSummaries(projectId, userId);
-        setStageSummaries(summaries);
-      } catch {
-        // não-bloqueante
-      }
       // Invalida o layout Server Component para atualizar a barra de progresso
       router.refresh();
     } catch (error) {
