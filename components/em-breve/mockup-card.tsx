@@ -1,5 +1,3 @@
-"use client";
-
 import type { LucideIcon } from "lucide-react";
 import { Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
