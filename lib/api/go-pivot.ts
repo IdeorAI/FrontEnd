@@ -8,6 +8,8 @@ export interface GoPivotResponse {
   confidence: number;
   reasons: string[];
   pivotRecommendations?: string[];
+  positivePoints?: string[];
+  improvementPoints?: string[];
   override: boolean;
   fromCache: boolean;
   createdAt: string;
