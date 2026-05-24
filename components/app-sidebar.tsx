@@ -5,16 +5,14 @@ import * as React from "react";
 import {
   Home,
   PlusSquare,
-  Store,
-  Trophy,
   Settings,
   User,
-  CreditCard,
   Mail,
   Menu,
   X,
   ShieldCheck,
   Bell,
+  Clock,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -73,11 +71,9 @@ export function AppSidebar({ user }: AppSidebarProps) {
     { title: "Início", icon: Home, href: "/dashboard" },
     { title: "Novo Projeto", icon: PlusSquare, href: "/idea/create" },
     { title: "Convites", icon: Bell, href: "/convites", badge: pendingInvites },
-    { title: "Marketplace", icon: Store, href: "/marketplace" },
-    { title: "Ranking", icon: Trophy, href: "/ranking" },
+    { title: "Em Breve", icon: Clock, href: "/em-breve" },
     { title: "Configurações", icon: Settings, href: "/configuracoes" },
     { title: "Perfil", icon: User, href: "/perfil" },
-    { title: "Planos", icon: CreditCard, href: "/planos" },
     { title: "Contato", icon: Mail, href: "/contato" },
   ];
 

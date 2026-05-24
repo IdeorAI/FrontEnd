@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react"
-import { Home, Settings, User, Menu, X, Trash2, ChevronDown, Rocket, FileText, ShieldCheck, LogOut } from "lucide-react"
+import { Home, Settings, User, Menu, X, Trash2, ChevronDown, Rocket, FileText, ShieldCheck, LogOut, Clock } from "lucide-react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -123,6 +123,12 @@ export function AppSidebar({ user, onCardOpen }: AppSidebarProps) {
           icon: Home,
           href: "/dashboard",
           active: pathname === "/dashboard",
+        },
+        {
+          title: "Em Breve",
+          icon: Clock,
+          href: "/em-breve",
+          active: pathname === "/em-breve",
         },
         ...(isAdmin ? [{
           title: "Admin · Tokens",
