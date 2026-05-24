@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Sparkles, FileText } from "lucide-react";
 
 export interface FormField {
@@ -46,6 +47,14 @@ export function StageForm({
     return initial;
   });
 
+  const [aiDecide, setAiDecide] = useState<Record<string, boolean>>({});
+
+  const toggleAiDecide = (name: string) => {
+    setAiDecide((prev) => ({ ...prev, [name]: !prev[name] }));
+    // Limpa o valor do campo quando o usuário delega à IA
+    setValues((prev) => ({ ...prev, [name]: "" }));
+  };
+
   const handleChange = (name: string, value: string) => {
     // Aplicar limite de caracteres se definido
     const field = fields.find((f) => f.name === name);
@@ -64,7 +73,7 @@ export function StageForm({
 
     // Validar campos obrigatórios
     const missingFields = fields
-      .filter((f) => f.required && !values[f.name]?.trim())
+      .filter((f) => f.required && !aiDecide[f.name] && !values[f.name]?.trim())
       .map((f) => f.label);
 
     if (missingFields.length > 0) {
@@ -97,8 +106,23 @@ export function StageForm({
               )}
             </div>
 
+            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none w-fit">
+              <Checkbox
+                checked={!!aiDecide[field.name]}
+                onCheckedChange={() => toggleAiDecide(field.name)}
+                aria-label={`Delegar campo "${field.label}" à IA`}
+              />
+              Quero que o IdeorAI defina
+            </label>
+
+            {aiDecide[field.name] && (
+              <p className="text-xs text-primary/70 italic">
+                O IdeorAI vai definir esse campo com base no contexto do seu projeto.
+              </p>
+            )}
+
             {/* Sugestão da etapa anterior */}
-            {field.suggestion && !values[field.name] && (
+            {field.suggestion && !values[field.name] && !aiDecide[field.name] && (
               <div className="bg-muted/50 border rounded-lg p-3 space-y-2">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <FileText className="h-4 w-4" />
@@ -124,8 +148,10 @@ export function StageForm({
                 placeholder={field.placeholder}
                 value={values[field.name] || ""}
                 onChange={(e) => handleChange(field.name, e.target.value)}
-                required={field.required}
+                required={field.required && !aiDecide[field.name]}
                 maxLength={field.maxLength}
+                disabled={!!aiDecide[field.name]}
+                className="disabled:opacity-50"
               />
             )}
 
@@ -136,10 +162,11 @@ export function StageForm({
                 placeholder={field.placeholder}
                 value={values[field.name] || ""}
                 onChange={(e) => handleChange(field.name, e.target.value)}
-                required={field.required}
+                required={field.required && !aiDecide[field.name]}
                 rows={4}
-                className="resize-none"
+                className="resize-none disabled:opacity-50"
                 maxLength={field.maxLength}
+                disabled={!!aiDecide[field.name]}
               />
             )}
 
@@ -149,8 +176,9 @@ export function StageForm({
                 name={field.name}
                 value={values[field.name] || ""}
                 onChange={(e) => handleChange(field.name, e.target.value)}
-                required={field.required}
-                className="w-full border border-input bg-background px-3 py-2 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-[#8c7dff]"
+                required={field.required && !aiDecide[field.name]}
+                disabled={!!aiDecide[field.name]}
+                className="w-full border border-input bg-background px-3 py-2 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-[#8c7dff] disabled:opacity-50"
               >
                 <option value="">Selecione...</option>
                 {field.options.map((option) => (
