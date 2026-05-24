@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { GoPivotResponse, triggerGoPivot } from '@/lib/api/go-pivot';
+import { GoPivotResponse, triggerGoPivot, getGoPivot } from '@/lib/api/go-pivot';
 import { ChevronDown, Sparkles, CheckCircle2, ArrowUpRight, RotateCcw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -23,6 +23,7 @@ export function GoPivotCard({ projectId, userId, etapa2Complete, initial }: Prop
   const [result, setResult] = useState<GoPivotResponse | null>(initial ?? null);
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
 
   useEffect(() => {
     if (etapa2Complete && cardState === 'disabled') {
@@ -30,6 +31,33 @@ export function GoPivotCard({ projectId, userId, etapa2Complete, initial }: Prop
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [etapa2Complete]);
+
+  useEffect(() => {
+    if (
+      !etapa2Complete ||
+      result !== null ||
+      cardState === 'loading' ||
+      hasAttemptedFetch
+    ) {
+      return;
+    }
+    setHasAttemptedFetch(true);
+    let cancelled = false;
+    (async () => {
+      try {
+        const cached = await getGoPivot(projectId, userId);
+        if (cancelled || !cached) return;
+        setResult(cached);
+        setCardState('result');
+      } catch (err) {
+        console.warn('Falha ao carregar avaliação cacheada:', err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [etapa2Complete, projectId, userId]);
 
   async function evaluate() {
     setCardState('loading');
