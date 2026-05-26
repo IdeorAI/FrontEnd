@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react"
-import { Home, Settings, User, Menu, X, Trash2, ChevronDown, Rocket, FileText, ShieldCheck, LogOut, Clock } from "lucide-react"
+import { Home, Settings, User, Menu, X, Trash2, ChevronDown, FileText, ShieldCheck, LogOut, Star } from "lucide-react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -119,14 +119,14 @@ export function AppSidebar({ user, onCardOpen }: AppSidebarProps) {
       title: "Geral",
       items: [
         {
-          title: "Dashboard",
+          title: "Início",
           icon: Home,
           href: "/dashboard",
           active: pathname === "/dashboard",
         },
         {
           title: "Em Breve",
-          icon: Clock,
+          icon: Star,
           href: "/em-breve",
           active: pathname === "/em-breve",
         },
@@ -142,19 +142,9 @@ export function AppSidebar({ user, onCardOpen }: AppSidebarProps) {
       title: "Desenvolvimento",
       items: [
         {
-          title: "MVP",
-          icon: Rocket,
-          cardId: "etapa5",
-        },
-        {
           title: "Documentação",
           icon: FileText,
           cardId: "documentacao",
-        },
-        {
-          title: "Relatórios",
-          icon: FileText,
-          cardId: "relatorios",
         },
       ],
     },

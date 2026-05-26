@@ -11,8 +11,7 @@ import {
   Menu,
   X,
   ShieldCheck,
-  Bell,
-  Clock,
+  Star,
 } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -30,7 +29,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = React.useState(false);
   const [isAdmin, setIsAdmin] = React.useState(false);
-  const [pendingInvites, setPendingInvites] = React.useState(0);
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
@@ -53,25 +51,13 @@ export function AppSidebar({ user }: AppSidebarProps) {
         const data = await res.json();
         setIsAdmin(data.isAdmin === true);
       }
-
-      // Pending invites count
-      try {
-        const invRes = await fetch(`${API}/api/projects/invites/pending`, {
-          headers: { "x-user-id": authUser.id },
-        });
-        if (invRes.ok) {
-          const invites = await invRes.json();
-          setPendingInvites(Array.isArray(invites) ? invites.length : 0);
-        }
-      } catch { /* silencioso */ }
     })();
   }, []);
 
   const baseItems = [
     { title: "Início", icon: Home, href: "/dashboard" },
     { title: "Novo Projeto", icon: PlusSquare, href: "/idea/create" },
-    { title: "Convites", icon: Bell, href: "/convites", badge: pendingInvites },
-    { title: "Em Breve", icon: Clock, href: "/em-breve" },
+    { title: "Em Breve", icon: Star, href: "/em-breve" },
     { title: "Configurações", icon: Settings, href: "/configuracoes" },
     { title: "Perfil", icon: User, href: "/perfil" },
     { title: "Contato", icon: Mail, href: "/contato" },

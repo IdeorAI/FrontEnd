@@ -1,4 +1,4 @@
-import { Store, Trophy, CreditCard, MessageCircle, BarChart2 } from "lucide-react";
+import { Store, Trophy, CreditCard, MessageCircle, BarChart2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { FeatureSection } from "@/components/em-breve/feature-section";
@@ -138,6 +138,48 @@ function PlanosPreview() {
   );
 }
 
+function ConvitesPreview() {
+  const invites = [
+    { initials: "JS", name: "João Silva", email: "joao@exemplo.com", role: "Editor" },
+    { initials: "MR", name: "Maria Rocha", email: "maria@exemplo.com", role: "Visualizador" },
+  ];
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-medium text-muted-foreground mb-3">Convites pendentes</p>
+      {invites.map((i) => (
+        <div
+          key={i.initials}
+          className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/30 px-3 py-2.5"
+        >
+          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground shrink-0">
+            {i.initials}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium truncate">{i.name}</p>
+            <p className="text-[10px] text-muted-foreground truncate">
+              {i.email} · {i.role}
+            </p>
+          </div>
+          <div className="flex gap-1 shrink-0">
+            <button
+              disabled
+              className="text-[10px] px-2 py-1 rounded border border-primary/30 text-primary/50 opacity-60 cursor-not-allowed"
+            >
+              Aceitar
+            </button>
+            <button
+              disabled
+              className="text-[10px] px-2 py-1 rounded border border-border/50 text-muted-foreground opacity-60 cursor-not-allowed"
+            >
+              Recusar
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // --- Page ---
 
 export default function EmBrevePage() {
@@ -202,6 +244,21 @@ export default function EmBrevePage() {
             "Sem fidelidade: pague mensal ou anual com desconto. Cancele quando quiser.",
           ]}
           preview={<PlanosPreview />}
+        />
+
+        <FeatureSection
+          icon={Mail}
+          name="Convites"
+          tagline="Construa time e parcerias dentro do próprio projeto, sem sair do IdeorAI."
+          description="Convide cofundadores, mentores e colaboradores para colaborar em projetos específicos. Cada pessoa convidada terá um papel (editor ou visualizador) com permissões granulares e poderá contribuir nas etapas que você liberar."
+          bullets={[
+            "Convites por email com aceite em 1-clique",
+            "Papéis configuráveis: editor, visualizador, mentor",
+            "Notificações em tempo real quando alguém entrar",
+            "Histórico de quem mudou o quê em cada etapa",
+            "Limite de assentos por projeto conforme o plano",
+          ]}
+          preview={<ConvitesPreview />}
         />
       </div>
 
