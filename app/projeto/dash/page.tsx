@@ -39,7 +39,6 @@ import { StageDetailCard } from "@/components/projeto/stage-detail-card";
 import { IvoCard } from "@/components/projeto/ivo-card";
 import { ScoreCard } from "@/components/projeto/score-card";
 import { KeywordsBlock } from "@/components/projeto/keywords-block";
-import { MilestoneStrip, DEFAULT_MILESTONES } from "@/components/projeto/milestone-strip";
 import { Folder, ShieldCheck, Flag, ChevronRight as ChevronRightLucide, Pencil, FileText, Rocket as RocketIcon, ChevronDown as ChevronDownIcon, FileDown, Loader2, Lock } from "lucide-react";
 import { downloadStagePdf } from "@/lib/api/pdf";
 import dynamic from "next/dynamic";
@@ -155,7 +154,6 @@ function DashPageContent() {
     project,
     activeDialog,
     anunciarOpen,
-    stageStatuses,
     peerProjects,
     projectKeywords,
     stageSummaries,
@@ -262,20 +260,6 @@ function DashPageContent() {
     loadStageStatuses();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, user]);
-
-  // Função para verificar se uma etapa está bloqueada (F-02)
-  const isEtapaBloqueada = (etapaId: string): boolean => {
-    // Etapa 1 sempre desbloqueada
-    if (etapaId === 'etapa1') return false;
-
-    // Para outras etapas, verificar se a anterior está completa
-    const etapaNumero = parseInt(etapaId.replace('etapa', ''));
-    if (isNaN(etapaNumero)) return false; // Cards não-etapa (roadmap, valuation, etc)
-
-    // F-02: Usar status real das etapas ao invés de lógica hardcoded
-    const previousStageStatus = stageStatuses.find(s => s.stageNumber === etapaNumero - 1);
-    return !previousStageStatus || previousStageStatus.status === 'pending';
-  };
 
 
   const handleDownloadPDF = async (phase?: string) => {
@@ -1006,14 +990,35 @@ function DashPageContent() {
             Etapas da jornada
           </div>
 
-          {/* Início (etapa0) — sempre concluída */}
-          <StageDetailCard
-            short="01"
-            label="Início"
-            description="Projeto iniciado — pronto para a jornada de validação."
-            icon={Flag}
-            status="completed"
-          />
+          {/* Início (etapa0) — sempre aberto, exibe descrição do projeto */}
+          <div className="rounded-xl border border-border bg-card p-5">
+            <div className="flex items-start gap-3.5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-brand-subtle text-ink-brand">
+                <Flag className="h-[18px] w-[18px]" strokeWidth={2} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-ink-muted">
+                    01
+                  </span>
+                  <span className="text-sm font-bold leading-tight text-ink-primary">
+                    Início · Resumo da sua ideia
+                  </span>
+                </div>
+                <div className="mt-3">
+                  {project?.description ? (
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+                      {project.description}
+                    </p>
+                  ) : (
+                    <p className="text-sm italic text-muted-foreground">
+                      Sem descrição cadastrada.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Etapas 1-5 */}
           {(() => {
@@ -1024,10 +1029,22 @@ function DashPageContent() {
               { id: 'etapa4', short: '05', label: 'Modelo de Negócio',       description: 'Como sua startup gera receita e captura valor.', icon: Briefcase },
               { id: 'etapa5', short: '06', label: 'MVP',                     description: 'Produto mínimo viável para validar com usuários reais.', icon: Rocket },
             ];
+            // Lock estrito sequencial: apenas a próxima etapa incompleta é interativa.
+            const completedNums = stageDefs
+              .map(s => parseInt(s.id.replace('etapa', ''), 10))
+              .filter(n => completedStages.includes(n));
+            const nextIncompleteNum = (() => {
+              for (const s of stageDefs) {
+                const n = parseInt(s.id.replace('etapa', ''), 10);
+                if (!completedStages.includes(n)) return n;
+              }
+              return -1;
+            })();
             return stageDefs.map((s) => {
               const num = parseInt(s.id.replace('etapa', ''), 10);
-              const isCompleted = completedStages.includes(num);
-              const isLocked = isEtapaBloqueada(s.id);
+              const isCompleted = completedNums.includes(num);
+              const isCurrent = num === nextIncompleteNum;
+              const isLocked = !isCompleted && !isCurrent;
               const status = isCompleted ? 'completed' : isLocked ? 'locked' : 'in-progress';
               const isExpanded = expandedCardId === s.id;
               const summary = stageSummaries[s.id];
@@ -1209,17 +1226,6 @@ function DashPageContent() {
           })()}
         </div>
       </div>
-
-      {/* ─── Milestone Strip ──────────────────────────────────── */}
-      {(() => {
-        const completedCount = completedStages.filter(s => s > 0).length;
-        // Mapeia conclusão de etapas para marcos correspondentes
-        const milestones = DEFAULT_MILESTONES.map((m, idx) => ({
-          ...m,
-          unlocked: idx < completedCount + 1, // primeira ideia unlocked desde criação
-        }));
-        return <MilestoneStrip milestones={milestones} />;
-      })()}
 
       {project?.category && project?.score !== undefined && (
         <BenchmarkPanel
