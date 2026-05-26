@@ -125,7 +125,13 @@ export default function ConfiguracoesPage() {
       <SectionCard icon={Lock} title="Privacidade" description="Dados e segurança">
         <div className="flex items-center justify-between py-2">
           <span className="text-sm">Política de Privacidade</span>
-          <a href="mailto:contato@ideorai.com" className="text-xs text-primary hover:underline">
+          <a href="/legal/privacidade" className="text-xs text-primary hover:underline">
+            Ver documento →
+          </a>
+        </div>
+        <div className="flex items-center justify-between py-2">
+          <span className="text-sm">Termos de Uso</span>
+          <a href="/legal/termos" className="text-xs text-primary hover:underline">
             Ver documento →
           </a>
         </div>
