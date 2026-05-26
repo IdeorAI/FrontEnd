@@ -178,11 +178,36 @@ export function GoPivotCard({ projectId, userId, etapa2Complete, initial }: Prop
             <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">{error}</p>
           )}
 
-          <div>
-            <Button variant="outline" size="sm" onClick={evaluate} className="gap-2">
-              <RotateCcw className="w-3.5 h-3.5" />
-              Reavaliar
-            </Button>
+          <div className="space-y-2">
+            {typeof result.usageCount === 'number' && (
+              <p className="text-xs text-muted-foreground">
+                {result.usageCount} / {result.usageLimit ?? 3} avaliações usadas
+              </p>
+            )}
+            {(() => {
+              const limitReached =
+                typeof result.usageCount === 'number' &&
+                result.usageCount >= (result.usageLimit ?? 3);
+              return (
+                <div className="flex items-center gap-3 flex-wrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={evaluate}
+                    disabled={limitReached}
+                    className="gap-2"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Reavaliar
+                  </Button>
+                  {limitReached && (
+                    <p className="text-xs text-muted-foreground italic">
+                      Limite de avaliações atingido para este projeto.
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}

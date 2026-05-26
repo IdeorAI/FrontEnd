@@ -13,6 +13,8 @@ export interface GoPivotResponse {
   override: boolean;
   fromCache: boolean;
   createdAt: string;
+  usageCount?: number;
+  usageLimit?: number;
 }
 
 export async function getGoPivot(projectId: string, userId: string): Promise<GoPivotResponse | null> {
