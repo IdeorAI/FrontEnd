@@ -11,7 +11,7 @@ import { useUser } from "@/lib/supabase/use-user";
 import { FirstTimeTooltip } from "@/components/first-time-tooltip";
 import { toast } from "sonner";
 import { StageStatusBadge } from "@/components/stage-status-badge";
-import { AlertCircle, ArrowLeft } from "lucide-react";
+import { AlertCircle, Folder, ChevronRight } from "lucide-react";
 import { MvpPromptPanel } from "@/components/projeto/mvp-prompt-panel";
 import { LlmLoadingOverlay } from "@/components/ui/llm-loading-overlay";
 import { Button } from "@/components/ui/button";
@@ -308,14 +308,25 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
     <div className="relative space-y-6">
       <LlmLoadingOverlay isVisible={isGenerating} />
 
-      {/* Botão voltar para o projeto */}
-      <button
-        onClick={() => router.push(`/projeto/dash?project_id=${projectId}`)}
-        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Voltar para o projeto
-      </button>
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-xs text-ink-tertiary" aria-label="Breadcrumb">
+        <Folder className="h-3 w-3 text-ink-muted" strokeWidth={2} />
+        <button
+          onClick={() => router.push('/dashboard')}
+          className="hover:text-ink-primary transition-colors"
+        >
+          Meus Projetos
+        </button>
+        <ChevronRight className="h-3 w-3 text-ink-muted" strokeWidth={2} />
+        <button
+          onClick={() => router.push(`/projeto/dash?project_id=${projectId}`)}
+          className="hover:text-ink-primary transition-colors truncate max-w-[260px]"
+        >
+          {projectName || 'Projeto'}
+        </button>
+        <ChevronRight className="h-3 w-3 text-ink-muted" strokeWidth={2} />
+        <span className="text-ink-secondary">Etapa {currentStageNumber}</span>
+      </nav>
 
       {/* Badge de status */}
       {currentStageSaved === false && (
