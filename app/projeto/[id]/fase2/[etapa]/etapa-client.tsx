@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { StageForm, FormField } from "@/components/stage-form";
 import { generateDocument } from "@/lib/api/documents";
+import { recalculateIvo } from "@/lib/api/ivo";
 import { getStageSummaries } from "@/lib/api/stage-summaries";
 import { RocketLoading } from "@/components/rocket-loading";
 import { STAGE_CONFIGS } from "@/lib/stage-configs";
@@ -240,6 +241,13 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         setCurrentStageSaved(true);
         toast.success("Documento gerado e contexto salvo com sucesso!");
       }
+
+      // Garantia explícita de recálculo do IVO — não bloqueia o fluxo
+      // mesmo que falhe, e dispara em paralelo com router.refresh().
+      // Útil porque background tasks no Render free tier podem ser killadas.
+      recalculateIvo(projectId).catch(() => {
+        /* falha silenciosa — logada dentro de recalculateIvo */
+      });
 
       // Invalida o layout Server Component para atualizar a barra de progresso
       router.refresh();
