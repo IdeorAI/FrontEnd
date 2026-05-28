@@ -33,7 +33,7 @@ export function RocketLoading({
         {/* Foguete principal */}
         <div className="relative z-10 animate-bounce-slow">
           <Rocket
-            className="h-16 w-16 text-[#8c7dff] drop-shadow-2xl"
+            className="h-16 w-16 text-[#8c7dff] drop-shadow-2xl -rotate-45"
             strokeWidth={2}
           />
           {/* Rastro do foguete */}
