@@ -7,7 +7,7 @@ import { Lightbulb } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUser } from "@/lib/supabase/use-user";
 import { createDraftProject } from "./actions";
-import { RocketLoading } from "@/components/rocket-loading";
+import { LlmLoadingOverlay } from "@/components/ui/llm-loading-overlay";
 import { log } from "@/lib/logger";
 
 export default function IdeaCreatePage() {
@@ -56,13 +56,12 @@ export default function IdeaCreatePage() {
 
   const isDisabled = loading || isCreatingProject || !user;
 
-  // Mostrar RocketLoading quando estiver criando projeto
-  if (isCreatingProject) {
-    return <RocketLoading message="Criando seu novo projeto..." />;
-  }
-
   return (
-    <div className="w-full mx-auto px-4">
+    <div className="relative w-full mx-auto px-4">
+      {/* Overlay com foguete + frases rotativas (mesma usada nas etapas da fase 2) */}
+      <div className="fixed inset-0 z-50 pointer-events-none">
+        <LlmLoadingOverlay isVisible={isCreatingProject} />
+      </div>
       <div className="mx-auto w-full max-w-[640px] py-4">
         <div className="flex items-center justify-between ">
           <h1 className="text-xl font-bold flex items-center gap-2">

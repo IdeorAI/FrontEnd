@@ -21,21 +21,9 @@ export const STAGE_CONFIGS: Record<string, StageConfig> = {
         placeholder: "Qual problema você identificou e como sua solução o resolve? Ex: 'Clínicas pequenas perdem 30% das consultas por falta de lembretes. Enviamos notificações via WhatsApp e reduzimos cancelamentos em até 40%.'",
         required: true,
       },
-      {
-        name: "mercado",
-        label: "Quem é o cliente?",
-        type: "text",
-        placeholder: "Tipo de negócio, porte e localização. Ex: 'Clínicas de fisioterapia com 1 a 5 profissionais no interior de SP'",
-        required: false,
-      },
-      {
-        name: "regiao",
-        label: "Região/País de Atuação",
-        type: "text",
-        placeholder: "Ex: Brasil",
-        defaultValue: "Brasil",
-        required: true,
-      },
+      // "Quem é o cliente?" (mercado) e "Região/País" (regiao) removidos.
+      // Já coletados na criação do projeto e injetados pelo backend a partir
+      // de project.TargetAudience / project.Region.
     ],
   },
 
