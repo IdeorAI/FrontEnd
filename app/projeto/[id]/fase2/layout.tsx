@@ -47,7 +47,7 @@ export default async function Fase2Layout({
     <div className="space-y-6">
       {/* Progress Indicator */}
       <div className="bg-card border rounded-lg p-6">
-        <h2 className="text-xl font-bold mb-4">Progresso da Fase Projeto</h2>
+        <h2 className="text-xl font-bold mb-4">Progresso da sua Startup</h2>
         <StageProgressNav
           projectId={projectId}
           currentStage={currentStage}

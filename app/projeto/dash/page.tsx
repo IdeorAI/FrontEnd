@@ -874,7 +874,7 @@ function DashPageContent() {
 
   return (
     <TooltipProvider>
-      <div className="space-y-6">
+      <div className="space-y-4">
         {/* Hero Banner */}
         {project && (
           <ProjectHeroBanner

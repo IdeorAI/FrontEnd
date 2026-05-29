@@ -16,7 +16,7 @@ export const STAGE_CONFIGS: Record<string, StageConfig> = {
     fields: [
       {
         name: "ideia",
-        label: "Problema e Solução",
+        label: "Gostaria de acrescentar mais alguma coisa? (edite abaixo)",
         type: "textarea",
         placeholder: "Qual problema você identificou e como sua solução o resolve? Ex: 'Clínicas pequenas perdem 30% das consultas por falta de lembretes. Enviamos notificações via WhatsApp e reduzimos cancelamentos em até 40%.'",
         required: true,
@@ -35,14 +35,14 @@ export const STAGE_CONFIGS: Record<string, StageConfig> = {
     fields: [
       {
         name: "segmento",
-        label: "Nicho do MVP",
+        label: "Quem você imagina como seu primeiro cliente? (O nicho da sua Startup)",
         type: "text",
-        placeholder: "Setor, porte da empresa e perfil de quem decide a compra. Ex: 'Escritórios de contabilidade com até 10 funcionários atendendo PJ'",
+        placeholder: "Pense nas pessoas ou empresas que mais sentem o problema que sua startup resolve.",
         required: true,
       },
       {
         name: "ideia",
-        label: "Sua solução em resumo",
+        label: "Resumo até aqui (edite se quiser)",
         type: "textarea",
         placeholder: "Qual problema resolve, para quem, como funciona e o que te diferencia das alternativas que já existem.",
         required: true,
@@ -58,18 +58,12 @@ export const STAGE_CONFIGS: Record<string, StageConfig> = {
     fields: [
       {
         name: "problema",
-        label: "Problema Validado",
+        label: "Qual a principal dor do cliente que a sua startup resolve?",
         type: "textarea",
-        placeholder: "Use dados quando tiver. Quem sofre, com que frequência, qual o custo real (tempo, dinheiro) e por que as soluções atuais não resolvem. Ex: 'Gestores de RH de PMEs gastam 8h/semana em planilhas de ponto porque os sistemas existentes custam caro demais para empresas de 50 pessoas.'",
+        placeholder: "Descreva o principal resultado ou benefício esperado.",
         required: true,
       },
-      {
-        name: "personas",
-        label: "Personas",
-        type: "textarea",
-        placeholder: "1 a 2 personas com contexto real: cargo, rotina, dor principal e o que os faria pagar. Ex: 'Ana, 34 anos, Gerente de RH, empresa de 50 funcionários. Passa horas corrigindo erros de ponto e não tem budget para sistemas grandes.'",
-        required: true,
-      },
+      // "Personas" removido — já gerado dentro da etapa 1.
     ],
   },
 
@@ -81,9 +75,9 @@ export const STAGE_CONFIGS: Record<string, StageConfig> = {
     fields: [
       {
         name: "proposta_valor",
-        label: "Proposta de Valor",
+        label: "Como você imagina ganhar dinheiro com essa startup?",
         type: "textarea",
-        placeholder: "[Solução] ajuda [segmento] que enfrenta [problema] a conseguir [benefício]. Diferente de [alternativa] porque [diferenciador]. Ex: 'Nossa plataforma ajuda clínicas de fisioterapia a reduzir cancelamentos em 40%. Diferente de agenda manual porque confirma presença automaticamente pelo WhatsApp.'",
+        placeholder: "Venda única, assinatura mensal, comissão por transação, publicidade ou outra forma.",
         required: true,
       },
     ],
@@ -97,9 +91,9 @@ export const STAGE_CONFIGS: Record<string, StageConfig> = {
     fields: [
       {
         name: "proposta_valor",
-        label: "Proposta de Valor",
+        label: "Como seria a primeira versão do seu produto?",
         type: "textarea",
-        placeholder: "Escreva sua proposta de valor final. O MVP será desenhado em torno do que está aqui: quanto mais específico, mais objetivo será o escopo de funcionalidades.",
+        placeholder: "Landing page, aplicativo, plataforma web, marketplace, app mobile ou outra ideia.",
         required: true,
       },
     ],

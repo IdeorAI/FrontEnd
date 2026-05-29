@@ -32,7 +32,7 @@ export function ProjetoLayoutWrapper({
         />
         <div className="flex-1 lg:ml-64">
           <div className="h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
-          <main className="p-4 lg:p-6">{children}</main>
+          <main className="p-3 lg:p-4 max-w-[1600px] mx-auto">{children}</main>
         </div>
       </div>
       <ChatFab />

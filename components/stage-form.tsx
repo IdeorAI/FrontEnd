@@ -112,7 +112,7 @@ export function StageForm({
                 onCheckedChange={() => toggleAiDecide(field.name)}
                 aria-label={`Delegar campo "${field.label}" à IA`}
               />
-              Quero que o IdeorAI defina
+              Deixar conforme sugestão abaixo
             </label>
 
             {aiDecide[field.name] && (
