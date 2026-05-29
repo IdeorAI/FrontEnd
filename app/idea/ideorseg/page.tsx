@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/command";
 import { X, ChevronLeft, Lightbulb, Check, ChevronsUpDown } from "lucide-react";
 import categories from "@/lib/data/categories.json";
+import { LlmLoadingOverlay } from "@/components/ui/llm-loading-overlay";
 import { generateStartupIdeas } from "@/lib/gemini-api";
 
 export default function SegmentIdeasPage() {
@@ -121,7 +122,12 @@ export default function SegmentIdeasPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[640px] py-4 space-y-4">
+    <div className="mx-auto w-full max-w-[640px] py-4 space-y-4 relative">
+      {/* Overlay de loading da chamada LLM (foguete + frases rotativas) */}
+      <div className="fixed inset-0 z-50 pointer-events-none">
+        <LlmLoadingOverlay isVisible={isLoading} />
+      </div>
+
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Lightbulb className="h-6 w-6" />

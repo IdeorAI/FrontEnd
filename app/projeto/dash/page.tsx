@@ -434,7 +434,7 @@ function DashPageContent() {
           .limit(30)
           .then(({ data: histData }) => {
             // Trajetória completa: baseline (criação) → snapshots históricos → valor atual
-            const BASELINE_IVO = 100000; // ivo_index default na criação (R$ 100k); bom R$ 2M; cap R$ 10M
+            const BASELINE_IVO = 0; // ivo_index inicial em t0 = R$ 0; cresce conforme etapas avaliadas
             type Point = { date: string; label: string; value: number };
             const points: Point[] = [];
 
@@ -582,7 +582,7 @@ function DashPageContent() {
               currency: "BRL",
               notation: "compact",
               maximumFractionDigits: 0,
-            }).format(Number(project.ivo_index ?? project.valuation ?? 100000))}
+            }).format(Number(project.ivo_index ?? project.valuation ?? 0))}
           </div>
           <IvoMiniChart data={ivoHistory} />
         </div>
@@ -601,7 +601,7 @@ function DashPageContent() {
                     currency: "BRL",
                     notation: "compact",
                     maximumFractionDigits: 0,
-                  }).format(Number(project?.ivo_index ?? project?.valuation ?? 100000))}
+                  }).format(Number(project?.ivo_index ?? project?.valuation ?? 0))}
                 </div>
               </div>
               {ivoHistory.length >= 2 && (() => {
@@ -1145,7 +1145,7 @@ function DashPageContent() {
               </div>
               {railTab === 'ivo' ? (
                 <IvoCard
-                  value={Number(project.ivo_index ?? project.valuation ?? 100000)}
+                  value={Number(project.ivo_index ?? project.valuation ?? 0)}
                   prevValue={ivoHistory.length >= 2 ? ivoHistory[ivoHistory.length - 2].value : undefined}
                   history={ivoHistory}
                   partial={(!project.ivo_o || project.ivo_o === 5) && (!project.ivo_m || project.ivo_m === 5)}

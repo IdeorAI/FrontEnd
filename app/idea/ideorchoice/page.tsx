@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Lightbulb, ChevronLeft, Check } from "lucide-react";
 import categories from "@/lib/data/categories.json";
+import { LlmLoadingOverlay } from "@/components/ui/llm-loading-overlay";
 
 export default function IdeorChoicePage() {
   const router = useRouter();
@@ -92,8 +93,8 @@ export default function IdeorChoicePage() {
   }, [options]);
   if (userLoading || loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center text-muted-foreground">
-        Carregando opções...
+      <div className="relative min-h-[60vh]">
+        <LlmLoadingOverlay isVisible={true} />
       </div>
     );
   }

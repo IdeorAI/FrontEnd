@@ -122,7 +122,7 @@ export function ProjectProgressLine({ currentStage, completedStages }: ProjectPr
                           transition={{ type: "spring", stiffness: 260, damping: 20 }}
                         >
                           {/* Foguete horizontal apontando para direita */}
-                          <Rocket className="h-5 w-5 text-primary rotate-45" />
+                          <Rocket className="h-5 w-5 text-primary -rotate-45" />
                         </motion.div>
                       )}
                       {completed && !current && (
@@ -204,7 +204,7 @@ export function ProjectProgressLine({ currentStage, completedStages }: ProjectPr
           {/* Informação de progresso */}
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
-              <Rocket className="h-4 w-4 text-primary rotate-90" />
+              <Rocket className="h-4 w-4 text-primary -rotate-45" />
               <span className="font-semibold text-foreground">
                 {stages[currentStage]?.shortLabel || "Captação"}
               </span>
@@ -250,7 +250,7 @@ export function ProjectProgressLine({ currentStage, completedStages }: ProjectPr
                         </svg>
                       )}
                       {current && !completed && (
-                        <Rocket className="h-3 w-3 text-primary rotate-90" />
+                        <Rocket className="h-3 w-3 text-primary -rotate-45" />
                       )}
                     </div>
                     <span className={`text-sm ${completed || current ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>

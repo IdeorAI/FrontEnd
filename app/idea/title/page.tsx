@@ -133,12 +133,12 @@ export default function TitlePage() {
         </h1>
       </div>
 
-      {/* Card container */}
+      {/* Card container — usa tokens do design system para suportar dark/light */}
       <div
         className="
           mx-auto w-full max-w-[880px]
-          rounded-3xl border border-white/10
-          bg-[#202a31] backdrop-blur-lg shadow-2xl
+          rounded-3xl border border-border
+          bg-card backdrop-blur-lg shadow-2xl
           px-5 py-6 sm:px-8 sm:py-8
         "
       >
@@ -163,19 +163,19 @@ export default function TitlePage() {
                   }
                   placeholder="Digite o nome do projeto"
                   maxLength={100}
-                  className="h-10 flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus-visible:ring-brand/50"
+                  className="h-10 flex-1"
                 />
                 <button
                   type="button"
                   onClick={handleSuggestName}
                   disabled={!description || suggesting}
                   title="Sugerir nome com IA"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-brand/40 bg-brand/10 text-brand hover:bg-brand/20 transition-colors disabled:opacity-40"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-primary/40 bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-40"
                 >
                   <Sparkles className={`h-4 w-4 ${suggesting ? "animate-pulse" : ""}`} />
                 </button>
               </div>
-              <div className="mt-1 text-right text-xs text-white/60">
+              <div className="mt-1 text-right text-xs text-muted-foreground">
                 {name.length}/100
               </div>
             </div>
@@ -192,12 +192,12 @@ export default function TitlePage() {
                 maxLength={400}
                 rows={5}
                 className="
-                  w-full rounded-lg border border-white/10 bg-white/5
-                  p-3 text-sm text-white/90 placeholder:text-white/40
-                  focus:outline-none focus:ring-2 focus:ring-white/20
+                  w-full rounded-lg border border-border bg-background
+                  p-3 text-sm text-foreground placeholder:text-muted-foreground
+                  focus:outline-none focus:ring-2 focus:ring-ring
                 "
               />
-              <div className="mt-1 text-right text-xs text-white/60">
+              <div className="mt-1 text-right text-xs text-muted-foreground">
                 {description?.length ?? 0}/400
               </div>
             </div>
@@ -207,7 +207,7 @@ export default function TitlePage() {
               <div className="text-sm font-medium mb-1">
                 Categoria selecionada:
               </div>
-              <div className="rounded-lg border border-white/10 bg-white/5 p-3 sm:p-4 text-sm text-white/90 min-h-[3rem] flex items-center">
+              <div className="rounded-lg border border-border bg-muted/40 p-3 sm:p-4 text-sm text-foreground min-h-[3rem] flex items-center">
                 {category
                   ? getCategoryLabel(category)
                   : "Nenhuma categoria selecionada"}
@@ -220,7 +220,7 @@ export default function TitlePage() {
                 type="button"
                 variant="outline"
                 onClick={handleBack}
-                className="order-1 sm:order-1 text-brand border-brand/40 hover:bg-brand/10 hover:text-brand"
+                className="order-1 sm:order-1 text-primary border-primary/40 hover:bg-primary/10 hover:text-primary"
               >
                 <ChevronLeft className="mr-2 h-4 w-4" />
                 Voltar
