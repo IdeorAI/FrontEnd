@@ -368,6 +368,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
               fields={formFieldsWithSuggestions}
               onSubmit={handleGenerate}
               isSubmitting={isGenerating}
+              phase={etapa}
             />
           </div>
         </FirstTimeTooltip>

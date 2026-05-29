@@ -28,6 +28,8 @@ interface StageFormProps {
   onSubmit: (values: Record<string, string>) => void;
   isSubmitting?: boolean;
   submitButtonText?: string;
+  /** ex: "etapa1", "etapa2"... usado para customizar copy por etapa */
+  phase?: string;
 }
 
 export function StageForm({
@@ -37,7 +39,14 @@ export function StageForm({
   onSubmit,
   isSubmitting = false,
   submitButtonText = "Gerar Documento",
+  phase,
 }: StageFormProps) {
+  // Etapas 1 e 2: "Deixar conforme sugestão abaixo" (textos mais explicativos)
+  // Etapas 3, 4 e 5: "Quero que o IdeorAI defina" (texto original)
+  const aiDecideLabel =
+    phase === "etapa1" || phase === "etapa2"
+      ? "Deixar conforme sugestão abaixo"
+      : "Quero que o IdeorAI defina";
   const [values, setValues] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {};
     fields.forEach((field) => {
@@ -112,7 +121,7 @@ export function StageForm({
                 onCheckedChange={() => toggleAiDecide(field.name)}
                 aria-label={`Delegar campo "${field.label}" à IA`}
               />
-              Deixar conforme sugestão abaixo
+              {aiDecideLabel}
             </label>
 
             {aiDecide[field.name] && (
