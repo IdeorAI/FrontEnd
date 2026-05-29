@@ -905,33 +905,8 @@ function DashPageContent() {
 
           {/* Cluster de ações */}
           <div className="flex items-center gap-2">
-            {/* Exportar */}
-            {todasEtapasCompletas && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    className="hidden md:inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-card text-sm font-semibold text-ink-secondary hover:border-strong hover:text-ink-primary transition-colors"
-                    title="Exportar relatório"
-                  >
-                    <Download className="h-4 w-4" strokeWidth={2} />
-                    Exportar
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent><p>Gerar relatório consolidado</p></TooltipContent>
-              </Tooltip>
-            )}
-
-            {/* GO or PIVOT — ação primária */}
-            {completedStages.filter(s => s > 0).length >= 5 && (
-              <a
-                href="#go-pivot"
-                className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md bg-brand text-brand-foreground text-sm font-semibold shadow-sm hover:bg-brand-hover transition-colors"
-              >
-                <ShieldCheck className="h-4 w-4" strokeWidth={2} />
-                GO or PIVOT
-              </a>
-            )}
+            {/* Botões 'Exportar' e 'GO or PIVOT' removidos —
+                não devem aparecer mesmo depois das 5 etapas completas. */}
 
             {/* Publicar no Marketplace — oculto até NEXT_PUBLIC_ENABLE_MARKETPLACE=true */}
             {FEATURES.MARKETPLACE && completedStages.filter(s => s > 0).length >= 1 && (
@@ -1068,7 +1043,9 @@ function DashPageContent() {
                       </div>
                       {summary ? (
                         <>
-                          <p className="text-xs leading-relaxed text-ink-secondary line-clamp-4">{summary}</p>
+                          <p className="text-xs leading-relaxed text-ink-secondary line-clamp-4">
+                            {summary.replace(/[.…\s]+$/, "")}…
+                          </p>
                           <div className="mt-3 flex flex-wrap gap-2">
                             <button
                               onClick={() => projectId && router.push(`/projeto/${projectId}/fase2/etapa${num}`)}
