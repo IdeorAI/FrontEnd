@@ -39,7 +39,7 @@ import { StageDetailCard } from "@/components/projeto/stage-detail-card";
 import { IvoCard } from "@/components/projeto/ivo-card";
 import { ScoreCard } from "@/components/projeto/score-card";
 import { KeywordsBlock } from "@/components/projeto/keywords-block";
-import { Folder, ShieldCheck, Flag, ChevronRight as ChevronRightLucide, Pencil, FileText, Rocket as RocketIcon, ChevronDown as ChevronDownIcon, FileDown, Loader2, Lock } from "lucide-react";
+import { Folder, Flag, ChevronRight as ChevronRightLucide, Pencil, FileText, Rocket as RocketIcon, ChevronDown as ChevronDownIcon, FileDown, Loader2, Lock } from "lucide-react";
 import { downloadStagePdf } from "@/lib/api/pdf";
 import dynamic from "next/dynamic";
 
