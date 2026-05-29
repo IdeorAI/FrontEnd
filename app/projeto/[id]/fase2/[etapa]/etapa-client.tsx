@@ -127,14 +127,18 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
       return;
     }
 
+    // Flag de cancelamento — evita setState em componente desmontado
+    // (Strict Mode roda o efeito 2x; navegação rápida entre etapas também)
+    let cancelled = false;
+
     const fetchData = async () => {
+      if (cancelled) return;
       setUserId(realUserId);
       setHasError(false);
 
       try {
         const supabase = createClient();
 
-        // 1. Buscar descrição do projeto (fase 1) diretamente do Supabase
         const { data: project, error: projectError } = await supabase
           .from("projects")
           .select("description, name, category")
@@ -142,6 +146,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
           .eq("owner_id", realUserId)
           .single();
 
+        if (cancelled) return;
         if (projectError || !project) {
           throw new Error("Projeto não encontrado ou acesso negado.");
         }
@@ -149,7 +154,6 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         setProjectName(project.name || "");
         setProjectCategory(project.category || null);
 
-        // 2. Verificar se já existe task gerada para esta etapa
         const { data: existingTask } = await supabase
           .from("tasks")
           .select("id, content")
@@ -157,16 +161,16 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
           .eq("phase", etapa)
           .maybeSingle();
 
+        if (cancelled) return;
         if (existingTask?.content) {
           setTaskId(existingTask.id);
           setGeneratedContent(existingTask.content);
         }
 
-        // 3. Buscar resumos das etapas (contexto acumulado) — não-bloqueante
         try {
           const summaries = await getStageSummaries(projectId, realUserId);
+          if (cancelled) return;
 
-          // Resumo da etapa ANTERIOR como sugestão de preenchimento
           if (currentStageNumber > 1) {
             const previousSummary = summaries.find(
               (s) => s.stageNumber === currentStageNumber - 1
@@ -179,6 +183,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
           // Resumos são contexto opcional, não bloqueiam a página
         }
       } catch (error) {
+        if (cancelled) return;
         console.error("[EtapaPage] Error fetching data:", error);
         const msg = error instanceof Error ? error.message : "Erro desconhecido";
         setErrorMessage(msg);
@@ -187,12 +192,17 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
           description: "Verifique sua conexão e tente novamente.",
         });
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [projectId, etapa, currentStageNumber, user, userLoading, router]);
+
+    return () => {
+      cancelled = true;
+    };
+    // Depende de user?.id em vez de user — evita re-fetch a cada token refresh
+  }, [projectId, etapa, currentStageNumber, user?.id, userLoading, router]);
 
   // Sugestão para o campo "ideia":
   // etapa1 → usa a descrição do projeto (fase 1)
