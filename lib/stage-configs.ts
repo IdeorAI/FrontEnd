@@ -39,6 +39,7 @@ export const STAGE_CONFIGS: Record<string, StageConfig> = {
         type: "text",
         placeholder: "Pense nas pessoas ou empresas que mais sentem o problema que sua startup resolve.",
         required: true,
+        aiDecideLabel: "Quero que o IdeorAI defina",
       },
       {
         name: "ideia",

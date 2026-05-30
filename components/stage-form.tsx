@@ -19,6 +19,7 @@ export interface FormField {
   defaultValue?: string;
   maxLength?: number; // Limite de caracteres
   suggestion?: string; // Texto sugerido (ex: resumo da etapa anterior)
+  aiDecideLabel?: string; // Override do label do checkbox AI para este campo específico
 }
 
 interface StageFormProps {
@@ -121,7 +122,7 @@ export function StageForm({
                 onCheckedChange={() => toggleAiDecide(field.name)}
                 aria-label={`Delegar campo "${field.label}" à IA`}
               />
-              {aiDecideLabel}
+              {field.aiDecideLabel ?? aiDecideLabel}
             </label>
 
             {aiDecide[field.name] && (
