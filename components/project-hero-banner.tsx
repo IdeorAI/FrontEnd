@@ -79,7 +79,7 @@ export function ProjectHeroBanner({ projectName, category, createdAt }: ProjectH
         priority
         sizes="100vw"
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/20 to-transparent" />
       <div className="absolute inset-0 flex flex-col justify-center px-4 sm:px-6 md:px-10">
         <h2 className="text-white font-bold text-lg sm:text-xl md:text-2xl leading-tight drop-shadow-lg truncate">
           {projectName}
