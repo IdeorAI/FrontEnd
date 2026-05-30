@@ -1,4 +1,4 @@
-import { Store, Trophy, CreditCard, MessageCircle, BarChart2, Mail } from "lucide-react";
+import { Store, Trophy, CreditCard, MessageCircle, BarChart2, Mail, Users, Swords } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { FeatureSection } from "@/components/em-breve/feature-section";
@@ -180,6 +180,82 @@ function ConvitesPreview() {
   );
 }
 
+function AfiliadosPreview() {
+  const top = [
+    { name: "João Silva", invites: 42 },
+    { name: "Você", invites: 27, mine: true },
+    { name: "Ana Costa", invites: 19 },
+  ];
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="text-xs font-medium text-muted-foreground mb-2">Top Embaixadores do Mês</p>
+        <div className="space-y-1.5">
+          {top.map((r) => (
+            <div key={r.name} className={`flex items-center justify-between rounded-lg px-3 py-2 text-xs border ${r.mine ? "border-primary/40 bg-primary/5 font-semibold text-primary" : "border-border/50 bg-background/40"}`}>
+              <span className="truncate">{r.name}</span>
+              <span className="shrink-0 ml-2 text-muted-foreground font-mono">{r.invites} ativos</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="rounded-lg border border-border/50 bg-background/40 p-3 space-y-2">
+        <p className="text-xs font-medium text-muted-foreground">Sua Evolução</p>
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-primary font-semibold">🟣 Strategic Partner</span>
+        </div>
+        <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+          <div className="h-full w-4/5 rounded-full bg-primary/60" />
+        </div>
+        <p className="text-[10px] text-muted-foreground">Próximo: Conselho de Embaixadores</p>
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <div className="text-center">
+            <p className="text-sm font-bold text-foreground">24</p>
+            <p className="text-[10px] text-muted-foreground">Indicados Ativos</p>
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-bold text-primary">R$ 1.280</p>
+            <p className="text-[10px] text-muted-foreground">Comissões</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DesafiosPreview() {
+  const contests = [
+    { title: "Desafio Startup IA 2026", sub: "Inscrições até 30/09" },
+    { title: "HealthTech Innovation Award", sub: "Prêmio: Mentoria + Créditos Cloud" },
+    { title: "Future Founders Challenge", sub: "Prêmio: Programa de aceleração" },
+  ];
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="text-xs font-medium text-muted-foreground mb-2">Concursos Abertos</p>
+        <div className="space-y-1.5">
+          {contests.map((c) => (
+            <div key={c.title} className="rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+              <p className="text-xs font-medium">🏆 {c.title}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">{c.sub}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-1.5">
+        <p className="text-xs font-semibold text-primary">EduMind AI</p>
+        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+          <span>Categoria: <span className="text-foreground font-medium">EdTech</span></span>
+        </div>
+        <p className="text-[10px] text-emerald-500 font-medium">✅ Elegível para 3 concursos</p>
+        <button disabled className="mt-1 w-full text-[10px] py-1.5 rounded border border-primary/30 text-primary/60 opacity-70 cursor-not-allowed">
+          Ver oportunidades
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // --- Page ---
 
 export default function EmBrevePage() {
@@ -259,6 +335,36 @@ export default function EmBrevePage() {
             "Limite de assentos por projeto conforme o plano",
           ]}
           preview={<ConvitesPreview />}
+        />
+
+        <FeatureSection
+          icon={Users}
+          name="Programa de Afiliados"
+          tagline="Transforme sua rede em oportunidades e participe do crescimento do Ideor."
+          description="Um programa criado para empreendedores, criadores de conteúdo, mentores e profissionais de inovação que desejam recomendar o Ideor e ser recompensados pelo crescimento da plataforma. Além das comissões por indicação, os participantes poderão evoluir dentro do ecossistema e conquistar benefícios exclusivos conforme sua contribuição."
+          bullets={[
+            "Link exclusivo: receba um link personalizado para convidar novos usuários.",
+            "Comissões por indicação: ganhe recompensas quando usuários indicados assinarem planos pagos.",
+            "Níveis de progressão: evolua de Afiliado para Embaixador conforme sua performance e retenção.",
+            "Partner Pool: participe do fundo de embaixadores financiado por uma parcela dos lucros da plataforma.",
+            "Reconhecimento e benefícios: desbloqueie badges, visibilidade, acesso antecipado a funcionalidades e oportunidades exclusivas.",
+          ]}
+          preview={<AfiliadosPreview />}
+        />
+
+        <FeatureSection
+          icon={Swords}
+          name="Desafios & Concursos"
+          tagline="Concursos internos e desafios que geram reconhecimento, apoio e crescimento."
+          description="Uma área dedicada a desafios, editais e concursos promovidos pelo Ideor em parceria com empresas, aceleradoras, investidores, universidades e organizações do ecossistema de inovação. Os participantes poderão inscrever seus projetos e concorrer a premiações, mentorias, visibilidade, programas de aceleração e outros benefícios definidos por cada parceiro."
+          bullets={[
+            "Editais temáticos: participe de desafios voltados para setores específicos como IA, Saúde, Educação, Sustentabilidade, Fintech, Agrotech e outros.",
+            "Inscrição simplificada: utilize as informações já geradas pelo Ideor para submeter seu projeto em poucos cliques.",
+            "Avaliação estruturada: projetos analisados com base em critérios definidos por cada concurso.",
+            "Premiações e incentivos: mentorias, créditos de tecnologia, aceleração, investimentos, serviços especializados e outras recompensas.",
+            "Visibilidade para seu projeto: destaque para startups selecionadas e vencedoras dentro do ecossistema Ideor.",
+          ]}
+          preview={<DesafiosPreview />}
         />
       </div>
 
