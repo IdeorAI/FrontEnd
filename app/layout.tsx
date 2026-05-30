@@ -5,14 +5,32 @@ import "./globals.css";
 import "@/lib/fetch-debug"; // Debug fetch antes de qualquer coisa
 import { BetaFeedbackFab } from "@/components/beta-feedback/beta-feedback-fab";
 
-const defaultUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(defaultUrl),
+  metadataBase: new URL("https://www.ideorai.com"),
   title: "Ideor.AI",
-  description: "The fastest way to ",
+  description: "Valide sua ideia de startup com inteligência artificial.",
+  openGraph: {
+    title: "Ideor.AI — Valide sua startup com IA",
+    description: "Crie projetos, preencha etapas e deixe a IA gerar análise de mercado, proposta de valor, modelo de negócio e MVP.",
+    url: "https://www.ideorai.com",
+    siteName: "Ideor.AI",
+    images: [
+      {
+        url: "/assets/logo_branco.png",
+        width: 1200,
+        height: 630,
+        alt: "Ideor.AI — Plataforma de validação de startups",
+      },
+    ],
+    locale: "pt_BR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Ideor.AI — Valide sua startup com IA",
+    description: "Crie projetos, preencha etapas e deixe a IA gerar análise de mercado, proposta de valor, modelo de negócio e MVP.",
+    images: ["/assets/logo_branco.png"],
+  },
 };
 
 const geistSans = Geist({
@@ -44,12 +62,6 @@ export default function RootLayout({
           content="startup, ideation, business, entrepreneurship"
         />
         <meta name="author" content="Ideor.AI Team" />
-        <meta property="og:title" content="Ideor.AI" />
-        <meta
-          property="og:description"
-          content="The fastest way to create your startup"
-        />
-        <meta property="og:image" content="/og-image.png" />
       </head>
 
       <body className={`${geistSans.className} antialiased`}>
