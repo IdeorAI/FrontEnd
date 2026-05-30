@@ -30,9 +30,10 @@ export function ProjetoLayoutWrapper({
           user={user}
           onCardOpen={handleCardOpen}
         />
-        <div className="flex-1 lg:ml-64">
+        <div className="flex-1 lg:ml-64 min-w-0">
           <div className="h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
-          <main className="p-3 lg:p-4 max-w-[1600px] mx-auto">{children}</main>
+          {/* pt-16 no mobile abre espaço para o botão hambúrguer flutuante (top-4 left-4) */}
+          <main className="pt-16 px-3 pb-3 lg:p-4 lg:pt-4 max-w-[1600px] mx-auto">{children}</main>
         </div>
       </div>
       <ChatFab />

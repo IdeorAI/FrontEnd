@@ -204,6 +204,17 @@
     @apply bg-background text-foreground;
   }
 
+  /* Anti-zoom iOS: inputs com font-size < 16px disparam zoom automático no
+     Safari mobile ao focar. Garante mínimo de 16px no mobile sem afetar
+     o tamanho visual no desktop (>= sm). */
+  @media (max-width: 639px) {
+    input,
+    textarea,
+    select {
+      font-size: max(16px, 1rem);
+    }
+  }
+
   /* Animação personalizada para o foguete */
   @keyframes bounce-slow {
     0%, 100% {

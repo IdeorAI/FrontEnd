@@ -88,7 +88,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
       <aside
         className={cn(
-          "fixed left-0 top-0 h-screen w-64 border-r bg-background z-50 transition-transform lg:transform-none",
+          "fixed left-0 top-0 h-[100svh] w-64 border-r bg-background z-50 transition-transform lg:transform-none overflow-y-auto",
           "lg:block",
           isMobileOpen ? "transform-none" : "-translate-x-full"
         )}

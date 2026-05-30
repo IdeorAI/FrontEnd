@@ -21,9 +21,9 @@ export default async function ConvitesLayout({
   return (
     <div className="flex min-h-screen">
       <AppSidebar user={{ name: meta.full_name ?? user.email ?? "User", email: user.email ?? "" }} />
-      <div className="flex-1 lg:ml-64">
+      <div className="flex-1 lg:ml-64 min-w-0">
         <div className="h-px bg-gradient-to-r from-transparent via-white/60 to-transparent" />
-        <main className="p-6">{children}</main>
+        <main className="pt-16 px-4 pb-4 lg:p-6">{children}</main>
       </div>
     </div>
   );
