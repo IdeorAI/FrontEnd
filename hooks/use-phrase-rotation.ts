@@ -24,17 +24,24 @@ export function usePhraseRotation(
     setIndex(0);
     setIsFading(false);
 
-    intervalRef.current = setInterval(() => {
-      setIsFading(true);
-      setTimeout(() => {
-        setIndex((prev) => (prev + 1) % phrases.length);
-        setIsFading(false);
-      }, 400);
-    }, 2500);
+    const schedule = () => {
+      // Varia entre 2800ms e 3800ms para parecer mais orgânico
+      const delay = 2800 + Math.random() * 1000;
+      intervalRef.current = setTimeout(() => {
+        setIsFading(true);
+        setTimeout(() => {
+          setIndex((prev) => (prev + 1) % phrases.length);
+          setIsFading(false);
+          schedule();
+        }, 450);
+      }, delay);
+    };
+
+    schedule();
 
     return () => {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+        clearTimeout(intervalRef.current);
         intervalRef.current = null;
       }
     };

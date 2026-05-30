@@ -1,6 +1,8 @@
 export const LLM_LOADING_PHRASES = [
-  "Analisando o potencial da sua ideia...",
-  "Mapeando o terreno do seu mercado...",
-  "Estruturando os pilares da sua startup...",
-  "Sua estratégia está tomando forma...",
+  "Analisando sua ideia inicial...",
+  "Mapeando os pilares do projeto...",
+  "Avaliando todas as possibilidades...",
+  "Reunindo insights para sua ideia...",
+  "Conectando visão e execução...",
+  "Sua startup está tomando forma...",
 ] as const;
