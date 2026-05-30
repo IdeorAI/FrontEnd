@@ -234,4 +234,31 @@
   .animate-bounce-slow {
     animation: bounce-slow 2s ease-in-out infinite;
   }
+
+  /* Scrollbar discreta — dark e light */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(240 10% 70% / 0.3);
+    border-radius: 9999px;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: hsl(240 10% 40% / 0.35);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(240 10% 60% / 0.5);
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: hsl(240 10% 55% / 0.5);
+  }
 }

@@ -264,10 +264,10 @@ export default function EmBrevePage() {
       {/* Header */}
       <header className="space-y-3">
         <p className="text-xs font-semibold text-primary uppercase tracking-widest">
-          IdeorAI Próximas Versões
+          IdeorAI - Próximas Versões
         </p>
         <h1 className="text-3xl font-bold tracking-tight">
-          O que estamos construindo a seguir
+          Veja o que vem por aí
         </h1>
         <p className="text-muted-foreground max-w-2xl leading-relaxed">
           Cada funcionalidade abaixo foi desenhada para remover um bloqueio real na jornada do
