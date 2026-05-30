@@ -215,13 +215,19 @@
     }
   }
 
-  /* Animação personalizada para o foguete */
+  /* Animação personalizada para o foguete — APENAS flutuação vertical.
+     A rotação/direção do foguete é controlada exclusivamente pela classe
+     no <Rocket> (ex: -rotate-45). NUNCA colocar rotate() aqui, senão o
+     transform da animação sobrescreve a inclinação do ícone (só pode
+     haver um transform por elemento — mas como animação e ícone estão em
+     elementos separados, o problema era o rotate(90deg) embutido aqui
+     forçando uma direção diferente da do ícone). */
   @keyframes bounce-slow {
     0%, 100% {
-      transform: translateY(0) rotate(90deg);
+      transform: translateY(0);
     }
     50% {
-      transform: translateY(-20px) rotate(90deg);
+      transform: translateY(-20px);
     }
   }
 

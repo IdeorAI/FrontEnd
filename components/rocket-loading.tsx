@@ -73,7 +73,12 @@ export function RocketLoading({
 export function RocketLoadingInline({ className }: { className?: string }) {
   return (
     <div className={`inline-flex items-center gap-2 ${className || ""}`}>
-      <Rocket className="h-4 w-4 text-[#8c7dff] animate-bounce" />
+      {/* animate-bounce (transform: translateY) fica no WRAPPER; a rotação
+          (-rotate-45) fica no ÍCONE — separados para os dois transforms não
+          conflitarem no mesmo elemento. */}
+      <span className="inline-block animate-bounce">
+        <Rocket className="h-4 w-4 text-[#8c7dff] -rotate-45" />
+      </span>
       <span className="text-sm text-muted-foreground">Carregando...</span>
     </div>
   );
