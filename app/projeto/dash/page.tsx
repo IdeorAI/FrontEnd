@@ -957,10 +957,12 @@ function DashPageContent() {
         );
       })()}
 
-      {/* ─── Grid 2 colunas: etapas (esq) · right rail (dir) ──── */}
+      {/* ─── Grid 2 colunas: etapas (esq) · right rail (dir) ────
+           Mobile (1 coluna): rail IVO/Score vai PRO TOPO via order-first,
+           etapas abaixo. Desktop: ordem normal (etapas esq, rail dir). */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
         {/* Esquerda: Stage Detail Cards */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 order-2 lg:order-1">
           <div className="px-1 pt-1 text-[11px] font-bold uppercase tracking-[0.08em] text-ink-tertiary">
             Etapas da jornada
           </div>
@@ -1099,8 +1101,8 @@ function DashPageContent() {
           })()}
         </div>
 
-        {/* Direita: Right rail */}
-        <div className="flex flex-col gap-3">
+        {/* Direita: Right rail — order-1 no mobile (topo), order-2 no desktop (direita) */}
+        <div className="flex flex-col gap-3 order-1 lg:order-2">
           {/* IVO + Score tabs */}
           {project && (
             <div>

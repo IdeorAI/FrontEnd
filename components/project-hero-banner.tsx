@@ -80,16 +80,16 @@ export function ProjectHeroBanner({ projectName, category, createdAt }: ProjectH
         sizes="100vw"
       />
       <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-transparent" />
-      <div className="absolute inset-0 flex flex-col justify-center px-6 md:px-10">
-        <h2 className="text-white font-bold text-xl md:text-2xl leading-tight drop-shadow-lg truncate">
+      <div className="absolute inset-0 flex flex-col justify-center px-4 sm:px-6 md:px-10">
+        <h2 className="text-white font-bold text-lg sm:text-xl md:text-2xl leading-tight drop-shadow-lg truncate">
           {projectName}
         </h2>
-        <div className="flex items-center mt-1.5">
+        <div className="flex items-center mt-1.5 gap-2">
           {categoryLabel && (
-            <span className="text-white/75 text-sm font-medium">{categoryLabel}</span>
+            <span className="text-white/75 text-xs sm:text-sm font-medium truncate">{categoryLabel}</span>
           )}
           {createdAt && (
-            <span className="ml-auto text-white/60 text-xs">
+            <span className="ml-auto hidden sm:inline text-white/60 text-xs whitespace-nowrap">
               Criada em: {new Date(createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
             </span>
           )}

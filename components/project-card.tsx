@@ -74,7 +74,7 @@ export function ProjectCard({ project: p, role }: ProjectCardProps) {
           {/* TOP: avatar + nome */}
           <div className={`flex items-center gap-3 ${role ? "pr-24" : ""}`}>
             <ProjectAvatar projectName={projectName} category={p.category ?? undefined} size={48} />
-            <h3 className="font-semibold text-base leading-snug line-clamp-2 flex-1">{projectName}</h3>
+            <h3 className="font-semibold text-base leading-snug line-clamp-2 flex-1 min-w-0 break-words">{projectName}</h3>
           </div>
 
           {/* MEIO: categoria + IVO */}
