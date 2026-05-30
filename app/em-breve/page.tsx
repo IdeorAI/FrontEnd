@@ -294,7 +294,7 @@ export default function EmBrevePage() {
 
         <FeatureSection
           icon={Trophy}
-          name="Ranking"
+          name="Ranking de Melhores Projetos"
           tagline="Saiba como sua startup está posicionada."
           description="Ranking público (opcional) e dinâmico das melhores startups construídas na plataforma atraindo visibilidade, potenciais parceiros e até investidores."
           bullets={[
@@ -308,33 +308,18 @@ export default function EmBrevePage() {
         />
 
         <FeatureSection
-          icon={CreditCard}
-          name="Planos"
-          tagline="De inscrição gratuita a planos flexíveis conforme o espírito do empreendedor."
-          description="Planos pagos opcionais para quem quer ultrapassar os limites da versão gratuita — mais geração de documentos por mês, exportações em formatos profissionais, e acesso direto à nossa equipe."
+          icon={Swords}
+          name="Desafios & Concursos"
+          tagline="Concursos internos e desafios que geram reconhecimento, apoio e crescimento."
+          description="Uma área dedicada a desafios, editais e concursos promovidos pelo Ideor em parceria com empresas, aceleradoras, investidores, universidades e organizações do ecossistema de inovação. Os participantes poderão inscrever seus projetos e concorrer a premiações, mentorias, visibilidade, programas de aceleração e outros benefícios definidos por cada parceiro."
           bullets={[
-            "Tokens estendidos: limite mensal de geração de etapas ~10x maior.",
-            "Exportações premium: PDF formatado, PPT pitch-ready, planilhas de unit economics.",
-            "Acesso ao Marketplace (Pro): visibilidade prioritária na lista de mentores.",
-            "Suporte prioritário: canal direto com a equipe e mentoria mensal incluída no plano Founder.",
-            "Sem fidelidade: pague mensal ou anual com desconto. Cancele quando quiser.",
+            "Editais temáticos: participe de desafios voltados para setores específicos como IA, Saúde, Educação, Sustentabilidade, Fintech, Agrotech e outros.",
+            "Inscrição simplificada: utilize as informações já geradas pelo Ideor para submeter seu projeto em poucos cliques.",
+            "Avaliação estruturada: projetos analisados com base em critérios definidos por cada concurso.",
+            "Premiações e incentivos: mentorias, créditos de tecnologia, aceleração, investimentos, serviços especializados e outras recompensas.",
+            "Visibilidade para seu projeto: destaque para startups selecionadas e vencedoras dentro do ecossistema Ideor.",
           ]}
-          preview={<PlanosPreview />}
-        />
-
-        <FeatureSection
-          icon={Mail}
-          name="Convites"
-          tagline="A própria IA te ajuda a construir seu time e encontrar parcerias."
-          description="Convide cofundadores, mentores e colaboradores para colaborar em projetos específicos. Cada pessoa convidada terá um papel (editor ou visualizador) com permissões granulares e poderá contribuir nas etapas que você liberar."
-          bullets={[
-            "Convites por email com aceite em 1-clique",
-            "Papéis configuráveis: editor, visualizador, mentor",
-            "Notificações em tempo real quando alguém entrar",
-            "Histórico de quem mudou o quê em cada etapa",
-            "Limite de assentos por projeto conforme o plano",
-          ]}
-          preview={<ConvitesPreview />}
+          preview={<DesafiosPreview />}
         />
 
         <FeatureSection
@@ -353,18 +338,33 @@ export default function EmBrevePage() {
         />
 
         <FeatureSection
-          icon={Swords}
-          name="Desafios & Concursos"
-          tagline="Concursos internos e desafios que geram reconhecimento, apoio e crescimento."
-          description="Uma área dedicada a desafios, editais e concursos promovidos pelo Ideor em parceria com empresas, aceleradoras, investidores, universidades e organizações do ecossistema de inovação. Os participantes poderão inscrever seus projetos e concorrer a premiações, mentorias, visibilidade, programas de aceleração e outros benefícios definidos por cada parceiro."
+          icon={CreditCard}
+          name="Planos Free e Pagos"
+          tagline="De inscrição gratuita a planos flexíveis conforme o espírito do empreendedor."
+          description="Planos pagos opcionais para quem quer ultrapassar os limites da versão gratuita — mais geração de documentos por mês, exportações em formatos profissionais, e acesso direto à nossa equipe."
           bullets={[
-            "Editais temáticos: participe de desafios voltados para setores específicos como IA, Saúde, Educação, Sustentabilidade, Fintech, Agrotech e outros.",
-            "Inscrição simplificada: utilize as informações já geradas pelo Ideor para submeter seu projeto em poucos cliques.",
-            "Avaliação estruturada: projetos analisados com base em critérios definidos por cada concurso.",
-            "Premiações e incentivos: mentorias, créditos de tecnologia, aceleração, investimentos, serviços especializados e outras recompensas.",
-            "Visibilidade para seu projeto: destaque para startups selecionadas e vencedoras dentro do ecossistema Ideor.",
+            "Tokens estendidos: limite mensal de geração de etapas ~10x maior.",
+            "Exportações premium: PDF formatado, PPT pitch-ready, planilhas de unit economics.",
+            "Acesso ao Marketplace (Pro): visibilidade prioritária na lista de mentores.",
+            "Suporte prioritário: canal direto com a equipe e mentoria mensal incluída no plano Founder.",
+            "Sem fidelidade: pague mensal ou anual com desconto. Cancele quando quiser.",
           ]}
-          preview={<DesafiosPreview />}
+          preview={<PlanosPreview />}
+        />
+
+        <FeatureSection
+          icon={Mail}
+          name="Convites para Equipe e Parceiros"
+          tagline="A própria IA te ajuda a construir seu time e encontrar parcerias."
+          description="Convide cofundadores, mentores e colaboradores para colaborar em projetos específicos. Cada pessoa convidada terá um papel (editor ou visualizador) com permissões granulares e poderá contribuir nas etapas que você liberar."
+          bullets={[
+            "Convites por email com aceite em 1-clique",
+            "Papéis configuráveis: editor, visualizador, mentor",
+            "Notificações em tempo real quando alguém entrar",
+            "Histórico de quem mudou o quê em cada etapa",
+            "Limite de assentos por projeto conforme o plano",
+          ]}
+          preview={<ConvitesPreview />}
         />
       </div>
 
