@@ -125,7 +125,7 @@ export default function TitlePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[640px] py-4">
+    <div className="mx-auto w-full max-w-[640px] py-4 px-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold flex items-center gap-2">
           <Lightbulb className="h-6 w-6" />

@@ -122,7 +122,7 @@ export default function SegmentIdeasPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[640px] py-4 space-y-4 relative">
+    <div className="mx-auto w-full max-w-[640px] py-4 px-4 space-y-4 relative">
       {/* Overlay de loading da chamada LLM (foguete + frases rotativas) */}
       <div className="fixed inset-0 z-50 pointer-events-none">
         <LlmLoadingOverlay isVisible={isLoading} />
