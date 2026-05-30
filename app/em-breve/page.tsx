@@ -188,7 +188,7 @@ export default function EmBrevePage() {
       {/* Header */}
       <header className="space-y-3">
         <p className="text-xs font-semibold text-primary uppercase tracking-widest">
-          Beta privada · Próximas releases
+          IdeorAI Próximas Versões
         </p>
         <h1 className="text-3xl font-bold tracking-tight">
           O que estamos construindo a seguir
@@ -205,7 +205,7 @@ export default function EmBrevePage() {
           icon={Store}
           name="Marketplace"
           tagline="A rede de mentores, parceiros e investidores curada para a sua etapa."
-          description="Um diretório curado de mentores, prestadores de serviço, parceiros de tecnologia e investidores que você pode contratar ou fazer match conforme o seu IVO Index e a etapa atual do projeto."
+          description="Um diretório de mentores selecionados, prestadores de serviço, parceiros de tecnologia e investidores que você pode contratar ou fazer match de acordo com a fase e necessidades do seu projeto."
           bullets={[
             "Match inteligente: parceiros recomendados pela IA com base no seu setor, estágio e bloqueio atual.",
             "Catálogo curado: cada perfil passa por validação (cases, reviews públicos, autenticidade).",
@@ -219,8 +219,8 @@ export default function EmBrevePage() {
         <FeatureSection
           icon={Trophy}
           name="Ranking"
-          tagline="Veja como sua ideia se posiciona — e o que falta para subir."
-          description="Ranking público (opcional) dos projetos por IVO Index e pelos pilares O-M-V-E-T-D. Compare-se com o mercado, ganhe visibilidade e desbloqueie conquistas conforme evolui."
+          tagline="Saiba como sua startup está posicionada."
+          description="Ranking público (opcional) e dinâmico das melhores startups construídas na plataforma atraindo visibilidade, potenciais parceiros e até investidores."
           bullets={[
             "Top por setor: posição no seu nicho, não em listas genéricas.",
             "Decomposição por pilar: veja onde está acima/abaixo da média (Originalidade, Mercado, Viabilidade, etc.).",
@@ -234,7 +234,7 @@ export default function EmBrevePage() {
         <FeatureSection
           icon={CreditCard}
           name="Planos"
-          tagline="Mais tokens, exportações avançadas e suporte prioritário quando você precisa acelerar."
+          tagline="De inscrição gratuita a planos flexíveis conforme o espírito do empreendedor."
           description="Planos pagos opcionais para quem quer ultrapassar os limites da versão gratuita — mais geração de documentos por mês, exportações em formatos profissionais, e acesso direto à nossa equipe."
           bullets={[
             "Tokens estendidos: limite mensal de geração de etapas ~10x maior.",
@@ -249,7 +249,7 @@ export default function EmBrevePage() {
         <FeatureSection
           icon={Mail}
           name="Convites"
-          tagline="Construa time e parcerias dentro do próprio projeto, sem sair do IdeorAI."
+          tagline="A própria IA te ajuda a construir seu time e encontrar parcerias."
           description="Convide cofundadores, mentores e colaboradores para colaborar em projetos específicos. Cada pessoa convidada terá um papel (editor ou visualizador) com permissões granulares e poderá contribuir nas etapas que você liberar."
           bullets={[
             "Convites por email com aceite em 1-clique",
