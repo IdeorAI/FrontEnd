@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Rocket, Zap, MessageSquareHeart, Target, Gift, AlertCircle } from "lucide-react";
@@ -31,9 +31,11 @@ export default async function BetaInvitePage({ params }: PageProps) {
 
   const invite = data?.[0];
 
-  // Token inexistente ou já consumido → 404.
+  // Token inexistente ou já consumido (convite usado) → manda pro login.
+  // O cadastro fica protegido pelo gate no banco de qualquer forma, então
+  // não há risco em redirecionar mesmo tokens inválidos.
   if (!invite?.email) {
-    notFound();
+    redirect("/auth/login");
   }
 
   const signUpHref = `/auth/sign-up?email=${encodeURIComponent(invite.email)}&invite=${token}`;
