@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useState } from "react";
-import { Loader2, Mail, Lock } from "lucide-react";
+import { Loader2, Mail, Lock, AlertCircle } from "lucide-react";
 
 function GoogleIcon() {
   return (
@@ -94,6 +94,14 @@ export function LoginForm({
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-4">
+            <div className="flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground">
+              <AlertCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <span>
+                O IdeorAI está em fase beta. O login só está disponível a
+                usuários convidados.
+              </span>
+            </div>
+
             <Button
               type="button"
               variant="outline"
