@@ -15,7 +15,23 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Loader2, Mail, User } from "lucide-react";
+import { Loader2, Mail, User, AlertCircle } from "lucide-react";
+
+// Traduz erros técnicos do Supabase para mensagens amigáveis.
+function friendlyAuthError(message: string): string {
+  const m = message.toLowerCase();
+  // Erro disparado pelo trigger enforce_beta_invite no banco
+  if (m.includes("beta_invite") || m.includes("database error")) {
+    return "Este email não está na lista do beta. Use o mesmo email em que você recebeu o convite.";
+  }
+  if (m.includes("already registered") || m.includes("already been registered")) {
+    return "Este email já tem uma conta. Tente entrar.";
+  }
+  if (m.includes("password")) {
+    return "A senha precisa ter pelo menos 6 caracteres.";
+  }
+  return "Não foi possível criar a conta agora. Tente novamente em instantes.";
+}
 
 function GoogleIcon() {
   return (
@@ -40,12 +56,19 @@ function GoogleIcon() {
   );
 }
 
+type SignUpFormProps = React.ComponentPropsWithoutRef<"div"> & {
+  invitedEmail?: string;
+  hasInvite?: boolean;
+};
+
 export function SignUpForm({
   className,
+  invitedEmail,
+  hasInvite = false,
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: SignUpFormProps) {
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(invitedEmail ?? "");
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +100,11 @@ export function SignUpForm({
       if (error) throw error;
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Ocorreu um erro");
+      setError(
+        error instanceof Error
+          ? friendlyAuthError(error.message)
+          : "Não foi possível criar a conta agora. Tente novamente."
+      );
     } finally {
       setIsLoadingEmail(false);
     }
@@ -97,7 +124,11 @@ export function SignUpForm({
       });
       if (error) throw error;
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Erro ao entrar com Google");
+      setError(
+        error instanceof Error
+          ? friendlyAuthError(error.message)
+          : "Erro ao entrar com Google"
+      );
       setIsLoadingOAuth(false);
     }
   };
@@ -108,11 +139,22 @@ export function SignUpForm({
         <CardHeader>
           <CardTitle className="text-2xl">Criar conta</CardTitle>
           <CardDescription>
-            Registre-se com email/senha ou Google
+            {hasInvite
+              ? "Você foi convidado para o beta. Finalize seu cadastro abaixo."
+              : "Registre-se com email/senha ou Google"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-4">
+            {!hasInvite && (
+              <div className="flex items-start gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-xs text-muted-foreground">
+                <AlertCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <span>
+                  O IdeorAI está em beta fechado. O cadastro só funciona com um
+                  email convidado — use o mesmo email em que recebeu o convite.
+                </span>
+              </div>
+            )}
             <Button
               type="button"
               variant="outline"
@@ -166,6 +208,8 @@ export function SignUpForm({
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    readOnly={Boolean(invitedEmail)}
+                    className={invitedEmail ? "bg-muted/50 cursor-not-allowed" : undefined}
                   />
                 </div>
               </div>

@@ -96,7 +96,7 @@ export function AppSidebar({ user, onCardOpen }: AppSidebarProps) {
   const handleLogout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push("/login");
+    router.push("/auth/login");
   };
 
   type MenuItem = {
