@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Lightbulb, Sparkles, Rocket, ArrowRight } from "lucide-react";
+import { Lightbulb, Telescope, NotebookPen, Flag, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useUser } from "@/lib/supabase/use-user";
 import { createDraftProject } from "./actions";
@@ -22,7 +22,7 @@ type OptionConfig = {
 const OPTIONS: OptionConfig[] = [
   {
     key: "assisted",
-    icon: Sparkles,
+    icon: Telescope,
     title: "Descobrir oportunidades",
     subtitle:
       "Ainda não tenho uma ideia definida e quero que o Ideor sugira oportunidades de negócio para eu explorar.",
@@ -30,7 +30,7 @@ const OPTIONS: OptionConfig[] = [
   },
   {
     key: "self",
-    icon: Lightbulb,
+    icon: NotebookPen,
     title: "Tenho uma ideia inicial",
     subtitle:
       "Já tenho uma ideia, mas ainda não desenvolvi e quero que o Ideor me ajude a refiná-la e estruturá-la em um passo a passo.",
@@ -38,7 +38,7 @@ const OPTIONS: OptionConfig[] = [
   },
   {
     key: "manual",
-    icon: Rocket,
+    icon: Flag,
     title: "Já possuo um projeto de startup",
     subtitle:
       "Eu tenho uma ideia bem definida. Desejo apenas organizar o projeto de forma manual, contando com o Ideor para um eventual apoio estratégico.",
@@ -99,11 +99,11 @@ export default function IdeaCreatePage() {
         <LlmLoadingOverlay isVisible={isCreatingProject} />
       </div>
 
-      <Card className="mx-auto w-full max-w-5xl rounded-3xl border-white/10 shadow-2xl">
+      <Card className="mx-auto w-full max-w-5xl rounded-3xl border-border shadow-2xl">
         <CardHeader className="space-y-1 pb-2">
           <h1 className="text-xl font-bold flex items-center gap-2">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-primary">
-              <Lightbulb className="h-5 w-5" />
+              <Lightbulb className="h-5 w-5" aria-hidden="true" />
             </span>
             Criar novo projeto
           </h1>
@@ -118,7 +118,11 @@ export default function IdeaCreatePage() {
             Escolha a opção que melhor representa o estágio atual da sua ideia.
           </CardDescription>
           {error && (
-            <p className="text-sm text-red-400 bg-red-950/20 p-3 rounded-lg mt-2">
+            <p
+              role="alert"
+              aria-live="polite"
+              className="text-sm text-red-400 bg-red-950/20 p-3 rounded-lg mt-2"
+            >
               {error}
             </p>
           )}
@@ -129,11 +133,11 @@ export default function IdeaCreatePage() {
             {OPTIONS.map(({ key, icon: Icon, title, subtitle, cta }) => (
               <div
                 key={key}
-                className="flex flex-col rounded-2xl border border-white/10 bg-background/40 p-5 transition-colors hover:border-primary/40"
+                className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-md transition-all hover:border-primary/40 hover:shadow-lg dark:bg-background/40"
               >
                 <div className="flex flex-col items-center text-center gap-3 flex-1">
                   <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
-                    <Icon className="h-6 w-6" />
+                    <Icon className="h-6 w-6" aria-hidden="true" />
                   </span>
                   <h3 className="text-sm font-semibold">{title}</h3>
                   <p className="text-xs text-muted-foreground leading-relaxed">
@@ -142,12 +146,12 @@ export default function IdeaCreatePage() {
                 </div>
                 <Button
                   size="lg"
-                  className="mt-5 w-full font-semibold rounded-lg shadow-md bg-gradient-hero hover:shadow-glow transition-all duration-300 transform hover:scale-105 text-[#1e2830] drop-shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  className="mt-5 w-full font-semibold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => createAndNavigate(key)}
                   disabled={isDisabled}
                 >
                   {cta}
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                 </Button>
               </div>
             ))}
