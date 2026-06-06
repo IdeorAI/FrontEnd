@@ -25,7 +25,7 @@ export default function IdeaCreatePage() {
   }, [sp]);
 
   // Cria o projeto apenas quando o usuário escolhe uma opção
-  const createAndNavigate = async (destination: "self" | "assisted") => {
+  const createAndNavigate = async (destination: "self" | "assisted" | "manual") => {
     if (isCreatingProject) return;
     setIsCreatingProject(true);
     setError(null);
@@ -39,9 +39,12 @@ export default function IdeaCreatePage() {
         return result.projectId!;
       })();
 
-      const path = destination === "self"
-        ? `/idea/questions-self?project_id=${targetPid}`
-        : `/idea/questions-assisted?project_id=${targetPid}`;
+      const path =
+        destination === "self"
+          ? `/idea/questions-self?project_id=${targetPid}`
+          : destination === "assisted"
+          ? `/idea/questions-assisted?project_id=${targetPid}`
+          : `/idea/manual?project_id=${targetPid}`;
       router.push(path);
     } catch (error) {
       log.error("Client: Erro ao criar projeto:", error);
@@ -53,6 +56,7 @@ export default function IdeaCreatePage() {
 
   const goToDescribe = () => createAndNavigate("self");
   const goToIdeor = () => createAndNavigate("assisted");
+  const goToManual = () => createAndNavigate("manual");
 
   const isDisabled = loading || isCreatingProject || !user;
 
@@ -113,6 +117,17 @@ export default function IdeaCreatePage() {
               disabled={isDisabled}
             >
               COMEÇAR COM A AJUDA DO IDEOR ✨
+            </Button>
+          </div>
+          <div className="space-y-1">
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-full font-semibold rounded-lg border-white/20 hover:bg-white/5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={goToManual}
+              disabled={isDisabled}
+            >
+              ESCREVER EU MESMO (SEM IA)
             </Button>
           </div>
         </CardContent>
