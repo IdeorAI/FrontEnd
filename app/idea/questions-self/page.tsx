@@ -81,8 +81,10 @@ export default function QuestionsSelfPage() {
         return setError("Erro ao salvar as respostas");
       }
 
-      // Redireciona para a próxima página do fluxo self-guided
-      router.replace(`/idea/descreva?project_id=${projectId}`);
+      // Destino: 'manual' (escrita sem IA) ou 'descreva' (com ajuda da IA — default).
+      const next = sp.get("next");
+      const destination = next === "manual" ? "manual" : "descreva";
+      router.replace(`/idea/${destination}?project_id=${projectId}`);
     } catch (err) {
       setError("Erro inesperado ao salvar");
       console.error(err);

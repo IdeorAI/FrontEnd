@@ -44,7 +44,7 @@ export default function IdeaCreatePage() {
           ? `/idea/questions-self?project_id=${targetPid}`
           : destination === "assisted"
           ? `/idea/questions-assisted?project_id=${targetPid}`
-          : `/idea/manual?project_id=${targetPid}`;
+          : `/idea/questions-self?project_id=${targetPid}&next=manual`;
       router.push(path);
     } catch (error) {
       log.error("Client: Erro ao criar projeto:", error);
@@ -122,8 +122,7 @@ export default function IdeaCreatePage() {
           <div className="space-y-1">
             <Button
               size="lg"
-              variant="outline"
-              className="w-full font-semibold rounded-lg border-white/20 hover:bg-white/5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full font-semibold rounded-lg shadow-md bg-gradient-hero hover:shadow-glow transition-all duration-300 transform hover:scale-105 text-[#1e2830] drop-shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               onClick={goToManual}
               disabled={isDisabled}
             >

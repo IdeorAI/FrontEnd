@@ -65,7 +65,8 @@ export default function IdeaManualPage() {
   }, [user, projectId, supabase]);
 
   const handleBack = () =>
-    projectId && router.replace(`/idea/create?project_id=${projectId}`);
+    projectId &&
+    router.replace(`/idea/questions-self?project_id=${projectId}&next=manual`);
   const handleClose = () => router.replace("/dashboard");
 
   const handleSaveProject = async () => {
