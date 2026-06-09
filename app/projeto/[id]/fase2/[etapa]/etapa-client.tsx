@@ -407,6 +407,29 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
                 setGeneratedContent(updated);
                 toast.success("Seção salva com sucesso");
               }}
+              onDreSave={async (dre) => {
+                if (!taskId || !generatedContent) return;
+
+                // Merge só da chave "dre" (objeto) no content atual — não sobrescreve o resto.
+                let parsed: Record<string, unknown>;
+                try {
+                  parsed = JSON.parse(generatedContent);
+                } catch {
+                  parsed = {};
+                }
+                parsed.dre = dre;
+                const updated = JSON.stringify(parsed, null, 2);
+
+                const supabase = createClient();
+                const { error } = await supabase
+                  .from("tasks")
+                  .update({ content: updated, updated_at: new Date().toISOString() })
+                  .eq("id", taskId);
+
+                if (error) throw new Error("Falha ao salvar a DRE");
+
+                setGeneratedContent(updated);
+              }}
               onSectionRefine={async (key, sectionTitle, currentValue, feedback, signal) => {
                 const headers = await refineSectionAuthHeaders();
                 const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "";

@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { DreTable, type DreData } from "@/components/dre-table";
 
 interface DocumentViewerProps {
   content: string;
@@ -28,6 +29,8 @@ interface DocumentViewerProps {
     feedback: string,
     signal?: AbortSignal
   ) => Promise<string>;
+  /** Chamado quando a DRE (chave "dre") é editada. Persiste o objeto inteiro. */
+  onDreSave?: (dre: DreData) => Promise<void>;
 }
 
 interface Section {
@@ -470,9 +473,19 @@ export function DocumentViewer({
   content,
   onSectionSave,
   onSectionRefine,
+  onDreSave,
 }: DocumentViewerProps) {
   const shape = useMemo(() => detectShape(content), [content]);
   const sections = useMemo(() => buildSections(shape), [shape]);
+
+  // Objeto bruto da DRE (chave "dre"), quando o JSON da etapa a contém.
+  const dreRaw = useMemo(
+    () =>
+      shape.kind === "json" && shape.raw["dre"] && typeof shape.raw["dre"] === "object"
+        ? (shape.raw["dre"] as Partial<DreData>)
+        : null,
+    [shape]
+  );
 
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     () => new Set(sections.map((s) => s.id))
@@ -623,6 +636,17 @@ export function DocumentViewer({
       {sections.map((section, index) => {
         const isOpen = expandedSections.has(section.id);
         const isEditing = editingKey === section.key;
+
+        // Hook dedicado: a chave "dre" vira uma tabela editável, não uma seção genérica.
+        if (section.key === "dre" && dreRaw) {
+          return (
+            <div key={section.id} className="rounded-lg border border-border bg-card p-3 sm:p-4">
+              <h3 className="text-sm font-semibold mb-3">Demonstração de Resultado (DRE)</h3>
+              <DreTable dre={dreRaw} onSave={onDreSave} />
+            </div>
+          );
+        }
+
         return (
           <SectionCard
             key={section.id}
