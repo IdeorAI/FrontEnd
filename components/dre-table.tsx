@@ -269,8 +269,8 @@ export function DreTable({ dre, onSave }: DreTableProps) {
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-xs sm:text-sm border-collapse">
           <thead>
-            <tr className="bg-muted/50">
-              <th className="sticky left-0 z-10 bg-muted/50 text-left font-semibold p-2 min-w-[220px]">
+            <tr className="bg-muted">
+              <th className="sticky left-0 z-20 bg-muted text-left font-semibold p-2 min-w-[220px] border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]">
                 Descrição da Conta
               </th>
               {Array.from({ length: MESES }, (_, i) => (
@@ -278,7 +278,7 @@ export function DreTable({ dre, onSave }: DreTableProps) {
                   Mês {i + 1}
                 </th>
               ))}
-              {!readOnly && <th className="w-8" />}
+              {!readOnly && <th className="w-10 sticky right-0 z-20 bg-muted border-l border-border" />}
             </tr>
           </thead>
           <tbody>
@@ -287,9 +287,9 @@ export function DreTable({ dre, onSave }: DreTableProps) {
               return (
                 <tr
                   key={l.id}
-                  className={isTotal ? "bg-primary/5 font-semibold border-t border-border" : "border-t border-border/50"}
+                  className={isTotal ? "bg-muted/60 font-semibold border-t border-border" : "border-t border-border/50"}
                 >
-                  <td className={`sticky left-0 z-10 p-2 whitespace-nowrap ${isTotal ? "bg-primary/5" : "bg-card"}`}>
+                  <td className={`sticky left-0 z-10 p-2 whitespace-nowrap border-r border-border shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)] ${isTotal ? "bg-muted" : "bg-card"}`}>
                     {l.descricao}
                   </td>
                   {l.valores.map((v, m) => (
@@ -298,15 +298,16 @@ export function DreTable({ dre, onSave }: DreTableProps) {
                     </td>
                   ))}
                   {!readOnly && (
-                    <td className="p-1 text-center">
+                    <td className={`p-1 text-center sticky right-0 z-10 border-l border-border ${isTotal ? "bg-muted" : "bg-card"}`}>
                       {l.removivel && (
                         <button
                           type="button"
                           onClick={() => handleRemover(l.id)}
                           aria-label={`Remover linha ${l.descricao}`}
-                          className="text-muted-foreground hover:text-red-500 transition-colors"
+                          title="Remover esta linha"
+                          className="inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
                         >
-                          <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                          <Trash2 className="h-4 w-4" aria-hidden="true" />
                         </button>
                       )}
                     </td>
