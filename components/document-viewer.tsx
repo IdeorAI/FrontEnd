@@ -15,7 +15,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { DreTable, type DreData } from "@/components/dre-table";
+import { type DreData } from "@/components/dre-table";
 
 interface DocumentViewerProps {
   content: string;
@@ -29,7 +29,10 @@ interface DocumentViewerProps {
     feedback: string,
     signal?: AbortSignal
   ) => Promise<string>;
-  /** Chamado quando a DRE (chave "dre") é editada. Persiste o objeto inteiro. */
+  /**
+   * @deprecated Spec 022 v2: a DRE saiu da etapa 4 e vive na tela "Resumo Financeiro".
+   * Prop mantida apenas para compatibilidade de assinatura; não é mais usada aqui.
+   */
   onDreSave?: (dre: DreData) => Promise<void>;
 }
 
@@ -473,17 +476,12 @@ export function DocumentViewer({
   content,
   onSectionSave,
   onSectionRefine,
-  onDreSave,
 }: DocumentViewerProps) {
   const shape = useMemo(() => detectShape(content), [content]);
-  const sections = useMemo(() => buildSections(shape), [shape]);
-
-  // Objeto bruto da DRE (chave "dre"), quando o JSON da etapa a contém.
-  const dreRaw = useMemo(
-    () =>
-      shape.kind === "json" && shape.raw["dre"] && typeof shape.raw["dre"] === "object"
-        ? (shape.raw["dre"] as Partial<DreData>)
-        : null,
+  // A chave "dre" deixou de ser exibida na etapa 4 (Spec 022 v2): a DRE migrou
+  // para o card/tela "Resumo Financeiro". Filtramos a seção para não renderizá-la.
+  const sections = useMemo(
+    () => buildSections(shape).filter((s) => s.key !== "dre"),
     [shape]
   );
 
@@ -637,15 +635,6 @@ export function DocumentViewer({
         const isOpen = expandedSections.has(section.id);
         const isEditing = editingKey === section.key;
 
-        // Hook dedicado: a chave "dre" vira uma tabela editável, não uma seção genérica.
-        if (section.key === "dre" && dreRaw) {
-          return (
-            <div key={section.id} className="rounded-lg border border-border bg-card p-3 sm:p-4">
-              <h3 className="text-sm font-semibold mb-3">Demonstração de Resultado (DRE)</h3>
-              <DreTable dre={dreRaw} onSave={onDreSave} />
-            </div>
-          );
-        }
 
         return (
           <SectionCard

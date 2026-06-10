@@ -33,6 +33,7 @@ import { useStageOperations } from "@/hooks/use-stage-operations";
 import { BenchmarkPanel } from "@/components/projeto/benchmark-panel";
 import { AnunciarModal } from "@/components/marketplace/anunciar-modal";
 import { GoPivotCard } from "@/app/projeto/[id]/components/go-pivot-gate";
+import { FinancialSummaryCard } from "@/app/projeto/[id]/components/financial-summary-card";
 import { ProjectHeroBanner } from "@/components/project-hero-banner";
 import { JourneyStepper, DEFAULT_STAGES } from "@/components/projeto/journey-stepper";
 import { StageDetailCard } from "@/components/projeto/stage-detail-card";
@@ -1146,6 +1147,17 @@ function DashPageContent() {
                 projectId={projectId}
                 userId={user.id}
                 etapa2Complete={completedStages.includes(2)}
+              />
+            )}
+          </div>
+
+          {/* Resumo Financeiro (Spec 022 v2) — liberado após a Etapa 4 */}
+          <div id="financial-summary">
+            {projectId && user?.id && (
+              <FinancialSummaryCard
+                projectId={projectId}
+                userId={user.id}
+                etapa4Complete={completedStages.includes(4)}
               />
             )}
           </div>
