@@ -15,6 +15,8 @@ import {
   type DreSeriePonto,
 } from "@/components/dre-table";
 import { DreChart } from "@/components/dre-chart";
+import { markGeneratedDocumentsOutdated } from "@/lib/api/final-documents";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ArrowLeft, DollarSign, Loader2, LineChart as LineChartIcon } from "lucide-react";
@@ -85,6 +87,17 @@ export function FinanceiroClient({ projectId, projectName }: Props) {
     const { error } = await supabase.from("tasks").update({ content }).eq("id", taskId);
     if (error) throw new Error("Falha ao salvar a DRE no banco de dados");
     setRawContent(content);
+
+    // A DRE mudou: marca os documentos finais (Pitch/Plano/Resumo) que citam
+    // números financeiros como desatualizados, para regeneração consciente.
+    try {
+      const marked = await markGeneratedDocumentsOutdated(projectId);
+      if (marked > 0) {
+        toast.info("Documentos finais marcados como desatualizados. Regenere-os para usar os novos números.");
+      }
+    } catch (err) {
+      console.warn("Falha ao marcar documentos finais como desatualizados:", err);
+    }
   };
 
   if (loading) {

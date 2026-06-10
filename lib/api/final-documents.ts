@@ -53,6 +53,8 @@ export async function downloadFinalDocumentPdf(
 export interface GeneratedDocSummary {
   doc_type: DocType;
   generated_at: string;
+  /** Preenchido quando a DRE mudou após a geração → documento defasado. */
+  outdated_at: string | null;
 }
 
 export async function listGeneratedDocuments(
@@ -61,7 +63,26 @@ export async function listGeneratedDocuments(
   const supabase = createClient();
   const { data } = await supabase
     .from("generated_documents")
-    .select("doc_type, generated_at")
+    .select("doc_type, generated_at, outdated_at")
     .eq("project_id", projectId);
   return (data as GeneratedDocSummary[] | null) ?? [];
+}
+
+/**
+ * Marca os documentos finais de um projeto como DESATUALIZADOS (outdated_at = now()).
+ * Usado quando a DRE é editada: como Pitch/Plano/Resumo citam números financeiros,
+ * o texto congelado fica defasado. O documento NÃO é apagado — o usuário ainda vê
+ * o antigo, mas com badge "Desatualizado" (amarelo), e regenera quando quiser.
+ * RLS: a policy de UPDATE do dono já cobre. Retorna quantos foram marcados.
+ */
+export async function markGeneratedDocumentsOutdated(projectId: string): Promise<number> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("generated_documents")
+    .update({ outdated_at: new Date().toISOString() })
+    .eq("project_id", projectId)
+    .is("outdated_at", null)
+    .select("doc_type");
+  if (error) throw error;
+  return data?.length ?? 0;
 }

@@ -147,12 +147,17 @@ export function DocumentacaoClient({ projectId, projectName }: DocumentacaoClien
           const isDownloading = downloading === type;
           const status = isGenerating
             ? { label: "Gerando...", cls: "bg-amber-100 text-amber-800" }
-            : entry
+            : entry?.outdated_at
               ? {
-                  label: `Pronto · ${formatDate(entry.generated_at)}`,
-                  cls: "bg-emerald-100 text-emerald-800",
+                  label: "Desatualizado · regere com os novos números",
+                  cls: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300",
                 }
-              : { label: "Não gerado", cls: "bg-muted text-muted-foreground" };
+              : entry
+                ? {
+                    label: `Pronto · ${formatDate(entry.generated_at)}`,
+                    cls: "bg-emerald-100 text-emerald-800",
+                  }
+                : { label: "Não gerado", cls: "bg-muted text-muted-foreground" };
 
           return (
             <Card

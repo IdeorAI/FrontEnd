@@ -73,6 +73,7 @@ export type Database = {
           generated_at: string
           id: string
           model_used: string | null
+          outdated_at: string | null
           project_id: string
         }
         Insert: {
@@ -81,6 +82,7 @@ export type Database = {
           generated_at?: string
           id?: string
           model_used?: string | null
+          outdated_at?: string | null
           project_id: string
         }
         Update: {
@@ -89,6 +91,7 @@ export type Database = {
           generated_at?: string
           id?: string
           model_used?: string | null
+          outdated_at?: string | null
           project_id?: string
         }
         Relationships: [
