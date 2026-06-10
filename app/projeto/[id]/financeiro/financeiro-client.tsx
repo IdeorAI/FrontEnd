@@ -8,10 +8,16 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { DreTable, type DreData } from "@/components/dre-table";
+import {
+  DreTable,
+  computeSeriesMensais,
+  type DreData,
+  type DreSeriePonto,
+} from "@/components/dre-table";
+import { DreChart } from "@/components/dre-chart";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, DollarSign, Loader2 } from "lucide-react";
+import { ArrowLeft, DollarSign, Loader2, LineChart as LineChartIcon } from "lucide-react";
 
 interface Props {
   projectId: string;
@@ -37,6 +43,7 @@ export function FinanceiroClient({ projectId, projectName }: Props) {
   const [taskId, setTaskId] = useState<string | null>(null);
   const [rawContent, setRawContent] = useState<string | null>(null);
   const [dre, setDre] = useState<Partial<DreData> | null>(null);
+  const [series, setSeries] = useState<DreSeriePonto[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -51,9 +58,11 @@ export function FinanceiroClient({ projectId, projectName }: Props) {
           .maybeSingle();
 
         if (data) {
+          const extracted = extractDre(data.content as string);
           setTaskId(data.id as string);
           setRawContent(data.content as string);
-          setDre(extractDre(data.content as string));
+          setDre(extracted);
+          setSeries(computeSeriesMensais(extracted));
         }
       } finally {
         setLoading(false);
@@ -104,18 +113,36 @@ export function FinanceiroClient({ projectId, projectName }: Props) {
       </div>
 
       {dre ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Demonstração de Resultado (DRE)</CardTitle>
-            <CardDescription>
-              Ajuste receita, custos e despesas. As alterações são refletidas no card Resumo
-              Financeiro e nos documentos finais.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DreTable dre={dre} onSave={handleSave} />
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          {/* Gráfico — atualiza a cada edição da DRE */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <LineChartIcon className="h-4 w-4 text-primary" />
+                Evolução financeira (12 meses)
+              </CardTitle>
+              <CardDescription>
+                Receita Bruta, Despesas (todas as saídas) e Lucro Líquido por mês.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DreChart data={series} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Demonstração de Resultado (DRE)</CardTitle>
+              <CardDescription>
+                Ajuste receita, custos e despesas. As alterações são refletidas no card Resumo
+                Financeiro, no gráfico acima e nos documentos finais.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DreTable dre={dre} onSave={handleSave} onDataChange={(d) => setSeries(computeSeriesMensais(d))} />
+            </CardContent>
+          </Card>
+        </div>
       ) : (
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">

@@ -43,7 +43,6 @@ export function FinancialSummaryCard({ projectId, userId, etapa4Complete }: Prop
   const [cardState, setCardState] = useState<CardState>(etapa4Complete ? 'idle' : 'disabled');
   const [result, setResult] = useState<FinancialSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
 
   // Quando a etapa 4 conclui, sai de 'disabled'.
   useEffect(() => {
@@ -51,25 +50,37 @@ export function FinancialSummaryCard({ projectId, userId, etapa4Complete }: Prop
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [etapa4Complete]);
 
-  // Carrega o resumo já gerado (cache), uma vez.
+  // Busca o resumo já gerado. Re-busca no mount E quando a aba volta ao foco
+  // (ex.: usuário editou a DRE em /financeiro e voltou) — mantém a síntese fresca.
   useEffect(() => {
-    if (!etapa4Complete || result !== null || cardState === 'loading' || hasAttemptedFetch) return;
-    setHasAttemptedFetch(true);
+    if (!etapa4Complete) return;
     let cancelled = false;
-    (async () => {
+
+    const refetch = async () => {
       try {
         const cached = await getFinancialSummary(projectId, userId);
-        if (cancelled || !cached) return;
-        setResult(cached);
-        setCardState('result');
+        if (cancelled) return;
+        if (cached) {
+          setResult(cached);
+          setCardState((s) => (s === 'loading' ? s : 'result'));
+        }
       } catch (err) {
-        console.warn('Falha ao carregar Resumo Financeiro cacheado:', err);
+        console.warn('Falha ao carregar Resumo Financeiro:', err);
       }
-    })();
+    };
+
+    refetch();
+
+    const onFocus = () => {
+      if (document.visibilityState === 'visible') refetch();
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
     return () => {
       cancelled = true;
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [etapa4Complete, projectId, userId]);
 
   async function generate() {

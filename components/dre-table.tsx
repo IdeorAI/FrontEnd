@@ -5,7 +5,7 @@
 // - Adicionar/remover linha (receita ou despesa). Persiste via callback onSave.
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -164,16 +164,58 @@ function recalcular(data: DreData): DreData {
   return { ...data, linhas };
 }
 
+// ---------- Séries para o gráfico ----------
+export type DreSeriePonto = {
+  mes: string;        // "Mês 1" ... "Mês 12"
+  receita: number;    // Receita Bruta do mês
+  despesas: number;   // Soma de TODAS as saídas do mês
+  lucro: number;      // Lucro Líquido do mês
+};
+
+/**
+ * Calcula as 3 séries mensais para o gráfico a partir da DRE recalculada.
+ * - receita  = soma do grupo "receita" (inclui receitas adicionadas)
+ * - despesas = TODAS as saídas do mês = Receita Bruta − Lucro Líquido
+ *   (equivale a deduções + CPV + OPEX + depreciação + impostos − resultado financeiro,
+ *    e captura automaticamente quaisquer linhas extras de despesa/receita)
+ * - lucro    = linha lucro_liquido
+ */
+export function computeSeriesMensais(input: Partial<DreData> | null | undefined): DreSeriePonto[] {
+  const data = recalcular(normalize(input));
+  const receitaGrupo = zeros();
+  for (const l of data.linhas) {
+    if (l.grupo === "receita" && l.tipo === "entrada") {
+      for (let m = 0; m < MESES; m++) receitaGrupo[m] += l.valores[m];
+    }
+  }
+  const lucro = data.linhas.find((l) => l.id === "lucro_liquido")?.valores ?? zeros();
+
+  return Array.from({ length: MESES }, (_, m) => ({
+    mes: `Mês ${m + 1}`,
+    receita: receitaGrupo[m],
+    despesas: receitaGrupo[m] - lucro[m],
+    lucro: lucro[m],
+  }));
+}
+
 // ---------- Componente ----------
 type DreTableProps = {
   dre: Partial<DreData> | null | undefined;
   /** Persiste a DRE atualizada (objeto). Se ausente, modo somente-leitura. */
   onSave?: (dre: DreData) => Promise<void>;
+  /** Notifica a DRE recalculada a cada mudança (para gráficos etc.). */
+  onDataChange?: (data: DreData) => void;
 };
 
-export function DreTable({ dre, onSave }: DreTableProps) {
+export function DreTable({ dre, onSave, onDataChange }: DreTableProps) {
   const [data, setData] = useState<DreData>(() => normalize(dre));
   const [saving, setSaving] = useState(false);
+
+  // Notifica o consumidor (ex.: gráfico) sempre que a DRE recalculada muda.
+  useEffect(() => {
+    onDataChange?.(data);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
 
   // Painel de atualização
   const [linhaSel, setLinhaSel] = useState<string>("");
@@ -278,6 +320,9 @@ export function DreTable({ dre, onSave }: DreTableProps) {
                   Mês {i + 1}
                 </th>
               ))}
+              <th className="text-right font-bold p-2 whitespace-nowrap bg-muted border-l border-border text-foreground">
+                Total
+              </th>
               {!readOnly && <th className="w-10 sticky right-0 z-20 bg-muted border-l border-border" />}
             </tr>
           </thead>
@@ -297,6 +342,18 @@ export function DreTable({ dre, onSave }: DreTableProps) {
                       {fmtBRL.format(v)}
                     </td>
                   ))}
+                  {(() => {
+                    const total = l.valores.reduce((a, b) => a + b, 0);
+                    return (
+                      <td
+                        className={`text-right p-2 whitespace-nowrap tabular-nums font-semibold border-l border-border ${
+                          isTotal ? "bg-muted" : "bg-card"
+                        } ${total < 0 ? "text-red-500" : ""}`}
+                      >
+                        {fmtBRL.format(total)}
+                      </td>
+                    );
+                  })()}
                   {!readOnly && (
                     <td className={`p-1 text-center sticky right-0 z-10 border-l border-border ${isTotal ? "bg-muted" : "bg-card"}`}>
                       {l.removivel && (
