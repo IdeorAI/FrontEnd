@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-type Task = { status?: string; content?: string | null };
+type Task = { status?: string; content?: string | null; phase?: string | null };
 
 export type ProjectCardData = {
   id: string;
@@ -44,17 +44,26 @@ interface ProjectCardProps {
 
 export function ProjectCard({ project: p, role }: ProjectCardProps) {
   const tasks = Array.isArray(p.tasks) ? p.tasks : [];
-  const completedTasks = tasks.filter((t) => t.status === "evaluated").length;
+  // Etapas de validação concluídas = tasks etapa1..etapa5 com status 'evaluated'.
+  // EXCLUI a task 'resumo_financeiro' (spec 022) — ela não é uma etapa do roadmap.
+  const etapasFase2Concluidas = tasks.filter(
+    (t) => t.status === "evaluated" && (t.phase ?? "").startsWith("etapa"),
+  ).length;
+
+  // O roadmap mostra 6 etapas: a Fase 1 (criação do projeto) conta como a 1ª etapa
+  // (sempre concluída, pois o projeto já existe) + as 5 etapas da Fase 2.
+  const TOTAL_ETAPAS = 6;
+  const completedTasks = 1 + etapasFase2Concluidas; // 1 = Fase 1 (create)
 
   const projectName =
     p.name && p.name.trim() && !p.name.startsWith("NovoProjeto")
       ? p.name
       : `Startup${p.id.substring(0, 6)}`;
 
-  const tier = getTier(completedTasks);
+  const tier = getTier(etapasFase2Concluidas);
   const scoreValue = Number(p.score ?? 0) / 10;
   const highScore = scoreValue >= 9;
-  const isComplete = completedTasks >= 5;
+  const isComplete = etapasFase2Concluidas >= 5; // todas as 5 etapas da Fase 2 prontas
 
   const accentClass = isComplete ? "bg-emerald-500/60" : "bg-primary/60";
 
@@ -149,7 +158,7 @@ export function ProjectCard({ project: p, role }: ProjectCardProps) {
             </Tooltip>
           </div>
 
-          <RoadmapBar completed={completedTasks} total={5} />
+          <RoadmapBar completed={completedTasks} total={TOTAL_ETAPAS} />
         </article>
       </ProjectCardLink>
 

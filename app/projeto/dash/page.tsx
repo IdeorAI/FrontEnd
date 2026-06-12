@@ -882,6 +882,17 @@ function DashPageContent() {
             projectName={project.name ?? "Projeto"}
             category={project.category}
             createdAt={project.created_at}
+            onRename={async (newName) => {
+              if (!projectId) return;
+              const supabase = createClient();
+              const { error } = await supabase
+                .from("projects")
+                .update({ name: newName })
+                .eq("id", projectId);
+              if (error) throw error;
+              // Atualiza o estado local → propaga para hero, breadcrumb e slug do PDF.
+              dispatch({ type: 'UPDATE_PROJECT', payload: { name: newName } });
+            }}
           />
         )}
         {/* Action Bar — breadcrumb + ações primárias + utilidades compactas */}
