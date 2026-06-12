@@ -1140,6 +1140,17 @@ function DashPageContent() {
             </div>
           )}
 
+          {/* Resumo Financeiro (Spec 022 v2) — após o IVO, antes do Go/Pivot. Liberado após a Etapa 4 */}
+          <div id="financial-summary">
+            {projectId && user?.id && (
+              <FinancialSummaryCard
+                projectId={projectId}
+                userId={user.id}
+                etapa4Complete={completedStages.includes(4)}
+              />
+            )}
+          </div>
+
           {/* GO or PIVOT */}
           <div id="go-pivot">
             {projectId && user?.id && (
@@ -1147,17 +1158,6 @@ function DashPageContent() {
                 projectId={projectId}
                 userId={user.id}
                 etapa2Complete={completedStages.includes(2)}
-              />
-            )}
-          </div>
-
-          {/* Resumo Financeiro (Spec 022 v2) — liberado após a Etapa 4 */}
-          <div id="financial-summary">
-            {projectId && user?.id && (
-              <FinancialSummaryCard
-                projectId={projectId}
-                userId={user.id}
-                etapa4Complete={completedStages.includes(4)}
               />
             )}
           </div>

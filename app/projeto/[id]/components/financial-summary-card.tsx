@@ -22,6 +22,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { FinancialHighlights } from './financial-highlights';
 
 interface Props {
   projectId: string;
@@ -117,15 +118,30 @@ export function FinancialSummaryCard({ projectId, userId, etapa4Complete }: Prop
       </div>
 
       {cardState === 'disabled' && (
-        <div className="px-5 py-5 text-sm text-muted-foreground">
-          Conclua a Etapa 4 (Modelo de Negócio) para gerar a projeção financeira do seu projeto.
+        <div className="px-5 py-5 space-y-4">
+          {/* Highlights rotativos (fade in/out) do que a análise entrega */}
+          <FinancialHighlights />
+
+          <p className="text-sm text-muted-foreground">
+            Gere uma análise projetada para 12 meses com receitas, custos e lucro — editável a qualquer momento.
+          </p>
+
+          {/* Botão apagado até a etapa estar concluída */}
+          <div className="space-y-1.5">
+            <Button disabled className="gap-2 w-full opacity-50 cursor-not-allowed">
+              <DollarSign className="h-4 w-4" /> Gerar resumo financeiro
+            </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              Conclua a Etapa 05 - Modelo de Negócio antes de gerar
+            </p>
+          </div>
         </div>
       )}
 
       {cardState === 'idle' && (
         <div className="px-5 py-5 space-y-3">
           <p className="text-sm text-muted-foreground">
-            Gere uma DRE projetada para 12 meses com receita, custos e lucro — editável a qualquer momento.
+            Gere uma análise projetada para 12 meses com receitas, custos e lucro — editável a qualquer momento.
           </p>
           {error && (
             <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">{error}</p>
