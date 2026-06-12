@@ -20,6 +20,7 @@ import { Card } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import { DocumentViewer } from "@/components/document-viewer";
 import { refineSectionAuthHeaders } from "@/lib/api/refine-section";
+import { markLaterStagesOutdated } from "@/lib/api/stage-outdated";
 
 interface EtapaClientProps {
   seenTooltips: Record<string, boolean>;
@@ -406,6 +407,14 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
 
                 setGeneratedContent(updated);
                 toast.success("Seção salva com sucesso");
+
+                // Spec 023: editar esta etapa desatualiza as posteriores concluídas.
+                // Não-bloqueante: falha aqui não derruba o save da seção.
+                try {
+                  await markLaterStagesOutdated(projectId, currentStageNumber);
+                } catch (err) {
+                  console.warn("Falha ao marcar etapas posteriores como desatualizadas:", err);
+                }
               }}
               onSectionRefine={async (key, sectionTitle, currentValue, feedback, signal) => {
                 const headers = await refineSectionAuthHeaders();

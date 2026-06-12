@@ -634,6 +634,7 @@ export type Database = {
           description: string | null
           evaluation_result: Json | null
           id: string
+          outdated_at: string | null
           phase: string
           project_id: string
           status: string
@@ -646,6 +647,7 @@ export type Database = {
           description?: string | null
           evaluation_result?: Json | null
           id?: string
+          outdated_at?: string | null
           phase: string
           project_id: string
           status?: string
@@ -658,6 +660,7 @@ export type Database = {
           description?: string | null
           evaluation_result?: Json | null
           id?: string
+          outdated_at?: string | null
           phase?: string
           project_id?: string
           status?: string

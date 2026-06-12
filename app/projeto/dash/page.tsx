@@ -92,6 +92,7 @@ interface DashState {
   ivoHistory: IvoPoint[];
   stageTaskIds: Partial<Record<string, string>>;
   downloadingPdfTask: string | null;
+  outdatedStages: number[];
 }
 
 const initialDashState: DashState = {
@@ -108,6 +109,7 @@ const initialDashState: DashState = {
   ivoHistory: [],
   stageTaskIds: {},
   downloadingPdfTask: null,
+  outdatedStages: [],
 };
 
 type DashAction =
@@ -124,7 +126,8 @@ type DashAction =
   | { type: 'SET_EXPANDED_CARD_ID'; payload: string | null }
   | { type: 'SET_IVO_HISTORY'; payload: IvoPoint[] }
   | { type: 'SET_STAGE_TASK_IDS'; payload: Partial<Record<string, string>> }
-  | { type: 'SET_DOWNLOADING_PDF_TASK'; payload: string | null };
+  | { type: 'SET_DOWNLOADING_PDF_TASK'; payload: string | null }
+  | { type: 'SET_OUTDATED_STAGES'; payload: number[] };
 
 function dashReducer(state: DashState, action: DashAction): DashState {
   switch (action.type) {
@@ -137,6 +140,7 @@ function dashReducer(state: DashState, action: DashAction): DashState {
     case 'SET_PEER_PROJECTS':  return { ...state, peerProjects: action.payload };
     case 'SET_PROJECT_KEYWORDS': return { ...state, projectKeywords: action.payload };
     case 'SET_STAGE_SUMMARIES': return { ...state, stageSummaries: action.payload };
+    case 'SET_OUTDATED_STAGES': return { ...state, outdatedStages: action.payload };
     case 'SET_RAIL_TAB':       return { ...state, railTab: action.payload };
     case 'SET_EXPANDED_CARD_ID': return { ...state, expandedCardId: action.payload };
     case 'SET_IVO_HISTORY':    return { ...state, ivoHistory: action.payload };
@@ -163,6 +167,7 @@ function DashPageContent() {
     ivoHistory,
     stageTaskIds,
     downloadingPdfTask,
+    outdatedStages,
   } = state;
 
   const searchParams = useSearchParams();
@@ -238,13 +243,20 @@ function DashPageContent() {
           // Fallback: também verificar tasks diretamente (independe de NEXT_PUBLIC_API_URL)
           const { data: tasks } = await supabase
             .from('tasks')
-            .select('phase, status')
+            .select('phase, status, outdated_at')
             .eq('project_id', projectId)
             .eq('status', 'evaluated');
 
           const completedFromTasks = (tasks ?? [])
             .map((t: { phase: string }) => parseInt(t.phase.replace('etapa', '')))
             .filter((n: number) => !isNaN(n) && n > 0);
+
+          // Spec 023: etapas concluídas mas marcadas como desatualizadas (badge âmbar).
+          const outdated = (tasks ?? [])
+            .filter((t: { outdated_at?: string | null }) => t.outdated_at != null)
+            .map((t: { phase: string }) => parseInt(t.phase.replace('etapa', '')))
+            .filter((n: number) => !isNaN(n) && n > 0);
+          dispatch({ type: 'SET_OUTDATED_STAGES', payload: outdated });
 
           const allCompleted = [...new Set([...completedFromSummaries, ...completedFromTasks])].sort((a, b) => a - b);
           setCompletedStages([0, ...allCompleted]); // 0 = Início
@@ -1035,6 +1047,8 @@ function DashPageContent() {
               const isCurrent = num === nextIncompleteNum;
               const isLocked = !isCompleted && !isCurrent;
               const status = isCompleted ? 'completed' : isLocked ? 'locked' : 'in-progress';
+              // Spec 023: etapa concluída porém desatualizada (badge âmbar) — não muda o lock.
+              const isOutdated = isCompleted && outdatedStages.includes(num);
               const isExpanded = expandedCardId === s.id;
               const summary = stageSummaries[s.id];
               return (
@@ -1045,6 +1059,7 @@ function DashPageContent() {
                     description={s.description}
                     icon={s.icon}
                     status={status}
+                    outdated={isOutdated}
                     onClick={isLocked ? undefined : () => dispatch({ type: 'SET_EXPANDED_CARD_ID', payload: expandedCardId === s.id ? null : s.id })}
                   />
                   {isExpanded && (

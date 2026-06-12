@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronRight, Check, Lock } from "lucide-react";
+import { ChevronRight, Check, Lock, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AIHint } from "@/components/ui/ai-hint";
 
@@ -13,6 +13,8 @@ interface StageDetailCardProps {
   description: string;
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   status: StageStatus;
+  /** Spec 023: etapa concluída porém desatualizada → badge âmbar "Desatualizada". */
+  outdated?: boolean;
   aiHint?: string;
   onAcceptHint?: () => void;
   onClick?: () => void;
@@ -30,6 +32,7 @@ export function StageDetailCard({
   description,
   icon: Icon,
   status,
+  outdated = false,
   aiHint,
   onAcceptHint,
   onClick,
@@ -82,7 +85,13 @@ export function StageDetailCard({
             <span className="text-sm font-bold leading-tight text-ink-primary">
               {label}
             </span>
-            {isCompleted && (
+            {isCompleted && outdated && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:bg-amber-500/15 dark:text-amber-400">
+                <AlertTriangle className="h-3 w-3" strokeWidth={2.5} />
+                Desatualizada
+              </span>
+            )}
+            {isCompleted && !outdated && (
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400">
                 <Check className="h-3 w-3" strokeWidth={2.5} />
                 Concluído
