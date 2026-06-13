@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { StageForm, FormField } from "@/components/stage-form";
+import { ManualStageForm } from "@/components/manual-stage-form";
 import { generateDocument } from "@/lib/api/documents";
 import { recalculateIvo } from "@/lib/api/ivo";
 import { getStageSummaries } from "@/lib/api/stage-summaries";
@@ -117,6 +118,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [currentStageSaved, setCurrentStageSaved] = useState<boolean | null>(null);
   const [previousStageSummary, setPreviousStageSummary] = useState<string | null>(null);
+  const [isManual, setIsManual] = useState(false);
 
   // Carrega dados diretamente do Supabase (confiável, independente do backend)
   useEffect(() => {
@@ -142,7 +144,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
 
         const { data: project, error: projectError } = await supabase
           .from("projects")
-          .select("description, name, category")
+          .select("description, name, category, creation_mode")
           .eq("id", projectId)
           .eq("owner_id", realUserId)
           .single();
@@ -154,6 +156,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         setProjectIdea(project.description || "");
         setProjectName(project.name || "");
         setProjectCategory(project.category || null);
+        setIsManual(project.creation_mode === "manual");
 
         const { data: existingTask } = await supabase
           .from("tasks")
@@ -355,8 +358,18 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         />
       )}
 
-      {/* Formulário (quando não há conteúdo gerado) */}
-      {!generatedContent && (
+      {/* Modo MANUAL (Spec 024): formulário de subitens em texto livre. */}
+      {!generatedContent && isManual && (
+        <ManualStageForm
+          projectId={projectId}
+          userId={userId}
+          phase={etapa}
+          onSaved={() => router.push(`/projeto/dash?project_id=${projectId}`)}
+        />
+      )}
+
+      {/* Modo ASSISTIDO (IA): formulário que gera o documento. */}
+      {!generatedContent && !isManual && (
         <FirstTimeTooltip
           tooltipKey="gerar_button"
           jaVisto={seenTooltips["gerar_button"] ?? false}

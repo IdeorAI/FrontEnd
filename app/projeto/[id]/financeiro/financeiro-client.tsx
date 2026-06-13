@@ -16,10 +16,11 @@ import {
 } from "@/components/dre-table";
 import { DreChart } from "@/components/dre-chart";
 import { markGeneratedDocumentsOutdated } from "@/lib/api/final-documents";
+import { aiFillFinancialSummary } from "@/lib/api/financial-summary";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, DollarSign, Loader2, LineChart as LineChartIcon } from "lucide-react";
+import { ArrowLeft, DollarSign, Loader2, LineChart as LineChartIcon, Sparkles } from "lucide-react";
 
 interface Props {
   projectId: string;
@@ -37,6 +38,17 @@ function extractDre(content: string | null | undefined): Partial<DreData> | null
   }
 }
 
+/** True se a DRE já foi preenchida por IA (flag de uso único no content). */
+function hasAiFilled(content: string | null | undefined): boolean {
+  if (!content) return false;
+  try {
+    const parsed = JSON.parse(content) as Record<string, unknown>;
+    return typeof parsed["dre_ai_filled_at"] === "string" && !!parsed["dre_ai_filled_at"];
+  } catch {
+    return false;
+  }
+}
+
 export function FinanceiroClient({ projectId, projectName }: Props) {
   const router = useRouter();
   const supabase = createClient();
@@ -46,10 +58,25 @@ export function FinanceiroClient({ projectId, projectName }: Props) {
   const [rawContent, setRawContent] = useState<string | null>(null);
   const [dre, setDre] = useState<Partial<DreData> | null>(null);
   const [series, setSeries] = useState<DreSeriePonto[]>([]);
+  const [isManual, setIsManual] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [aiFilling, setAiFilling] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        setUserId(user?.id ?? null);
+
+        const { data: project } = await supabase
+          .from("projects")
+          .select("creation_mode")
+          .eq("id", projectId)
+          .maybeSingle();
+        setIsManual(project?.creation_mode === "manual");
+
         const { data } = await supabase
           .from("tasks")
           .select("id, content")
@@ -72,8 +99,40 @@ export function FinanceiroClient({ projectId, projectName }: Props) {
     })().catch(console.error);
   }, [projectId, supabase]);
 
+  // Modo manual: garante uma DRE editável (zerada) mesmo sem geração prévia.
+  const aiAlreadyFilled = hasAiFilled(rawContent);
+  const effectiveDre = dre ?? (isManual ? ({} as Partial<DreData>) : null);
+
+  const handleAiFill = async () => {
+    if (!userId) return;
+    setAiFilling(true);
+    try {
+      await aiFillFinancialSummary(projectId, userId);
+      // Recarrega a task recém-preenchida.
+      const { data } = await supabase
+        .from("tasks")
+        .select("id, content")
+        .eq("project_id", projectId)
+        .eq("phase", "resumo_financeiro")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data) {
+        const extracted = extractDre(data.content as string);
+        setTaskId(data.id as string);
+        setRawContent(data.content as string);
+        setDre(extracted);
+        setSeries(computeSeriesMensais(extracted));
+      }
+      toast.success("DRE preenchida pela IA. Ajuste os valores como quiser.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao preencher a DRE com IA.");
+    } finally {
+      setAiFilling(false);
+    }
+  };
+
   const handleSave = async (updated: DreData) => {
-    if (!taskId) return;
     // Merge só da chave "dre" no content atual — preserva `sintese` e o resto.
     let parsed: Record<string, unknown>;
     try {
@@ -84,8 +143,26 @@ export function FinanceiroClient({ projectId, projectName }: Props) {
     parsed.dre = updated;
     const content = JSON.stringify(parsed, null, 2);
 
-    const { error } = await supabase.from("tasks").update({ content }).eq("id", taskId);
-    if (error) throw new Error("Falha ao salvar a DRE no banco de dados");
+    if (taskId) {
+      const { error } = await supabase.from("tasks").update({ content }).eq("id", taskId);
+      if (error) throw new Error("Falha ao salvar a DRE no banco de dados");
+    } else {
+      // Modo manual: ainda não há task resumo_financeiro — cria ao primeiro save.
+      const { data, error } = await supabase
+        .from("tasks")
+        .insert({
+          project_id: projectId,
+          phase: "resumo_financeiro",
+          title: "Resumo Financeiro",
+          description: "Projeção para o primeiro ano",
+          content,
+          status: "evaluated",
+        })
+        .select("id")
+        .single();
+      if (error || !data) throw new Error("Falha ao criar a DRE no banco de dados");
+      setTaskId(data.id as string);
+    }
     setRawContent(content);
 
     // A DRE mudou: marca os documentos finais (Pitch/Plano/Resumo) que citam
@@ -125,8 +202,33 @@ export function FinanceiroClient({ projectId, projectName }: Props) {
         </p>
       </div>
 
-      {dre ? (
+      {effectiveDre ? (
         <div className="space-y-6">
+          {/* Modo manual: botão de preenchimento por IA (uso único). */}
+          {isManual && !aiAlreadyFilled && (
+            <Card className="border-primary/30 bg-primary/5">
+              <CardContent className="flex flex-col gap-3 py-5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-ink-primary">
+                    Preencher com auxílio da IA
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    A IA monta uma projeção inicial a partir do seu projeto. Você ajusta depois.
+                    Disponível uma vez — depois a edição é manual.
+                  </p>
+                </div>
+                <Button onClick={handleAiFill} disabled={aiFilling} className="shrink-0 rounded-xl">
+                  {aiFilling ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="mr-2 h-4 w-4" />
+                  )}
+                  {aiFilling ? "Gerando..." : "Preencher com auxílio da IA"}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Gráfico — atualiza a cada edição da DRE */}
           <Card>
             <CardHeader>
@@ -152,7 +254,7 @@ export function FinanceiroClient({ projectId, projectName }: Props) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <DreTable dre={dre} onSave={handleSave} onDataChange={(d) => setSeries(computeSeriesMensais(d))} />
+              <DreTable dre={effectiveDre} onSave={handleSave} onDataChange={(d) => setSeries(computeSeriesMensais(d))} />
             </CardContent>
           </Card>
         </div>

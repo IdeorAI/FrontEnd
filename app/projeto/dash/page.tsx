@@ -36,6 +36,7 @@ import { GoPivotCard } from "@/app/projeto/[id]/components/go-pivot-gate";
 import { FinancialSummaryCard } from "@/app/projeto/[id]/components/financial-summary-card";
 import { ProjectHeroBanner } from "@/components/project-hero-banner";
 import { JourneyStepper, DEFAULT_STAGES } from "@/components/projeto/journey-stepper";
+import { ContinueBanner } from "@/components/continue-banner";
 import { StageDetailCard } from "@/components/projeto/stage-detail-card";
 import { IvoCard } from "@/components/projeto/ivo-card";
 import { ScoreCard } from "@/components/projeto/score-card";
@@ -65,6 +66,7 @@ type DashProject = {
   created_at?: string;
   score?: number;
   category?: string;
+  creation_mode?: string;
   ivo_index?: number;
   ivo_o?: number;
   ivo_m?: number;
@@ -981,6 +983,14 @@ function DashPageContent() {
         );
       })()}
 
+      {/* ─── Faixa "Continue de onde parou" (Spec 025, slide 12) ─── */}
+      <ContinueBanner
+        completedStages={completedStages}
+        onContinue={(num) => {
+          if (projectId) router.push(`/projeto/${projectId}/fase2/etapa${num}`);
+        }}
+      />
+
       {/* ─── Grid 2 colunas: etapas (esq) · right rail (dir) ────
            Mobile (1 coluna): rail IVO/Score vai PRO TOPO via order-first,
            etapas abaixo. Desktop: ordem normal (etapas esq, rail dir). */}
@@ -1172,7 +1182,8 @@ function DashPageContent() {
               <FinancialSummaryCard
                 projectId={projectId}
                 userId={user.id}
-                etapa4Complete={completedStages.includes(4)}
+                etapa4Complete={completedStages.includes(4) || project?.creation_mode === "manual"}
+                isManual={project?.creation_mode === "manual"}
               />
             )}
           </div>

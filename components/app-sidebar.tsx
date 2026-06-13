@@ -56,7 +56,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
   const baseItems = [
     { title: "Início", icon: Home, href: "/dashboard" },
-    { title: "Novo Projeto", icon: PlusSquare, href: "/idea/create" },
+    { title: "Novo Projeto", icon: PlusSquare, href: "/idea/onboarding" },
     { title: "Em Breve", icon: Star, href: "/em-breve" },
     { title: "Configurações", icon: Settings, href: "/configuracoes" },
     { title: "Perfil", icon: User, href: "/perfil" },

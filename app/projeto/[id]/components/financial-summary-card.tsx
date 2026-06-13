@@ -29,6 +29,8 @@ interface Props {
   userId: string;
   /** Etapa 4 concluída (evaluated) libera a geração. */
   etapa4Complete: boolean;
+  /** Spec 024 — modo colaborativo: a DRE é montada na tela /financeiro (zerada + IA), não via etapa 4. */
+  isManual?: boolean;
 }
 
 type CardState = 'disabled' | 'idle' | 'loading' | 'result';
@@ -39,7 +41,7 @@ const fmtBRL = new Intl.NumberFormat('pt-BR', {
   maximumFractionDigits: 0,
 });
 
-export function FinancialSummaryCard({ projectId, userId, etapa4Complete }: Props) {
+export function FinancialSummaryCard({ projectId, userId, etapa4Complete, isManual = false }: Props) {
   const router = useRouter();
   const [cardState, setCardState] = useState<CardState>(etapa4Complete ? 'idle' : 'disabled');
   const [result, setResult] = useState<FinancialSummary | null>(null);
@@ -141,14 +143,22 @@ export function FinancialSummaryCard({ projectId, userId, etapa4Complete }: Prop
       {cardState === 'idle' && (
         <div className="px-5 py-5 space-y-3">
           <p className="text-sm text-muted-foreground">
-            Gere uma análise projetada para 12 meses com receitas, custos e lucro — editável a qualquer momento.
+            {isManual
+              ? 'Monte sua projeção de 12 meses: comece do zero ou peça uma sugestão inicial à IA. Tudo editável.'
+              : 'Gere uma análise projetada para 12 meses com receitas, custos e lucro — editável a qualquer momento.'}
           </p>
           {error && (
             <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">{error}</p>
           )}
-          <Button onClick={generate} className="gap-2">
-            <DollarSign className="h-4 w-4" /> Gerar resumo financeiro
-          </Button>
+          {isManual ? (
+            <Button onClick={() => router.push(`/projeto/${projectId}/financeiro`)} className="gap-2">
+              <DollarSign className="h-4 w-4" /> Montar análise financeira
+            </Button>
+          ) : (
+            <Button onClick={generate} className="gap-2">
+              <DollarSign className="h-4 w-4" /> Gerar resumo financeiro
+            </Button>
+          )}
         </div>
       )}
 

@@ -41,3 +41,23 @@ export async function triggerFinancialSummary(
   }
   return res.json();
 }
+
+/**
+ * Spec 024 — preenche a DRE por IA no modo manual (uso único).
+ * O backend gera a DRE a partir do contexto do projeto (desvinculado da etapa 4)
+ * e marca a flag de uso único. Lança em 422 se já preenchida.
+ */
+export async function aiFillFinancialSummary(
+  projectId: string,
+  userId: string,
+): Promise<FinancialSummary> {
+  const res = await fetch(`${API_BASE}/api/projects/${projectId}/financial-summary/ai-fill`, {
+    method: 'POST',
+    headers: await authHeaders(userId),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error ?? `Preenchimento por IA falhou: ${res.status}`);
+  }
+  return res.json();
+}

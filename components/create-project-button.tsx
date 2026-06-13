@@ -12,7 +12,7 @@ export function CreateProjectButton() {
 
   const handleClick = () => {
     setIsNavigating(true);
-    router.push("/idea/create");
+    router.push("/idea/onboarding");
   };
 
   return (

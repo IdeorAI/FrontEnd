@@ -531,9 +531,11 @@ export type Database = {
       }
       projects: {
         Row: {
+          business_type: string | null
           category: string | null
           constraints: string | null
           created_at: string
+          creation_mode: string
           current_phase: string
           description: string | null
           generated_options: string[] | null
@@ -560,9 +562,11 @@ export type Database = {
           valuation: number
         }
         Insert: {
+          business_type?: string | null
           category?: string | null
           constraints?: string | null
           created_at?: string
+          creation_mode?: string
           current_phase?: string
           description?: string | null
           generated_options?: string[] | null
@@ -589,9 +593,11 @@ export type Database = {
           valuation?: number
         }
         Update: {
+          business_type?: string | null
           category?: string | null
           constraints?: string | null
           created_at?: string
+          creation_mode?: string
           current_phase?: string
           description?: string | null
           generated_options?: string[] | null
