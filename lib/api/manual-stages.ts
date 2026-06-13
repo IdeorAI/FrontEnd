@@ -15,22 +15,23 @@ export interface SaveManualStageResponse {
 }
 
 /**
- * Salva/conclui uma etapa preenchida manualmente.
- * O backend grava a task como 'evaluated' (dispara IVO/Score) e gera o
- * stage_summary determinístico (concatenação dos textos, sem LLM).
+ * Salva uma etapa manual.
+ * - `draft=true`: rascunho parcial (status 'draft', sem IVO/Score nem summary).
+ * - `draft=false` (concluir): exige todos os subitens; salva 'evaluated' + summary.
  */
 export async function saveManualStage(
   projectId: string,
   phase: string,
   subitems: Record<string, string>,
-  userId: string
+  userId: string,
+  draft = false
 ): Promise<SaveManualStageResponse> {
   const res = await fetch(
     `${API_BASE}/api/projects/${projectId}/manual-stages/save`,
     {
       method: "POST",
       headers: await authHeaders(userId, { "Content-Type": "application/json" }),
-      body: JSON.stringify({ phase, subitems }),
+      body: JSON.stringify({ phase, subitems, draft }),
     }
   );
 

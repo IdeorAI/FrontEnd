@@ -24,6 +24,7 @@ import {
 import { Check, ChevronsUpDown, Sparkles } from "lucide-react";
 import categories from "@/lib/data/categories.json";
 import { streamChat } from "@/lib/api/chat";
+import { toast } from "sonner";
 
 import type { StepProps } from "./page";
 import { OnboardingHeader, OnboardingFooter } from "./_components";
@@ -546,6 +547,7 @@ export function ReviewStep({
   state,
   patchState,
   onBack,
+  projectId,
   onSave,
   saving,
 }: StepProps & { onSave: () => void; saving: boolean }) {
@@ -564,12 +566,24 @@ export function ReviewStep({
     try {
       const prompt = `Com base na descrição a seguir, sugira um nome criativo, curto e memorável (máx. 5 palavras) para este projeto de startup. Responda APENAS com o nome, sem explicações, sem aspas, sem pontuação final.\n\nDescrição: ${description}\nCategoria: ${categoryLabel}`;
       let full = "";
-      for await (const delta of streamChat(prompt, [], { mode: "guide" })) {
-        full += delta;
-        patchState({ name: full.trim().slice(0, NAME_MAX) });
+      for await (const ev of streamChat(prompt, [], {
+        mode: "guide",
+        projectId,
+      })) {
+        // streamChat pode emitir objetos (diff/erro) além de strings (deltas):
+        // só concatenamos os deltas de texto.
+        if (typeof ev === "string") {
+          full += ev;
+          patchState({ name: full.trim().slice(0, NAME_MAX) });
+        }
       }
-    } catch {
-      // silencioso — usuário pode digitar manualmente
+      if (!full.trim()) {
+        toast.error("Não consegui sugerir um nome agora. Digite manualmente.");
+      }
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : "Falha ao sugerir nome. Digite manualmente."
+      );
     } finally {
       setSuggesting(false);
     }

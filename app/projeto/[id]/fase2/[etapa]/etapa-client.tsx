@@ -119,6 +119,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
   const [currentStageSaved, setCurrentStageSaved] = useState<boolean | null>(null);
   const [previousStageSummary, setPreviousStageSummary] = useState<string | null>(null);
   const [isManual, setIsManual] = useState(false);
+  const [manualDraftContent, setManualDraftContent] = useState<string | null>(null);
 
   // Carrega dados diretamente do Supabase (confiável, independente do backend)
   useEffect(() => {
@@ -160,7 +161,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
 
         const { data: existingTask } = await supabase
           .from("tasks")
-          .select("id, content")
+          .select("id, content, status")
           .eq("project_id", projectId)
           .eq("phase", etapa)
           .maybeSingle();
@@ -168,7 +169,15 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         if (cancelled) return;
         if (existingTask?.content) {
           setTaskId(existingTask.id);
-          setGeneratedContent(existingTask.content);
+          const isManualMode = project.creation_mode === "manual";
+          const isDraft = existingTask.status !== "evaluated";
+          // Modo manual + rascunho (não concluído): reabre o ManualStageForm
+          // pré-preenchido, em vez do DocumentViewer (que é só para conteúdo final).
+          if (isManualMode && isDraft) {
+            setManualDraftContent(existingTask.content);
+          } else {
+            setGeneratedContent(existingTask.content);
+          }
         }
 
         try {
@@ -364,6 +373,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
           projectId={projectId}
           userId={userId}
           phase={etapa}
+          initialContent={manualDraftContent}
           onSaved={() => router.push(`/projeto/dash?project_id=${projectId}`)}
         />
       )}
