@@ -159,12 +159,14 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         setProjectCategory(project.category || null);
         setIsManual(project.creation_mode === "manual");
 
-        const { data: existingTask } = await supabase
+        const { data: existingTasks } = await supabase
           .from("tasks")
           .select("id, content, status")
           .eq("project_id", projectId)
           .eq("phase", etapa)
-          .maybeSingle();
+          .order("updated_at", { ascending: false })
+          .limit(1);
+        const existingTask = existingTasks?.[0];
 
         if (cancelled) return;
         if (existingTask?.content) {

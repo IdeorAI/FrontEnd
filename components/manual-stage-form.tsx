@@ -64,6 +64,9 @@ export function ManualStageForm({
 
   // Serializa os valores já persistidos para evitar auto-saves redundantes.
   const lastSavedRef = useRef<string>(JSON.stringify(parseInitial(initialContent)));
+  // Guard: impede auto-saves CONCORRENTES (que criariam tasks duplicadas).
+  const savingRef = useRef(false);
+  const pendingRef = useRef<Record<string, string> | null>(null);
 
   if (!config) {
     return (
@@ -76,10 +79,19 @@ export function ManualStageForm({
   const setValue = (key: string, v: string) =>
     setValues((prev) => ({ ...prev, [key]: v }));
 
-  // Auto-save do rascunho parcial (status 'draft'). Idempotente: só salva se mudou.
+  // Auto-save do rascunho parcial (status 'draft'). Idempotente (só salva se mudou)
+  // e SERIALIZADO: se um save já está em voo, enfileira o último estado e dispara
+  // ao terminar — evita POSTs concorrentes que criariam tasks duplicadas.
   const persistDraft = async (next: Record<string, string>) => {
     const serialized = JSON.stringify(next);
     if (serialized === lastSavedRef.current) return;
+
+    if (savingRef.current) {
+      pendingRef.current = next; // guarda o último; roda quando o atual terminar
+      return;
+    }
+
+    savingRef.current = true;
     setDraftStatus("saving");
     try {
       await saveManualStage(projectId, phase, next, userId, /* draft */ true);
@@ -88,6 +100,14 @@ export function ManualStageForm({
     } catch {
       // Auto-save silencioso — não interrompe o usuário; ele ainda pode concluir.
       setDraftStatus("idle");
+    } finally {
+      savingRef.current = false;
+      // Se algo mudou enquanto salvávamos, persiste o estado mais recente.
+      if (pendingRef.current) {
+        const queued = pendingRef.current;
+        pendingRef.current = null;
+        void persistDraft(queued);
+      }
     }
   };
 

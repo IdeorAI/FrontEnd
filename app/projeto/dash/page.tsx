@@ -1182,7 +1182,7 @@ function DashPageContent() {
               <FinancialSummaryCard
                 projectId={projectId}
                 userId={user.id}
-                etapa4Complete={completedStages.includes(4) || project?.creation_mode === "manual"}
+                etapa4Complete={completedStages.includes(4)}
                 isManual={project?.creation_mode === "manual"}
               />
             )}
