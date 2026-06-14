@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react"
-import { Home, Settings, User, Menu, X, Trash2, ChevronDown, FileText, ShieldCheck, LogOut, Star } from "lucide-react"
+import { Home, Settings, User, Menu, X, Trash2, ChevronDown, ShieldCheck, LogOut, Star } from "lucide-react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -136,16 +136,6 @@ export function AppSidebar({ user, onCardOpen }: AppSidebarProps) {
           href: "/admin/tokens",
           active: pathname === "/admin/tokens",
         }] : []),
-      ],
-    },
-    {
-      title: "Desenvolvimento",
-      items: [
-        {
-          title: "Documentação",
-          icon: FileText,
-          cardId: "documentacao",
-        },
       ],
     },
     {
