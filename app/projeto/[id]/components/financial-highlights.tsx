@@ -24,8 +24,8 @@ const ITEMS = [
   { icon: Coins, label: 'Lucro Líquido' },
 ] as const;
 
-const VISIBLE_MS = 1600; // tempo com o item visível
-const FADE_MS = 400; // duração do fade
+const VISIBLE_MS = 3000; // tempo com o item visível
+const FADE_MS = 700; // duração do fade
 
 export function FinancialHighlights() {
   const [index, setIndex] = useState(0);
