@@ -1,10 +1,15 @@
 // components/project-card.tsx
 "use client";
 
+import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { TrendingUp, Star, Sprout, Eye, Compass, Hammer, Crown, Users } from "lucide-react";
 import categories from "@/lib/data/categories.json";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 import { ProjectAvatar } from "@/components/project-hero-banner";
 import { ProjectCardLink } from "@/components/project-card-link";
+import { ProjectCardMenu } from "@/components/project-card-menu";
 import { RoadmapBar } from "@/components/roadmap-bar";
 import {
   Tooltip,
@@ -43,6 +48,8 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project: p, role }: ProjectCardProps) {
+  const router = useRouter();
+  const owned = !role; // o overflow menu (Spec 026) só aparece nos projetos próprios
   const tasks = Array.isArray(p.tasks) ? p.tasks : [];
   // Etapas de validação concluídas = tasks etapa1..etapa5 com status 'evaluated'.
   // EXCLUI a task 'resumo_financeiro' (spec 022) — ela não é uma etapa do roadmap.
@@ -59,6 +66,52 @@ export function ProjectCard({ project: p, role }: ProjectCardProps) {
     p.name && p.name.trim() && !p.name.startsWith("NovoProjeto")
       ? p.name
       : `Startup${p.id.substring(0, 6)}`;
+
+  // ── Renomear inline (Spec 026) ──────────────────────────────────────────────
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [nameDraft, setNameDraft] = useState(projectName);
+  const [displayName, setDisplayName] = useState(projectName);
+  const [savingName, setSavingName] = useState(false);
+  const savedNameRef = useRef(projectName);
+
+  const startRename = () => {
+    setNameDraft(displayName);
+    setIsRenaming(true);
+  };
+
+  const cancelRename = () => {
+    setNameDraft(displayName);
+    setIsRenaming(false);
+  };
+
+  const saveRename = async () => {
+    const trimmed = nameDraft.trim();
+    if (!trimmed) {
+      cancelRename();
+      return;
+    }
+    if (trimmed === savedNameRef.current) {
+      setIsRenaming(false);
+      return;
+    }
+    setSavingName(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("projects")
+        .update({ name: trimmed })
+        .eq("id", p.id);
+      if (error) throw new Error(error.message);
+      savedNameRef.current = trimmed;
+      setDisplayName(trimmed);
+      setIsRenaming(false);
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Falha ao renomear.");
+    } finally {
+      setSavingName(false);
+    }
+  };
 
   const tier = getTier(etapasFase2Concluidas);
   const scoreValue = Number(p.score ?? 0) / 10;
@@ -81,9 +134,35 @@ export function ProjectCard({ project: p, role }: ProjectCardProps) {
           )}
 
           {/* TOP: avatar + nome */}
-          <div className={`flex items-center gap-3 ${role ? "pr-24" : ""}`}>
-            <ProjectAvatar projectName={projectName} category={p.category ?? undefined} size={48} />
-            <h3 className="font-semibold text-base leading-snug line-clamp-2 flex-1 min-w-0 break-words">{projectName}</h3>
+          <div className={`flex items-center gap-3 ${role ? "pr-24" : "pr-10"}`}>
+            <ProjectAvatar projectName={displayName} category={p.category ?? undefined} size={48} />
+            {isRenaming ? (
+              <input
+                autoFocus
+                value={nameDraft}
+                disabled={savingName}
+                onChange={(e) => setNameDraft(e.target.value)}
+                onFocus={(e) => e.currentTarget.select()}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void saveRename();
+                  } else if (e.key === "Escape") {
+                    e.preventDefault();
+                    cancelRename();
+                  }
+                }}
+                onBlur={() => void saveRename()}
+                className="flex-1 min-w-0 rounded-md border border-primary/40 bg-background px-2 py-1 text-base font-semibold outline-none focus:border-primary"
+                maxLength={100}
+              />
+            ) : (
+              <h3 className="font-semibold text-base leading-snug line-clamp-2 flex-1 min-w-0 break-words">{displayName}</h3>
+            )}
           </div>
 
           {/* MEIO: categoria + IVO */}
@@ -161,6 +240,19 @@ export function ProjectCard({ project: p, role }: ProjectCardProps) {
           <RoadmapBar completed={completedTasks} total={TOTAL_ETAPAS} />
         </article>
       </ProjectCardLink>
+
+      {/* Overflow menu (Spec 026) — só nos projetos próprios. Fica FORA do <a>
+          do card (irmão do link), posicionado no canto superior direito. */}
+      {owned && (
+        <div className="absolute top-3 right-3 z-20">
+          <ProjectCardMenu
+            projectId={p.id}
+            projectName={displayName}
+            tasks={tasks}
+            onRenameRequest={startRename}
+          />
+        </div>
+      )}
 
       {p.description && (
         <div className="absolute left-0 right-0 top-full z-30 mt-1 pointer-events-none opacity-0 transition-opacity duration-200 delay-700 group-hover/proj:opacity-100 bg-popover border rounded-xl p-4 shadow-xl">
