@@ -42,6 +42,8 @@ interface JourneyStepperProps {
   onStageNavigate?: (stage: JourneyStage, index: number) => void;
   /** Chamado quando o usuário clica em "Gerar Relatório" (spec 014). */
   onReportClick?: (stage: JourneyStage) => void;
+  /** Conteúdo opcional renderizado dentro do frame, abaixo do stepper (ex.: faixa "Continue de onde parou"). */
+  footerSlot?: React.ReactNode;
   className?: string;
 }
 
@@ -52,6 +54,7 @@ export function JourneyStepper({
   stageSummaries = {},
   onStageNavigate,
   onReportClick,
+  footerSlot,
   className,
 }: JourneyStepperProps) {
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
@@ -238,6 +241,10 @@ export function JourneyStepper({
           )}
         </div>
       )}
+
+      {/* Slot de rodapé dentro do frame da Jornada (Spec 025 update 150626):
+          usado pela faixa "Continue de onde parou". */}
+      {footerSlot && <div className="mt-5">{footerSlot}</div>}
     </div>
   );
 }

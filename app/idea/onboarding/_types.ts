@@ -88,23 +88,25 @@ export type StepId =
 
 /**
  * Sequência condicional de passos, derivada do estado.
- * - slide 8 ("describe") só aparece quando approach !== "keep".
- *   (Com noIdea=true, "keep" fica indisponível no slide 2, então approach
- *   será "improve"/"suggest" e o slide 8 sempre aparece — coerente com a spec.)
+ * - "sem ideia" (noIdea=true): PULA o slide "approach" ("Como deseja seguir?") —
+ *   sem ideia não há o que manter/melhorar; a IA sugere do zero. O slide 8
+ *   ("describe") sempre aparece nesse caso.
+ * - Com ideia: o slide 8 só aparece quando approach !== "keep".
  */
 export function buildStepSequence(state: OnboardingState): StepId[] {
-  const steps: StepId[] = [
-    "idea",
-    "approach",
-    "area",
-    "businessType",
-    "audience",
-    "region",
-    "constraints",
-  ];
-  if (state.approach !== "keep") {
+  const steps: StepId[] = ["idea"];
+
+  if (!state.noIdea) {
+    steps.push("approach");
+  }
+
+  steps.push("area", "businessType", "audience", "region", "constraints");
+
+  // describe aparece quando: sem ideia (sugestão do zero) OU approach != keep.
+  if (state.noIdea || state.approach !== "keep") {
     steps.push("describe");
   }
+
   steps.push("workMode", "review");
   return steps;
 }

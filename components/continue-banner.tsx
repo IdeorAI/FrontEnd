@@ -36,7 +36,7 @@ export function ContinueBanner({
   if (nextStage === -1) return null; // jornada completa → sem faixa
 
   return (
-    <div className="mb-5 flex flex-col gap-4 rounded-2xl border border-amber-400/40 bg-amber-50/60 p-5 dark:bg-amber-950/10 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-4 rounded-2xl border border-amber-400/40 bg-amber-50/60 p-5 dark:bg-amber-950/10 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-start gap-3.5">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] bg-amber-400/20 text-amber-600 dark:text-amber-400">
           <Zap className="h-[18px] w-[18px]" strokeWidth={2} />

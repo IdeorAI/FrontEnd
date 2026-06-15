@@ -61,6 +61,9 @@ export function ManualStageForm({
   const [saving, setSaving] = useState(false);
   const [draftStatus, setDraftStatus] = useState<DraftStatus>("idle");
   const [aiBusy, setAiBusy] = useState<Record<string, "assist" | "review" | undefined>>({});
+  // "Revisar com IA": guarda o texto revisado como PRÉVIA por subitem (não sobrescreve
+  // direto). O usuário Aceita (aplica) ou Descarta (mantém o original) — Spec 025 update 150626.
+  const [reviewPreview, setReviewPreview] = useState<Record<string, string | undefined>>({});
 
   // Serializa os valores já persistidos para evitar auto-saves redundantes.
   const lastSavedRef = useRef<string>(JSON.stringify(parseInitial(initialContent)));
@@ -135,14 +138,26 @@ export function ManualStageForm({
     setAiBusy((p) => ({ ...p, [key]: "review" }));
     try {
       const text = await reviewSubitem(projectId, phase, key, label, current, userId);
-      const next = { ...values, [key]: text };
-      setValues(next);
-      void persistDraft(next);
+      // Não sobrescreve: mostra como prévia para Aceitar/Descartar.
+      setReviewPreview((p) => ({ ...p, [key]: text }));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Falha ao revisar com IA.");
     } finally {
       setAiBusy((p) => ({ ...p, [key]: undefined }));
     }
+  };
+
+  const acceptReview = (key: string) => {
+    const revised = reviewPreview[key];
+    if (revised === undefined) return;
+    const next = { ...values, [key]: revised };
+    setValues(next);
+    setReviewPreview((p) => ({ ...p, [key]: undefined }));
+    void persistDraft(next);
+  };
+
+  const discardReview = (key: string) => {
+    setReviewPreview((p) => ({ ...p, [key]: undefined }));
   };
 
   // Para CONCLUIR, TODOS os subitens precisam estar preenchidos.
@@ -221,6 +236,38 @@ export function ManualStageForm({
                 Revisar com IA
               </Button>
             </div>
+
+            {/* Prévia da revisão por IA — Aceitar aplica, Descartar mantém o original. */}
+            {reviewPreview[s.key] !== undefined && (
+              <div className="mt-2 rounded-xl border border-primary/30 bg-primary/5 p-3">
+                <p className="mb-1 text-xs font-semibold text-primary">
+                  Sugestão de revisão da IA:
+                </p>
+                <p className="whitespace-pre-wrap text-sm text-foreground">
+                  {reviewPreview[s.key]}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => acceptReview(s.key)}
+                    className="rounded-lg text-xs"
+                  >
+                    <Check className="mr-1.5 h-3.5 w-3.5" />
+                    Aceitar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => discardReview(s.key)}
+                    className="rounded-lg text-xs"
+                  >
+                    Descartar
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>

@@ -53,7 +53,7 @@ export function OnboardingHeader({
           <X className="h-5 w-5" />
         </Button>
       )}
-      <h1 className="text-2xl font-bold sm:text-3xl">{title}</h1>
+      <h1 className="text-balance px-8 text-lg font-bold sm:text-xl">{title}</h1>
       {subtitle && (
         <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
       )}

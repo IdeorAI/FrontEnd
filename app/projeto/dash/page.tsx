@@ -979,17 +979,19 @@ function DashPageContent() {
                 toast.error("Etapa ainda não foi salva — gere o conteúdo primeiro.");
               }
             }}
+            // Faixa "Continue de onde parou" agora vive DENTRO do frame da Jornada
+            // (Spec 025 update 150626).
+            footerSlot={
+              <ContinueBanner
+                completedStages={completedStages}
+                onContinue={(num) => {
+                  if (projectId) router.push(`/projeto/${projectId}/fase2/etapa${num}`);
+                }}
+              />
+            }
           />
         );
       })()}
-
-      {/* ─── Faixa "Continue de onde parou" (Spec 025, slide 12) ─── */}
-      <ContinueBanner
-        completedStages={completedStages}
-        onContinue={(num) => {
-          if (projectId) router.push(`/projeto/${projectId}/fase2/etapa${num}`);
-        }}
-      />
 
       {/* ─── Grid 2 colunas: etapas (esq) · right rail (dir) ────
            Mobile (1 coluna): rail IVO/Score vai PRO TOPO via order-first,

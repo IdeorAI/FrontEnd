@@ -145,7 +145,8 @@ export function ApproachStep({ state, patchState, onBack, onNext }: StepProps) {
 export function AreaStep({ state, patchState, onBack, onNext, projectId, setError }: StepProps) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const undefinedChecked = state.category === CATEGORY_UNDEFINED;
+  // Sem ideia: "Não sei" não vale — exige escolher a área (combobox sempre visível).
+  const undefinedChecked = !state.noIdea && state.category === CATEGORY_UNDEFINED;
   const selectedLabel = cats.find((c) => c.value === state.category)?.label;
 
   const handleNext = async () => {
@@ -162,17 +163,21 @@ export function AreaStep({ state, patchState, onBack, onNext, projectId, setErro
   return (
     <>
       <OnboardingHeader title="Qual a área do seu projeto?" />
-      <label className="mb-5 flex items-center justify-center gap-2 text-sm">
-        <Checkbox
-          checked={undefinedChecked}
-          onCheckedChange={(v) =>
-            patchState({ category: v === true ? CATEGORY_UNDEFINED : null })
-          }
-        />
-        <span>
-          <strong>Não sei /</strong> Quero que o Ideor defina
-        </span>
-      </label>
+      {/* "Não sei" indisponível quando o usuário não tem ideia: a IA precisa
+          da área para sugerir do zero (Spec 025 update 150626). */}
+      {!state.noIdea && (
+        <label className="mb-5 flex items-center justify-center gap-2 text-sm">
+          <Checkbox
+            checked={undefinedChecked}
+            onCheckedChange={(v) =>
+              patchState({ category: v === true ? CATEGORY_UNDEFINED : null })
+            }
+          />
+          <span>
+            <strong>Não sei /</strong> Quero que o Ideor defina
+          </span>
+        </label>
+      )}
       {!undefinedChecked && (
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
@@ -226,7 +231,10 @@ export function AreaStep({ state, patchState, onBack, onNext, projectId, setErro
         onBack={onBack}
         onNext={handleNext}
         loading={saving}
-        nextDisabled={!state.category}
+        nextDisabled={
+          // Sem ideia exige uma área REAL (não o sentinela "Não sei").
+          !state.category || (state.noIdea && state.category === CATEGORY_UNDEFINED)
+        }
       />
     </>
   );
@@ -263,7 +271,8 @@ const BUSINESS_TYPES: { value: BusinessType; label: string; desc: string }[] = [
 
 export function BusinessTypeStep({ state, patchState, onBack, onNext, projectId, setError }: StepProps) {
   const [saving, setSaving] = useState(false);
-  const undefinedChecked = state.businessType === "nao-sei";
+  // Sem ideia: "Não sei" não vale — exige escolher o tipo de negócio.
+  const undefinedChecked = !state.noIdea && state.businessType === "nao-sei";
 
   const handleNext = async () => {
     setSaving(true);
@@ -279,17 +288,20 @@ export function BusinessTypeStep({ state, patchState, onBack, onNext, projectId,
   return (
     <>
       <OnboardingHeader title="Que categoria melhor representa seu negócio?" />
-      <label className="mb-5 flex items-center justify-center gap-2 text-sm">
-        <Checkbox
-          checked={undefinedChecked}
-          onCheckedChange={(v) =>
-            patchState({ businessType: v === true ? "nao-sei" : null })
-          }
-        />
-        <span>
-          <strong>Não sei /</strong> Quero que o Ideor defina
-        </span>
-      </label>
+      {/* "Não sei" indisponível quando o usuário não tem ideia (Spec 025 update 150626). */}
+      {!state.noIdea && (
+        <label className="mb-5 flex items-center justify-center gap-2 text-sm">
+          <Checkbox
+            checked={undefinedChecked}
+            onCheckedChange={(v) =>
+              patchState({ businessType: v === true ? "nao-sei" : null })
+            }
+          />
+          <span>
+            <strong>Não sei /</strong> Quero que o Ideor defina
+          </span>
+        </label>
+      )}
       {!undefinedChecked && (
         <div className="space-y-3">
           {BUSINESS_TYPES.map((t) => {
@@ -316,7 +328,9 @@ export function BusinessTypeStep({ state, patchState, onBack, onNext, projectId,
         onBack={onBack}
         onNext={handleNext}
         loading={saving}
-        nextDisabled={!state.businessType}
+        nextDisabled={
+          !state.businessType || (state.noIdea && state.businessType === "nao-sei")
+        }
       />
     </>
   );

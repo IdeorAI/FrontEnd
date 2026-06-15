@@ -139,6 +139,11 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
       if (cancelled) return;
       setUserId(realUserId);
       setHasError(false);
+      // Reset ao (re)entrar numa etapa — evita carregar conteúdo da etapa anterior
+      // quando se navega direto entre etapas (ex.: "Concluir" → próxima etapa).
+      setGeneratedContent(null);
+      setManualDraftContent(null);
+      setTaskId(null);
 
       try {
         const supabase = createClient();
@@ -376,7 +381,15 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
           userId={userId}
           phase={etapa}
           initialContent={manualDraftContent}
-          onSaved={() => router.push(`/projeto/dash?project_id=${projectId}`)}
+          onSaved={() => {
+            // Spec 025 update 150626: ao concluir, abrir a PRÓXIMA etapa para editar
+            // (como no fluxo assistido); se for a última (etapa5), vai ao dash.
+            if (currentStageNumber >= 1 && currentStageNumber < 5) {
+              router.push(`/projeto/${projectId}/fase2/etapa${currentStageNumber + 1}`);
+            } else {
+              router.push(`/projeto/dash?project_id=${projectId}`);
+            }
+          }}
         />
       )}
 
