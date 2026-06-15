@@ -65,8 +65,9 @@ export function ProjectCardMenu({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const stop = (e: React.MouseEvent | React.PointerEvent) => {
-    e.preventDefault();
+  // Apenas impede a propagação do clique para elementos ao redor — NUNCA
+  // preventDefault no trigger, senão o Radix não abre o menu (abre no pointerdown).
+  const stopOnly = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
 
@@ -108,8 +109,7 @@ export function ProjectCardMenu({
         <DropdownMenuTrigger asChild>
           <button
             type="button"
-            onClick={stop}
-            onPointerDown={stop}
+            onClick={stopOnly}
             aria-label="Ações do projeto"
             className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           >
@@ -118,7 +118,7 @@ export function ProjectCardMenu({
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="end"
-          onClick={stop}
+          onClick={stopOnly}
           className="w-52"
         >
           <DropdownMenuItem
@@ -155,7 +155,7 @@ export function ProjectCardMenu({
       </DropdownMenu>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent onClick={stop}>
+        <AlertDialogContent onClick={stopOnly}>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir startup?</AlertDialogTitle>
             <AlertDialogDescription>

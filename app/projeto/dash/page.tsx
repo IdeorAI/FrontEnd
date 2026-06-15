@@ -979,16 +979,6 @@ function DashPageContent() {
                 toast.error("Etapa ainda não foi salva — gere o conteúdo primeiro.");
               }
             }}
-            // Faixa "Continue de onde parou" agora vive DENTRO do frame da Jornada
-            // (Spec 025 update 150626).
-            footerSlot={
-              <ContinueBanner
-                completedStages={completedStages}
-                onContinue={(num) => {
-                  if (projectId) router.push(`/projeto/${projectId}/fase2/etapa${num}`);
-                }}
-              />
-            }
           />
         );
       })()}
@@ -1002,6 +992,15 @@ function DashPageContent() {
           <div className="px-1 pt-1 text-[11px] font-bold uppercase tracking-[0.08em] text-ink-tertiary">
             Etapas da jornada
           </div>
+
+          {/* Faixa "Continue de onde parou" (Spec 025 update 150626): dentro da
+              section "Etapas da jornada", antes do card "Início". */}
+          <ContinueBanner
+            completedStages={completedStages}
+            onContinue={(num) => {
+              if (projectId) router.push(`/projeto/${projectId}/fase2/etapa${num}`);
+            }}
+          />
 
           {/* Início (etapa0) — sempre aberto, exibe descrição do projeto */}
           <div className="rounded-xl border border-border bg-card p-5">
