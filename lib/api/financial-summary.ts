@@ -61,3 +61,30 @@ export async function aiFillFinancialSummary(
   }
   return res.json();
 }
+
+/**
+ * Spec 022 — baixa o Resumo Financeiro (tabela DRE atualizada) em PDF.
+ * Dispara o download no navegador.
+ */
+export async function downloadFinancialSummaryPdf(
+  projectId: string,
+  userId: string,
+  filename = `IdeorAI-resumo-financeiro-${projectId}.pdf`,
+): Promise<void> {
+  const res = await fetch(
+    `${API_BASE}/api/projects/${projectId}/financial-summary/pdf`,
+    { headers: await authHeaders(userId) },
+  );
+  if (res.status === 404) throw new Error('Resumo Financeiro ainda não foi gerado.');
+  if (!res.ok) throw new Error(`Erro ${res.status} ao gerar o PDF.`);
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}

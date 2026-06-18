@@ -21,7 +21,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Check, ChevronsUpDown, Sparkles } from "lucide-react";
+import { Check, ChevronsUpDown, Sparkles, Loader2 } from "lucide-react";
 import categories from "@/lib/data/categories.json";
 import { streamChat } from "@/lib/api/chat";
 import { toast } from "sonner";
@@ -631,7 +631,11 @@ export function ReviewStep({
               aria-label="Sugerir nome com IA"
               className="rounded-xl"
             >
-              <Sparkles className="h-4 w-4" />
+              {suggesting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
             </Button>
           </div>
           <p className="mt-1 text-right text-xs text-muted-foreground">

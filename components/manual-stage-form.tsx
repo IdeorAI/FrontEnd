@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { CheckCircle2, Sparkles, Wand2, Loader2, Check } from "lucide-react";
+import { ArrowRight, Sparkles, Wand2, Loader2, Check } from "lucide-react";
 import { getManualSubitems, MANUAL_STAGE_CONFIGS } from "@/lib/manual-stage-configs";
 import { saveManualStage } from "@/lib/api/manual-stages";
 import { assistSubitem, reviewSubitem } from "@/lib/api/subitem-assist";
@@ -294,12 +294,16 @@ export function ManualStageForm({
             disabled={!allFilled || saving}
             className="rounded-xl font-semibold"
           >
-            <CheckCircle2 className="mr-2 h-4 w-4" />
-            {saving ? "Concluindo..." : "Concluir etapa"}
+            {saving ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <ArrowRight className="mr-2 h-4 w-4" />
+            )}
+            {saving ? "Salvando..." : "Próxima etapa"}
           </Button>
           {!allFilled && (
             <span className="text-xs text-muted-foreground">
-              Preencha todos os campos para concluir e avançar.
+              Preencha todos os campos para avançar.
             </span>
           )}
         </div>

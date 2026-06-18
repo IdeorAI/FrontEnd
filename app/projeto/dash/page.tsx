@@ -989,18 +989,17 @@ function DashPageContent() {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5">
         {/* Esquerda: Stage Detail Cards */}
         <div className="flex flex-col gap-3 order-2 lg:order-1">
-          <div className="px-1 pt-1 text-[11px] font-bold uppercase tracking-[0.08em] text-ink-tertiary">
-            Etapas da jornada
-          </div>
-
-          {/* Faixa "Continue de onde parou" (Spec 025 update 150626): dentro da
-              section "Etapas da jornada", antes do card "Início". */}
+          {/* Faixa "Continue de onde parou" — fica ANTES do título da section. */}
           <ContinueBanner
             completedStages={completedStages}
             onContinue={(num) => {
               if (projectId) router.push(`/projeto/${projectId}/fase2/etapa${num}`);
             }}
           />
+
+          <div className="px-1 pt-1 text-[11px] font-bold uppercase tracking-[0.08em] text-ink-tertiary">
+            Etapas da jornada
+          </div>
 
           {/* Início (etapa0) — sempre aberto, exibe descrição do projeto */}
           <div className="rounded-xl border border-border bg-card p-5">

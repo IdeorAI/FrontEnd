@@ -395,22 +395,32 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
 
       {/* Modo ASSISTIDO (IA): formulário que gera o documento. */}
       {!generatedContent && !isManual && (
-        <FirstTimeTooltip
-          tooltipKey="gerar_button"
-          jaVisto={seenTooltips["gerar_button"] ?? false}
-          mensagem="A IA vai analisar sua ideia com honestidade — incluindo os riscos e pontos fracos."
-        >
-          <div>
-            <StageForm
-              title={stageConfig.title}
-              description={stageConfig.description}
-              fields={formFieldsWithSuggestions}
-              onSubmit={handleGenerate}
-              isSubmitting={isGenerating}
-              phase={etapa}
-            />
-          </div>
-        </FirstTimeTooltip>
+        <div className="space-y-4">
+          {getPreviousEtapa() && (
+            <button
+              onClick={() => router.push(`/projeto/${projectId}/fase2/${getPreviousEtapa()}`)}
+              className="px-6 py-3 border border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-lg font-medium transition-colors"
+            >
+              ← Voltar etapa
+            </button>
+          )}
+          <FirstTimeTooltip
+            tooltipKey="gerar_button"
+            jaVisto={seenTooltips["gerar_button"] ?? false}
+            mensagem="A IA vai analisar sua ideia com honestidade — incluindo os riscos e pontos fracos."
+          >
+            <div>
+              <StageForm
+                title={stageConfig.title}
+                description={stageConfig.description}
+                fields={formFieldsWithSuggestions}
+                onSubmit={handleGenerate}
+                isSubmitting={isGenerating}
+                phase={etapa}
+              />
+            </div>
+          </FirstTimeTooltip>
+        </div>
       )}
 
       {/* Conteúdo Gerado — visualização e edição por seção */}
@@ -508,7 +518,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
               }
               className="px-6 py-3 border border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-lg font-medium transition-colors"
             >
-              ← Etapa Anterior
+              ← Voltar etapa
             </button>
           ) : <span />}
           {getNextEtapa() && (
@@ -516,7 +526,7 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
               onClick={() => router.push(`/projeto/${projectId}/fase2/${getNextEtapa()}`)}
               className="px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg font-medium transition-colors"
             >
-              Próxima Etapa →
+              Próxima etapa →
             </button>
           )}
           {!getNextEtapa() && (

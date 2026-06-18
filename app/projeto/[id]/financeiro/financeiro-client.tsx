@@ -16,11 +16,11 @@ import {
 } from "@/components/dre-table";
 import { DreChart } from "@/components/dre-chart";
 import { markGeneratedDocumentsOutdated } from "@/lib/api/final-documents";
-import { aiFillFinancialSummary } from "@/lib/api/financial-summary";
+import { aiFillFinancialSummary, downloadFinancialSummaryPdf } from "@/lib/api/financial-summary";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ArrowLeft, DollarSign, Loader2, LineChart as LineChartIcon, Sparkles } from "lucide-react";
+import { ArrowLeft, DollarSign, Loader2, LineChart as LineChartIcon, Sparkles, FileText } from "lucide-react";
 
 interface Props {
   projectId: string;
@@ -61,6 +61,7 @@ export function FinanceiroClient({ projectId, projectName }: Props) {
   const [isManual, setIsManual] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [aiFilling, setAiFilling] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -102,6 +103,21 @@ export function FinanceiroClient({ projectId, projectName }: Props) {
   // Modo manual: garante uma DRE editável (zerada) mesmo sem geração prévia.
   const aiAlreadyFilled = hasAiFilled(rawContent);
   const effectiveDre = dre ?? (isManual ? ({} as Partial<DreData>) : null);
+
+  // Só dá para baixar o PDF se a DRE já foi persistida (task resumo_financeiro existe).
+  const canDownloadPdf = !!taskId;
+
+  const handleDownloadPdf = async () => {
+    if (!userId || !canDownloadPdf) return;
+    setDownloadingPdf(true);
+    try {
+      await downloadFinancialSummaryPdf(projectId, userId);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Falha ao baixar o PDF.");
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
 
   const handleAiFill = async () => {
     if (!userId) return;
@@ -257,6 +273,28 @@ export function FinanceiroClient({ projectId, projectName }: Props) {
               <DreTable dre={effectiveDre} onSave={handleSave} onDataChange={(d) => setSeries(computeSeriesMensais(d))} />
             </CardContent>
           </Card>
+
+          {/* Gerar documento — PDF da DRE atualizada (mesmo padrão das etapas). */}
+          {canDownloadPdf && (
+            <Button
+              onClick={handleDownloadPdf}
+              disabled={downloadingPdf}
+              size="lg"
+              className="w-full gap-2 bg-[#8c7dff] hover:bg-[#7a6de6]"
+            >
+              {downloadingPdf ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Gerando documento...
+                </>
+              ) : (
+                <>
+                  <FileText className="h-5 w-5" />
+                  Gerar documento
+                </>
+              )}
+            </Button>
+          )}
         </div>
       ) : (
         <Card>

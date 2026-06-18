@@ -119,24 +119,24 @@ export function ProjectCardMenu({
         <DropdownMenuContent
           align="end"
           onClick={stopOnly}
-          className="w-52"
+          className="w-56"
         >
           <DropdownMenuItem
             onSelect={() => goContinue()}
-            className="cursor-pointer"
+            className="cursor-pointer whitespace-nowrap text-xs"
           >
-            <ArrowRight className="mr-2 h-4 w-4" />
+            <ArrowRight className="mr-2 h-3.5 w-3.5" />
             Continuar a desenvolver
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => goOpen()} className="cursor-pointer">
-            <ExternalLink className="mr-2 h-4 w-4" />
+          <DropdownMenuItem onSelect={() => goOpen()} className="cursor-pointer whitespace-nowrap text-xs">
+            <ExternalLink className="mr-2 h-3.5 w-3.5" />
             Abrir projeto
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => onRenameRequest()}
-            className="cursor-pointer"
+            className="cursor-pointer whitespace-nowrap text-xs"
           >
-            <Pencil className="mr-2 h-4 w-4" />
+            <Pencil className="mr-2 h-3.5 w-3.5" />
             Renomear
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -146,9 +146,9 @@ export function ProjectCardMenu({
               e.preventDefault();
               setConfirmOpen(true);
             }}
-            className="cursor-pointer text-destructive focus:text-destructive"
+            className="cursor-pointer whitespace-nowrap text-xs text-destructive focus:text-destructive"
           >
-            <Trash2 className="mr-2 h-4 w-4" />
+            <Trash2 className="mr-2 h-3.5 w-3.5" />
             Excluir startup
           </DropdownMenuItem>
         </DropdownMenuContent>
