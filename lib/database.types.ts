@@ -66,6 +66,42 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_variables: {
+        Row: {
+          id: string
+          project_id: string
+          key: string
+          value: number
+          unit: string
+          source_stage: string
+          source_path: string | null
+          locked: boolean
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          key: string
+          value: number
+          unit: string
+          source_stage: string
+          source_path?: string | null
+          locked?: boolean
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          project_id?: string
+          key?: string
+          value?: number
+          unit?: string
+          source_stage?: string
+          source_path?: string | null
+          locked?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       generated_documents: {
         Row: {
           content_md: string

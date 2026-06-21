@@ -406,10 +406,48 @@ export function AudienceStep({ state, patchState, onBack, onNext, projectId, set
   );
 }
 
-// ─── Slide 6 — País / região ───────────────────────────────────────────────────
-const REGION_MAX = 100;
+// ─── Slide 6 — País / região (select com busca) ────────────────────────────────
+// Lista de mercados-alvo. O valor gravado em projects.region é a própria string
+// (sem CHECK no banco). Inclui agregados regionais + principais países.
+const REGION_OPTIONS: string[] = [
+  "Brasil",
+  "América Latina",
+  "América do Norte",
+  "Europa",
+  "África",
+  "Ásia",
+  "Oriente Médio",
+  "Oceania",
+  "Global (vários países)",
+  "Argentina",
+  "Bolívia",
+  "Chile",
+  "Colômbia",
+  "Equador",
+  "Paraguai",
+  "Peru",
+  "Uruguai",
+  "Venezuela",
+  "México",
+  "Estados Unidos",
+  "Canadá",
+  "Portugal",
+  "Espanha",
+  "França",
+  "Reino Unido",
+  "Alemanha",
+  "Itália",
+  "China",
+  "Japão",
+  "Índia",
+  "Angola",
+  "Moçambique",
+];
+
 export function RegionStep({ state, patchState, onBack, onNext, projectId, setError }: StepProps) {
   const [saving, setSaving] = useState(false);
+  const [open, setOpen] = useState(false);
+
   const handleNext = async () => {
     setSaving(true);
     setError(null);
@@ -420,20 +458,56 @@ export function RegionStep({ state, patchState, onBack, onNext, projectId, setEr
     if (error) return setError(error);
     onNext();
   };
+
   return (
     <>
       <OnboardingHeader title="Em qual país ou região você pretende iniciar a operação?" />
-      <Textarea
-        value={state.region}
-        onChange={(e) => patchState({ region: e.target.value.slice(0, REGION_MAX) })}
-        rows={3}
-        placeholder="Ex: Brasil, América Latina, Europa..."
-        className="resize-none rounded-2xl"
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between rounded-xl"
+          >
+            {state.region || "Selecione o país ou região..."}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Buscar país ou região..." />
+            <CommandList>
+              <CommandEmpty>Nenhuma opção encontrada.</CommandEmpty>
+              <CommandGroup>
+                {REGION_OPTIONS.map((r) => (
+                  <CommandItem
+                    key={r}
+                    value={r}
+                    onSelect={() => {
+                      patchState({ region: r });
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={`mr-2 h-4 w-4 ${
+                        state.region === r ? "opacity-100" : "opacity-0"
+                      }`}
+                    />
+                    {r}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      <OnboardingFooter
+        onBack={onBack}
+        onNext={handleNext}
+        loading={saving}
+        nextDisabled={!state.region.trim()}
       />
-      <p className="mt-1 text-right text-xs text-muted-foreground">
-        {state.region.length}/{REGION_MAX}
-      </p>
-      <OnboardingFooter onBack={onBack} onNext={handleNext} loading={saving} />
     </>
   );
 }

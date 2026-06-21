@@ -160,12 +160,6 @@ export const MANUAL_STAGE_CONFIGS: Record<string, ManualStageConfig> = {
           "Classifique as funcionalidades: Must have (essencial), Should have (importante), Could have (desejável), Won't have (fora do MVP).",
       },
       {
-        key: "stack_tecnologica",
-        label: "Stack tecnológica",
-        placeholder:
-          "Que tecnologias/ferramentas você pretende usar para construir o MVP? (ex.: no-code, frameworks, serviços de nuvem.)",
-      },
-      {
         key: "metricas_validacao",
         label: "Métricas de validação",
         placeholder:

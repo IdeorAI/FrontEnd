@@ -343,7 +343,9 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
   }
 
   return (
-    <div className="relative space-y-6">
+    // pb-24 garante espaço no fim para que os FABs flutuantes (chat/feedback,
+    // fixed bottom-right) não cubram os botões de navegação "Próxima etapa".
+    <div className="relative space-y-6 pb-24">
       <LlmLoadingOverlay isVisible={isGenerating} />
 
       {/* Breadcrumb */}

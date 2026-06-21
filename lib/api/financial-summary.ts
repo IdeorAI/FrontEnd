@@ -63,6 +63,28 @@ export async function aiFillFinancialSummary(
 }
 
 /**
+ * Spec 027 — write-back das variáveis financeiras ao editar a DRE.
+ * Chamado APÓS salvar a DRE: o backend recalcula as âncoras (receita/custos médios),
+ * trava (locked) e reescreve a etapa 4 (marcando-a desatualizada). Best-effort:
+ * nunca lança — uma falha aqui não deve impedir o save da DRE.
+ */
+export async function syncFinancialVariables(
+  projectId: string,
+  userId: string,
+  dre: unknown,
+): Promise<void> {
+  try {
+    await fetch(`${API_BASE}/api/projects/${projectId}/financial-summary/sync-variables`, {
+      method: 'POST',
+      headers: { ...(await authHeaders(userId)), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dre: JSON.stringify(dre) }),
+    });
+  } catch (err) {
+    console.warn('[FinVars] sync-variables falhou (não crítico):', err);
+  }
+}
+
+/**
  * Spec 022 — baixa o Resumo Financeiro (tabela DRE atualizada) em PDF.
  * Dispara o download no navegador.
  */

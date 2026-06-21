@@ -16,7 +16,7 @@ import {
 } from "@/components/dre-table";
 import { DreChart } from "@/components/dre-chart";
 import { markGeneratedDocumentsOutdated } from "@/lib/api/final-documents";
-import { aiFillFinancialSummary, downloadFinancialSummaryPdf } from "@/lib/api/financial-summary";
+import { aiFillFinancialSummary, downloadFinancialSummaryPdf, syncFinancialVariables } from "@/lib/api/financial-summary";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -180,6 +180,12 @@ export function FinanceiroClient({ projectId, projectName }: Props) {
       setTaskId(data.id as string);
     }
     setRawContent(content);
+
+    // Spec 027 — write-back das variáveis financeiras (âncoras receita/custos →
+    // financial_variables locked + reescreve etapa4). Best-effort; não bloqueia o save.
+    if (userId) {
+      await syncFinancialVariables(projectId, userId, updated);
+    }
 
     // A DRE mudou: marca os documentos finais (Pitch/Plano/Resumo) que citam
     // números financeiros como desatualizados, para regeneração consciente.

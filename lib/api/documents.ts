@@ -61,15 +61,28 @@ export async function generateDocument(
         errorBody: errorText,
       });
 
+      // Tenta extrair a mensagem do backend ({ error: "..." }) — ela costuma ser
+      // mais precisa que um genérico por status (ex.: o 400 do generate é, na
+      // prática, "a IA demorou/não respondeu", não "dados inválidos").
+      let backendError = '';
+      try {
+        backendError = (JSON.parse(errorText)?.error as string) ?? '';
+      } catch {
+        /* corpo não-JSON */
+      }
+
       // Melhorar mensagem de erro baseada no status code
       let userFriendlyMessage = '';
 
       if (res.status === 503 || errorText.includes('ServiceUnavailable') || errorText.includes('indisponível')) {
-        userFriendlyMessage = 'A API de IA está temporariamente indisponível. O sistema tentou 3 vezes automaticamente, mas não obteve sucesso. Por favor, aguarde alguns instantes e tente novamente.';
+        userFriendlyMessage = 'A API de IA está temporariamente indisponível. O sistema tentou automaticamente, mas não obteve sucesso. Por favor, aguarde alguns instantes e tente novamente.';
       } else if (res.status === 429) {
         userFriendlyMessage = 'Limite de requisições atingido. Por favor, aguarde alguns instantes e tente novamente.';
       } else if (res.status === 400) {
-        userFriendlyMessage = 'Erro na solicitação. Verifique se o projeto e os dados estão corretos.';
+        // O 400 do /generate significa que a IA não conseguiu gerar (geralmente
+        // demora/timeout em etapas pesadas como Modelo de Negócio), não erro de dados.
+        userFriendlyMessage = backendError ||
+          'A IA não conseguiu gerar o documento desta vez (pode ter demorado demais). Aguarde alguns instantes e tente novamente.';
       } else if (res.status === 404) {
         userFriendlyMessage = 'Projeto não encontrado. Verifique se você tem acesso ao projeto.';
       } else if (res.status >= 500) {
@@ -78,7 +91,11 @@ export async function generateDocument(
         userFriendlyMessage = `Erro ao gerar documento (${res.status}). Tente novamente.`;
       }
 
-      throw new Error(userFriendlyMessage);
+      // Marca como erro já-tratado (flag), para o catch externo repassar sem
+      // transformar em "problema de conexão" — robusto a mudanças de texto.
+      const handled = new Error(userFriendlyMessage) as Error & { handled?: boolean };
+      handled.handled = true;
+      throw handled;
     }
 
     const result = await res.json();
@@ -92,15 +109,8 @@ export async function generateDocument(
       API_BASE,
     });
 
-    // Se já é um erro tratado (vindo do bloco res.ok acima), repassar sem modificar
-    if (error instanceof Error && (
-      error.message.includes('API de IA') ||
-      error.message.includes('Erro na solicitação') ||
-      error.message.includes('Limite de requisições') ||
-      error.message.includes('Projeto não encontrado') ||
-      error.message.includes('Erro no servidor') ||
-      error.message.includes('Erro ao gerar')
-    )) {
+    // Se já é um erro tratado (vindo do bloco res.ok acima), repassar sem modificar.
+    if (error instanceof Error && (error as Error & { handled?: boolean }).handled) {
       throw error;
     }
 
