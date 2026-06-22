@@ -660,7 +660,11 @@ export function ReviewStep({
     setSuggesting(true);
     patchState({ name: "" });
     try {
-      const prompt = `Com base na descrição a seguir, sugira um nome criativo, curto e memorável (máx. 5 palavras) para este projeto de startup. Responda APENAS com o nome, sem explicações, sem aspas, sem pontuação final.\n\nDescrição: ${description}\nCategoria: ${categoryLabel}`;
+      // O endpoint /api/chat rejeita message > 500 chars (400). A descrição pode
+      // ser longa (≤400) e o texto-base já tem ~230 chars, então truncamos a
+      // descrição para o prompt total caber no limite.
+      const descForPrompt = description.slice(0, 220);
+      const prompt = `Sugira um nome criativo, curto e memorável (máx. 5 palavras) para este projeto de startup. Responda APENAS com o nome, sem explicações, aspas ou pontuação final.\n\nDescrição: ${descForPrompt}\nCategoria: ${categoryLabel}`;
       let full = "";
       for await (const ev of streamChat(prompt, [], {
         mode: "guide",
