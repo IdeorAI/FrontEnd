@@ -53,9 +53,13 @@ export function ProjectCard({ project: p, role }: ProjectCardProps) {
   const tasks = Array.isArray(p.tasks) ? p.tasks : [];
   // Etapas de validação concluídas = tasks etapa1..etapa5 com status 'evaluated'.
   // EXCLUI a task 'resumo_financeiro' (spec 022) — ela não é uma etapa do roadmap.
-  const etapasFase2Concluidas = tasks.filter(
-    (t) => t.status === "evaluated" && (t.phase ?? "").startsWith("etapa"),
-  ).length;
+  // Conta PHASES distintas (Set) — duplicatas de tasks etapaN no banco
+  // (auto-save concorrente, Spec 024) não devem inflar o progresso ("7/6").
+  const etapasFase2Concluidas = new Set(
+    tasks
+      .filter((t) => t.status === "evaluated" && (t.phase ?? "").startsWith("etapa"))
+      .map((t) => t.phase),
+  ).size;
 
   // O roadmap mostra 6 etapas: a Fase 1 (criação do projeto) conta como a 1ª etapa
   // (sempre concluída, pois o projeto já existe) + as 5 etapas da Fase 2.

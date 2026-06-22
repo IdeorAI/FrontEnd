@@ -11,16 +11,18 @@ type Props = {
 };
 
 export const RoadmapBar = memo(function RoadmapBar({ completed, total = 8, className }: Props) {
+  // Clampa também o número exibido — duplicatas de tasks no banco podiam
+  // estourar o total e mostrar "7/6" (texto saía sem clamp, só a barra clampava).
+  const displayCompleted = Math.max(0, Math.min(completed, total));
   const pct = useMemo(() => {
-    const clamped = Math.max(0, Math.min(completed, total));
-    return (clamped / total) * 100; // 0..100
-  }, [completed, total]);
+    return (displayCompleted / total) * 100; // 0..100
+  }, [displayCompleted, total]);
 
   return (
     <div className={["w-full", className].filter(Boolean).join(" ")}>
       <div className="flex items-center justify-between text-sm mb-1">
         <span className="opacity-70">Roadmap</span>
-        <strong>{completed}/{total}</strong>
+        <strong>{displayCompleted}/{total}</strong>
       </div>
 
       <div className="relative h-2 w-full rounded bg-muted overflow-visible">
@@ -43,7 +45,7 @@ export const RoadmapBar = memo(function RoadmapBar({ completed, total = 8, class
             transform: 'translateY(-50%) rotate(45deg)',
             zIndex: 10
           }}
-          aria-label={`Progresso: ${completed} de ${total} etapas`}
+          aria-label={`Progresso: ${displayCompleted} de ${total} etapas`}
         />
       </div>
     </div>

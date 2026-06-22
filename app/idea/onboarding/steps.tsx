@@ -474,10 +474,18 @@ export function RegionStep({ state, patchState, onBack, onNext, projectId, setEr
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <PopoverContent
+          className="w-[--radix-popover-trigger-width] p-0"
+          align="start"
+          sideOffset={6}
+          collisionPadding={16}
+          avoidCollisions
+        >
           <Command>
             <CommandInput placeholder="Buscar país ou região..." />
-            <CommandList>
+            {/* max-h limita a altura e habilita rolagem — sem isso a lista abria
+                alta e o topo (Brasil) ficava cortado atrás do header. */}
+            <CommandList className="max-h-[240px] overflow-y-auto">
               <CommandEmpty>Nenhuma opção encontrada.</CommandEmpty>
               <CommandGroup>
                 {REGION_OPTIONS.map((r) => (

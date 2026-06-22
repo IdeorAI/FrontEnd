@@ -343,9 +343,10 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
   }
 
   return (
-    // pb-24 garante espaço no fim para que os FABs flutuantes (chat/feedback,
-    // fixed bottom-right) não cubram os botões de navegação "Próxima etapa".
-    <div className="relative space-y-6 pb-24">
+    // pb-28 garante respiro vertical e o row de navegação (abaixo) reserva um
+    // corredor à direita (pr-20) para que o FAB do chat (fixed bottom-5 right-5,
+    // ~56px) não cubra o botão "Próxima etapa", que fica no canto inferior-direito.
+    <div className="relative space-y-6 pb-28">
       <LlmLoadingOverlay isVisible={isGenerating} />
 
       {/* Breadcrumb */}
@@ -508,9 +509,10 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         />
       )}
 
-      {/* Navegação entre etapas */}
+      {/* Navegação entre etapas — pr-20 sm:pr-0 reserva o corredor do FAB do chat
+          em telas estreitas (onde o FAB cobriria o botão "Próxima etapa"). */}
       {generatedContent && (
-        <div className="flex justify-between">
+        <div className="flex justify-between pr-20 sm:pr-0">
           {getPreviousEtapa() ? (
             <button
               onClick={() =>
