@@ -3,7 +3,8 @@
 // O slide 8 (descrições geradas) vive em describe-step.tsx (Fase 4).
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { KeywordsBlock } from "@/components/projeto/keywords-block";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -648,12 +649,60 @@ export function ReviewStep({
   saving,
 }: StepProps & { onSave: () => void; saving: boolean }) {
   const [suggesting, setSuggesting] = useState(false);
+  const [suggestingTags, setSuggestingTags] = useState(false);
+  const tagsAutoTried = useRef(false);
   const NAME_MAX = 100;
+  const TAGS_MIN = 2;
+  const TAGS_MAX = 10;
   const categoryLabel =
     state.category === CATEGORY_UNDEFINED
       ? "A definir pelo Ideor"
       : cats.find((c) => c.value === state.category)?.label ?? "—";
   const description = state.chosenDescription ?? state.idea;
+
+  // Spec 028 — sugere ≥5 tags de contexto via streamChat (mesma infra do nome).
+  // Idioma pt-BR no topo do prompt + descrição truncada (evita 400 e idioma errado).
+  const suggestTags = async () => {
+    if (!description || suggestingTags) return;
+    setSuggestingTags(true);
+    try {
+      const descForPrompt = description.slice(0, 200);
+      const prompt = `Responda SEMPRE em português do Brasil. Liste de 5 a 8 palavras-chave curtas (1-3 palavras cada) que resumem a essência deste projeto de startup, separadas por vírgula. Responda APENAS as palavras-chave, sem numeração, sem explicações.\n\nDescrição: ${descForPrompt}\nCategoria: ${categoryLabel}`;
+      let full = "";
+      for await (const ev of streamChat(prompt, [], { mode: "guide", projectId })) {
+        if (typeof ev === "string") full += ev;
+      }
+      const parsed = Array.from(
+        new Set(
+          full
+            .split(/[,\n;•|]+/)
+            .map((t) => t.replace(/^[\d.\-)\s]+/, "").trim())
+            .filter((t) => t.length > 0 && t.length <= 40),
+        ),
+      ).slice(0, TAGS_MAX);
+      if (parsed.length === 0) {
+        toast.error("Não consegui sugerir tags agora. Adicione manualmente.");
+      } else {
+        patchState({ keywords: parsed });
+      }
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : "Falha ao sugerir tags. Adicione manualmente.",
+      );
+    } finally {
+      setSuggestingTags(false);
+    }
+  };
+
+  // Auto-sugestão na 1ª vez que a tela aparece sem tags.
+  useEffect(() => {
+    if (tagsAutoTried.current) return;
+    if (state.keywords.length === 0 && description) {
+      tagsAutoTried.current = true;
+      void suggestTags();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSuggestName = async () => {
     if (!description || suggesting) return;
@@ -742,6 +791,41 @@ export function ReviewStep({
           <p className="mt-1 text-right text-xs text-muted-foreground">
             {description.length}/400
           </p>
+        </div>
+
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <label className="block text-sm font-semibold">
+              Tags de contexto
+            </label>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={suggestTags}
+              disabled={suggestingTags || !description}
+              className="h-7 gap-1.5 text-xs"
+            >
+              {suggestingTags ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5" />
+              )}
+              Sugerir com IA
+            </Button>
+          </div>
+          <p className="mb-2 text-xs text-muted-foreground">
+            Palavras-chave que mantêm a IA focada no seu projeto ({TAGS_MIN} a {TAGS_MAX}).
+          </p>
+          <KeywordsBlock
+            keywords={state.keywords}
+            onKeywordsChange={(next) => patchState({ keywords: next.slice(0, TAGS_MAX) })}
+          />
+          {state.keywords.length > 0 && state.keywords.length < TAGS_MIN && (
+            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+              Adicione ao menos {TAGS_MIN} tags para um melhor contexto.
+            </p>
+          )}
         </div>
 
         <div>

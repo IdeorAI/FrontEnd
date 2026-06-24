@@ -30,14 +30,16 @@ export function BetaFeedbackFab() {
               onClick={() => setOpen(true)}
               aria-label="Enviar feedback"
               className={cn(
-                "fixed bottom-24 right-5 z-50 h-14 w-14 rounded-full",
+                // -15% (h-14→h-12) e ~meio da tela, empilhado ACIMA do chat-fab
+                // (chat fica em top-1/2; este ~60px acima).
+                "fixed top-[calc(50%-3.75rem)] -translate-y-1/2 right-5 z-50 h-12 w-12 rounded-full",
                 "bg-primary text-primary-foreground shadow-lg",
                 "flex items-center justify-center",
                 "transition-transform hover:scale-105 hover:bg-primary/90",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               )}
             >
-              <MessageSquarePlus className="h-6 w-6" aria-hidden="true" />
+              <MessageSquarePlus className="h-5 w-5" aria-hidden="true" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="left">Enviar feedback</TooltipContent>

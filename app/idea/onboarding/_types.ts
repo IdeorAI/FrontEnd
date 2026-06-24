@@ -56,6 +56,8 @@ export interface OnboardingState {
   workMode: WorkMode | null;
   /** slide 10 — nome do projeto. */
   name: string;
+  /** slide 10 — tags de contexto (Spec 028); persistidas em projects.keywords. */
+  keywords: string[];
 }
 
 export const initialOnboardingState: OnboardingState = {
@@ -71,6 +73,7 @@ export const initialOnboardingState: OnboardingState = {
   generatedOptions: [],
   workMode: null,
   name: "",
+  keywords: [],
 };
 
 /** Identificadores estáveis de cada passo (independem da posição na sequência). */

@@ -369,6 +369,18 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         <span className="text-ink-secondary">Etapa {currentStageNumber}</span>
       </nav>
 
+      {/* "Etapa anterior" sempre visível no topo a partir da etapa 2 — garante o
+          retorno em TODAS as etapas (assistido/manual, gerado ou não), em vez de
+          depender dos botões condicionais espalhados pelos blocos abaixo. */}
+      {getPreviousEtapa() && (
+        <button
+          onClick={() => router.push(`/projeto/${projectId}/fase2/${getPreviousEtapa()}`)}
+          className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline font-medium"
+        >
+          ← Etapa anterior
+        </button>
+      )}
+
       {/* Badge de status */}
       {currentStageSaved === false && (
         <StageStatusBadge
@@ -396,17 +408,10 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
         />
       )}
 
-      {/* Modo ASSISTIDO (IA): formulário que gera o documento. */}
+      {/* Modo ASSISTIDO (IA): formulário que gera o documento.
+          (O "Etapa anterior" agora vive no topo da página, após o breadcrumb.) */}
       {!generatedContent && !isManual && (
         <div className="space-y-4">
-          {getPreviousEtapa() && (
-            <button
-              onClick={() => router.push(`/projeto/${projectId}/fase2/${getPreviousEtapa()}`)}
-              className="px-6 py-3 border border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-lg font-medium transition-colors"
-            >
-              ← Voltar etapa
-            </button>
-          )}
           <FirstTimeTooltip
             tooltipKey="gerar_button"
             jaVisto={seenTooltips["gerar_button"] ?? false}
@@ -513,18 +518,8 @@ export function EtapaClient({ seenTooltips }: EtapaClientProps) {
           em telas estreitas (onde o FAB cobriria o botão "Próxima etapa"). */}
       {generatedContent && (
         <div className="flex justify-between pr-20 sm:pr-0">
-          {getPreviousEtapa() ? (
-            <button
-              onClick={() =>
-                router.push(
-                  `/projeto/${projectId}/fase2/${getPreviousEtapa()}`
-                )
-              }
-              className="px-6 py-3 border border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-lg font-medium transition-colors"
-            >
-              ← Voltar etapa
-            </button>
-          ) : <span />}
+          {/* "Etapa anterior" vive no topo; aqui fica só o avanço/finalização. */}
+          <span />
           {getNextEtapa() && (
             <button
               onClick={() => router.push(`/projeto/${projectId}/fase2/${getNextEtapa()}`)}

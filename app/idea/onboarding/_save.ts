@@ -30,11 +30,18 @@ export function useOnboardingSave(
     if (!name) return setError("O nome do projeto é obrigatório.");
     if (!description) return setError("A descrição do projeto é obrigatória.");
 
+    // Spec 028 — tags de contexto: normaliza (trim, dedup, máx. 10). Não bloqueia
+    // a criação se houver poucas (o aviso de mínimo é só na UI).
+    const keywords = Array.from(
+      new Set(state.keywords.map((t) => t.trim()).filter(Boolean)),
+    ).slice(0, 10);
+
     setSaving(true);
     setError(null);
     const { error } = await persistOnboardingPatch(projectId, {
       name,
       description,
+      keywords,
       current_phase: "fase2",
     });
     if (error) {

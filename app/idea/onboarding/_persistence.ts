@@ -42,7 +42,7 @@ export async function loadOnboardingDraft(
   const { data } = await supabase
     .from("projects")
     .select(
-      "name, description, category, business_type, target_audience, region, constraints, generated_options, creation_mode"
+      "name, description, category, business_type, target_audience, region, constraints, generated_options, creation_mode, keywords"
     )
     .eq("id", projectId)
     .maybeSingle();
@@ -64,5 +64,6 @@ export async function loadOnboardingDraft(
       : [],
     workMode: (data.creation_mode as OnboardingState["workMode"]) ?? null,
     name: data.name?.startsWith("Novo projeto") ? "" : data.name ?? "",
+    keywords: Array.isArray(data.keywords) ? (data.keywords as string[]) : [],
   };
 }
