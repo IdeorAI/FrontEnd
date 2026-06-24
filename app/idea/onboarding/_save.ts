@@ -30,11 +30,14 @@ export function useOnboardingSave(
     if (!name) return setError("O nome do projeto é obrigatório.");
     if (!description) return setError("A descrição do projeto é obrigatória.");
 
-    // Spec 028 — tags de contexto: normaliza (trim, dedup, máx. 10). Não bloqueia
-    // a criação se houver poucas (o aviso de mínimo é só na UI).
+    // Spec 028 — tags de contexto: normaliza (trim, dedup, máx. 10) e exige mín. 2
+    // para garantir contexto suficiente para ancorar a LLM.
     const keywords = Array.from(
       new Set(state.keywords.map((t) => t.trim()).filter(Boolean)),
     ).slice(0, 10);
+    if (keywords.length < 2) {
+      return setError("Adicione ao menos 2 tags de contexto antes de criar o projeto.");
+    }
 
     setSaving(true);
     setError(null);

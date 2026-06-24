@@ -8,21 +8,28 @@ interface KeywordsBlockProps {
   keywords: string[];
   onKeywordsChange?: (next: string[]) => void;
   className?: string;
+  /** Limite máximo de tags. Ao atingir, o botão "Adicionar" desaparece. Opcional. */
+  max?: number;
+  /** Mínimo de tags. Ao atingir, o "×" de remover desaparece (não deixa cair abaixo). Opcional. */
+  min?: number;
 }
 
 /**
  * Bloco de palavras-chave editável — adicionar clicando "+" e remover clicando "×" em cada tag.
  */
-export function KeywordsBlock({ keywords, onKeywordsChange, className }: KeywordsBlockProps) {
+export function KeywordsBlock({ keywords, onKeywordsChange, className, max, min }: KeywordsBlockProps) {
   const [input, setInput] = React.useState("");
   const [adding, setAdding] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const editable = !!onKeywordsChange;
+  const atLimit = max != null && keywords.length >= max;
+  const atFloor = min != null && keywords.length <= min;
 
   const commit = () => {
     const trimmed = input.trim();
-    if (trimmed && !keywords.includes(trimmed)) {
+    // Respeita o limite máximo — não adiciona além de `max` (evita o slice silencioso).
+    if (trimmed && !keywords.includes(trimmed) && !atLimit) {
       onKeywordsChange?.([...keywords, trimmed]);
     }
     setInput("");
@@ -51,7 +58,7 @@ export function KeywordsBlock({ keywords, onKeywordsChange, className }: Keyword
             className="inline-flex items-center gap-1 rounded-full bg-brand-subtle px-2.5 py-0.5 text-[11px] font-semibold text-ink-brand"
           >
             {k}
-            {editable && (
+            {editable && !atFloor && (
               <button
                 type="button"
                 onClick={() => remove(k)}
@@ -77,7 +84,7 @@ export function KeywordsBlock({ keywords, onKeywordsChange, className }: Keyword
             placeholder="Nova palavra…"
             className="h-6 w-32 rounded-full border border-brand bg-card px-2.5 text-[11px] font-semibold text-ink-primary outline-none ring-1 ring-brand/30"
           />
-        ) : editable ? (
+        ) : editable && !atLimit ? (
           <button
             type="button"
             onClick={() => setAdding(true)}

@@ -660,30 +660,48 @@ export function ReviewStep({
       : cats.find((c) => c.value === state.category)?.label ?? "—";
   const description = state.chosenDescription ?? state.idea;
 
-  // Spec 028 — sugere ≥5 tags de contexto via streamChat (mesma infra do nome).
+  // Spec 028 — sugere de 5 a 10 tags de contexto via streamChat (mesma infra do nome).
   // Idioma pt-BR no topo do prompt + descrição truncada (evita 400 e idioma errado).
+  const TAGS_SUGGEST_MIN = 5;
+
+  const requestTags = async (): Promise<string[]> => {
+    // O /api/chat rejeita message > 500 chars (400). Mantemos o texto-base enxuto
+    // e truncamos descrição+categoria para o total caber com folga.
+    const descForPrompt = description.slice(0, 160);
+    const catForPrompt = categoryLabel.slice(0, 40);
+    const prompt = `Responda em pt-BR. Liste ${TAGS_SUGGEST_MIN} a ${TAGS_MAX} palavras-chave curtas (1-3 palavras) que resumem este projeto, separadas por vírgula. Mínimo ${TAGS_SUGGEST_MIN}. Só as palavras-chave, sem numeração.\n\nDescrição: ${descForPrompt}\nCategoria: ${catForPrompt}`;
+    let full = "";
+    for await (const ev of streamChat(prompt, [], { mode: "guide", projectId })) {
+      if (typeof ev === "string") full += ev;
+    }
+    return Array.from(
+      new Set(
+        full
+          .split(/[,\n;•|]+/)
+          .map((t) => t.replace(/^[\d.\-)\s]+/, "").trim())
+          .filter((t) => t.length > 0 && t.length <= 40),
+      ),
+    ).slice(0, TAGS_MAX);
+  };
+
   const suggestTags = async () => {
     if (!description || suggestingTags) return;
     setSuggestingTags(true);
     try {
-      const descForPrompt = description.slice(0, 200);
-      const prompt = `Responda SEMPRE em português do Brasil. Liste de 5 a 8 palavras-chave curtas (1-3 palavras cada) que resumem a essência deste projeto de startup, separadas por vírgula. Responda APENAS as palavras-chave, sem numeração, sem explicações.\n\nDescrição: ${descForPrompt}\nCategoria: ${categoryLabel}`;
-      let full = "";
-      for await (const ev of streamChat(prompt, [], { mode: "guide", projectId })) {
-        if (typeof ev === "string") full += ev;
+      let parsed = await requestTags();
+      // Garante o mínimo de 5: se a 1ª resposta vier curta, tenta mais uma vez e
+      // mescla os resultados (dedup) — sem laço infinito (no máx. 2 tentativas).
+      if (parsed.length < TAGS_SUGGEST_MIN) {
+        const retry = await requestTags();
+        parsed = Array.from(new Set([...parsed, ...retry])).slice(0, TAGS_MAX);
       }
-      const parsed = Array.from(
-        new Set(
-          full
-            .split(/[,\n;•|]+/)
-            .map((t) => t.replace(/^[\d.\-)\s]+/, "").trim())
-            .filter((t) => t.length > 0 && t.length <= 40),
-        ),
-      ).slice(0, TAGS_MAX);
       if (parsed.length === 0) {
         toast.error("Não consegui sugerir tags agora. Adicione manualmente.");
       } else {
         patchState({ keywords: parsed });
+        if (parsed.length < TAGS_SUGGEST_MIN) {
+          toast.info(`Sugeri ${parsed.length} tags. Você pode adicionar mais para um contexto melhor.`);
+        }
       }
     } catch (e) {
       toast.error(
@@ -694,7 +712,9 @@ export function ReviewStep({
     }
   };
 
-  // Auto-sugestão na 1ª vez que a tela aparece sem tags.
+  // Auto-sugestão na 1ª vez que a tela aparece sem tags. Depende de `description`
+  // para não disparar com texto vazio/desatualizado no 1º render (o guard
+  // tagsAutoTried garante que roda só UMA vez, mesmo com a descrição mudando).
   useEffect(() => {
     if (tagsAutoTried.current) return;
     if (state.keywords.length === 0 && description) {
@@ -702,7 +722,7 @@ export function ReviewStep({
       void suggestTags();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [description]);
 
   const handleSuggestName = async () => {
     if (!description || suggesting) return;
@@ -820,10 +840,11 @@ export function ReviewStep({
           <KeywordsBlock
             keywords={state.keywords}
             onKeywordsChange={(next) => patchState({ keywords: next.slice(0, TAGS_MAX) })}
+            max={TAGS_MAX}
           />
-          {state.keywords.length > 0 && state.keywords.length < TAGS_MIN && (
+          {state.keywords.length < TAGS_MIN && !suggestingTags && (
             <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-              Adicione ao menos {TAGS_MIN} tags para um melhor contexto.
+              Adicione ao menos {TAGS_MIN} tags para criar o projeto.
             </p>
           )}
         </div>
@@ -842,7 +863,11 @@ export function ReviewStep({
         onNext={onSave}
         loading={saving}
         nextLabel="Salvar"
-        nextDisabled={!state.name.trim() || !description.trim()}
+        nextDisabled={
+          !state.name.trim() ||
+          !description.trim() ||
+          state.keywords.length < TAGS_MIN
+        }
       />
     </>
   );

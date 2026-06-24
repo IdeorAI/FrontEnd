@@ -1199,10 +1199,13 @@ function DashPageContent() {
             )}
           </div>
 
-          {/* Keywords */}
+          {/* Keywords / tags de contexto (Spec 028) — mín. 2 (não cair abaixo da
+              ancoragem da LLM) e máx. 10 (o backend usa até 10). */}
           <KeywordsBlock
             keywords={projectKeywords}
             onKeywordsChange={handleKeywordsChange}
+            min={2}
+            max={10}
           />
 
           {/* Documentação */}
