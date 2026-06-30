@@ -835,7 +835,7 @@ export function ReviewStep({
             </Button>
           </div>
           <p className="mb-2 text-xs text-muted-foreground">
-            Palavras-chave que mantêm a IA focada no seu projeto ({TAGS_MIN} a {TAGS_MAX}).
+            Exclua ou adicione palavras- chave para manter o IdeorAI focado em sua ideia. ({TAGS_MIN} a {TAGS_MAX}).
           </p>
           <KeywordsBlock
             keywords={state.keywords}
